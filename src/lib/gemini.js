@@ -90,19 +90,29 @@ export const getGeminiModel = (modelName = 'gemini-3.1-flash-lite', systemInstru
             { role: 'user', parts: [{ text: messageText }] }
           ];
 
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModelName}:streamGenerateContent?key=${apiKey}`;
-          const payload = {
-            contents
+          const makePayload = () => {
+            const payload = { contents };
+            if (systemInstruction) {
+              payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+            return payload;
           };
-          if (systemInstruction) {
-            payload.systemInstruction = { parts: [{ text: systemInstruction }] };
-          }
 
-          const res = await fetchWithRetry(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
+          const callStream = async (targetModel) => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:streamGenerateContent?key=${apiKey}`;
+            return fetchWithRetry(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(makePayload())
+            });
+          };
+
+          let res = await callStream(primaryModel);
+
+          if (!res.ok && primaryModel !== fallbackModel) {
+            console.warn(`Primary Gemini stream model (${primaryModel}) failed with status ${res.status}. Falling back to ${fallbackModel}...`);
+            res = await callStream(fallbackModel);
+          }
 
           if (!res.ok) {
             const errText = await res.text();
