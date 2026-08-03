@@ -1,9 +1,9 @@
 import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase/config';
 
-// ========================
-// User Profile CRUD
-// ========================
+// ==========================================
+// การจัดการข้อมูลโปรไฟล์ผู้ใช้งาน (User Profile CRUD)
+// ==========================================
 
 export const createUserProfile = async (uid, data) => {
   try {
@@ -41,9 +41,9 @@ export const getUserProfile = async (uid) => {
   }
 };
 
-// ========================
-// Chat Conversations CRUD
-// ========================
+// ==========================================
+// การจัดการประวัติสนทนาแชต (Chat Conversations CRUD)
+// ==========================================
 
 export const createConversation = async (uid, title = 'สนทนาใหม่', initialMessages = []) => {
   const convsRef = collection(db, 'users', uid, 'conversations');

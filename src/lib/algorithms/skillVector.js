@@ -1,17 +1,10 @@
-/**
- * Calculates the final skill vector based on academic grades and scenario responses.
- * Academic grades are mapped to the 5 dimensions via a polarized weight matrix.
- * Scenario responses (Holland's Theory based) accumulate and normalize to 0-1.
- *
- * Academic weight: 50% | Assessment weight: 50%
- */
+// ==========================================
+// การคำนวณ 5D Skill Vector จากเกรด (30%) และแบบทดสอบ (70%)
+// ==========================================
 
 import { TARGET_CLUSTERS } from '../constants/targetedAssessment';
 
-// Mapping of 5 subjects to 5 skill dimensions (POLARIZED)
-// subjects: math, science, thai, english, social
-// dimensions: logic, science, language, art, management
-// dominant weights: 0.85+, non-dominant: 0.15-
+// เมทริกซ์ถ่วงน้ำหนักรายวิชาเรียนเข้าสู่ 5 มิติทักษะ
 const ACADEMIC_WEIGHT_MATRIX = {
   logic:      { math: 0.90, science: 0.10, thai: 0.00, english: 0.00, social: 0.00 },
   science:    { math: 0.10, science: 0.90, thai: 0.00, english: 0.00, social: 0.00 },
@@ -24,7 +17,7 @@ const ACADEMIC_WEIGHT = 0.30;
 const ASSESSMENT_WEIGHT = 0.70;
 
 export function calculateSkillVector(academicGrades, assessmentResponses, targetPath = null) {
-  // Normalize grades to 0-1 (from 0-4)
+  // แปลงสเกลเกรดเฉลี่ย (0-4) เป็นช่วง 0.0 - 1.0
   const normGrades = {
     math: (academicGrades.math || 0) / 4,
     science: (academicGrades.science || 0) / 4,
@@ -33,10 +26,10 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
     social: (academicGrades.social || 0) / 4,
   };
 
-  const baseVector = [0, 0, 0, 0, 0]; // logic, science, language, art, management
+  const baseVector = [0, 0, 0, 0, 0];
   const dimKeys = ['logic', 'science', 'language', 'art', 'management'];
 
-  // Add academic contribution (Weight: 30%)
+  // คำนวณคะแนนส่วนเกรดวิชาเรียน (น้ำหนัก 30%)
   dimKeys.forEach((dim, index) => {
     const weights = ACADEMIC_WEIGHT_MATRIX[dim];
     const val = (
@@ -49,12 +42,11 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
     baseVector[index] += val * ACADEMIC_WEIGHT;
   });
 
-  // Add assessment contribution (Weight: 70%)
+  // คำนวณคะแนนส่วนแบบทดสอบสถานการณ์ (น้ำหนัก 70%)
   if (assessmentResponses && assessmentResponses.length > 0) {
     let relevantResponses = assessmentResponses;
 
     if (targetPath) {
-      // TARGET LOCK MODE: Use ONLY the 3 targeted stage responses
       const clusterKey = TARGET_CLUSTERS[targetPath];
       if (clusterKey) {
         const TARGETED_PREFIXES = {
@@ -73,12 +65,11 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
         });
       }
     } else {
-      // DISCOVERY MODE: Use ONLY general assessment responses (stages 1-12)
+      // โหมดค้นหาตัวตน (Discovery Mode): กรองใช้เฉพาะคำถามแบบทดสอบทั่วไป (ด่าน 1-12)
       relevantResponses = assessmentResponses.filter(response => {
         const qId = response.questionId || '';
         return /^S(?:[1-9]|1[0-2])Q/.test(qId);
       });
-      // If no questionId format matches (legacy data), use all
       if (relevantResponses.length === 0) {
         relevantResponses = assessmentResponses;
       }
@@ -96,7 +87,7 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
 
       const maxVal = Math.max(1.0, ...accumulated);
       
-      // Calculate progress factor to scale assessment contribution based on completed questions
+      // การคำนวณ Progress Factor ตามสัดส่วนจำนวนข้อที่ทำเสร็จ
       const totalExpected = targetPath ? 18 : 144;
       const progressRatio = Math.min(1, relevantResponses.length / totalExpected);
       const progressFactor = 0.3 + 0.7 * progressRatio;
@@ -108,6 +99,6 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
     }
   }
 
-  // Clamp final vector to ensure values are between 0 and 1
+  // ปรับจำกัดค่าสุทธิให้อยู่ในช่วง 0.0 ถึง 1.0
   return baseVector.map(val => Math.min(Math.max(val, 0), 1));
 }

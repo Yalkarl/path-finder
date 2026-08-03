@@ -8,6 +8,10 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase/config';
 
+// ==========================================
+// ฟังก์ชันจัดการระบบยืนยันตัวตน (Firebase Authentication)
+// ==========================================
+
 export const signUpWithEmail = async (email, password) => {
   return createUserWithEmailAndPassword(auth, email, password);
 };

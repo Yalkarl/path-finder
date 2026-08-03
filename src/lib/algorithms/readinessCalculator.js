@@ -1,17 +1,13 @@
 import { calculateMatchPercentage } from './cosineSimilarity';
 import { SELF_ASSESSMENT_SUBJECTS } from '../constants/selfAssessmentSubjects';
 
-/**
- * Normalizes a portfolio item (which can be a legacy string or a structured object)
- * into a standard object structure.
- * 
- * @param {string|Object} item - Portfolio item
- * @returns {Object} - Normalized portfolio item object
- */
+// ==========================================
+// การแปลงข้อมูลผลงาน (Portfolio Item Normalization)
+// ==========================================
 function normalizePortfolioItem(item) {
   if (typeof item === 'string') {
     const text = item;
-    let categoryId = 'academic'; // default fallback
+    let categoryId = 'academic';
     let level = 'local';
     let award = 'none';
     let role = 'member';
@@ -19,7 +15,6 @@ function normalizePortfolioItem(item) {
     let posnCamp = null;
     let posnSubject = null;
 
-    // Check category keywords
     if (text.includes('ค่าย') || text.includes('อบรม')) {
       categoryId = 'camp';
     } else if (text.includes('จิตอาสา') || text.includes(' volunteer') || text.includes('ช่วยเหลือ')) {
@@ -30,7 +25,6 @@ function normalizePortfolioItem(item) {
       categoryId = 'project';
     }
 
-    // Check level keywords
     if (text.includes('นานาชาติ') || text.includes('ต่างประเทศ')) {
       level = 'international';
     } else if (text.includes('ระดับชาติ') || text.includes('ประเทศ')) {
@@ -39,7 +33,6 @@ function normalizePortfolioItem(item) {
       level = 'regional';
     }
 
-    // Check award / role keywords
     if (text.includes('ชนะเลิศ') || text.includes('เหรียญทอง') || text.includes('ประธาน') || text.includes('แกนนำหลัก') || text.includes('หัวหน้า')) {
       award = 'winner';
       role = 'leader';
@@ -54,9 +47,8 @@ function normalizePortfolioItem(item) {
       role = 'cooperator';
     }
 
-    // Special POSN parsing for legacy string items
     if (text.includes('สอวน.') || text.includes('โอลิมปิกวิชาการ')) {
-      posnCamp = 'camp1'; // default to camp 1
+      posnCamp = 'camp1';
       if (text.includes('ค่าย 2')) posnCamp = 'camp2';
       else if (text.includes('ค่าย 3') || text.includes('ผู้แทนศูนย์')) posnCamp = 'national';
       else if (text.includes('ผู้แทนประเทศ')) posnCamp = 'team';
@@ -209,13 +201,15 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
     return isJunior ? isJuniorItem : !isJuniorItem;
   });
 
-  // Combine filtered portfolio items and custom activities
+  // รวมรายการผลงานและกิจกรรมเสริม
   const allItems = [
     ...filteredPortfolio,
     ...(customActivities || [])
   ];
 
-  // Factor 2: Portfolio Score (50% for junior, 70% for senior)
+  // ==========================================
+  // ปัจจัยที่ 2: คะแนนสะสมผลงาน (Portfolio Score: 60% ม.ต้น / 70% ม.ปลาย)
+  // ==========================================
   let portfolioWeightSum = 0;
   allItems.forEach(rawItem => {
     if (!rawItem) return;
@@ -223,10 +217,11 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
     portfolioWeightSum += calculateItemWeight(item);
   });
   
-  // Capped at 10 total units of weight = 100%
   const portfolioScore = Math.min(100, portfolioWeightSum * 10);
 
-  // Factor 3: Self-Assessment Score (10% weight)
+  // ==========================================
+  // ปัจจัยที่ 3: คะแนนประเมินตนเอง (Self-Assessment Score: 10%)
+  // ==========================================
   let saValues = [];
   if (targetPath && SELF_ASSESSMENT_SUBJECTS[targetPath]) {
     const targetSubjects = SELF_ASSESSMENT_SUBJECTS[targetPath].map(sub => sub.id);
@@ -237,22 +232,22 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
     });
   }
 
-  // Fallback to all values if target subjects not found or none assessed
   if (saValues.length === 0) {
     saValues = Object.values(selfAssessment || {});
   }
 
   const saAvg = saValues.length > 0
     ? saValues.reduce((sum, val) => sum + val, 0) / saValues.length
-    : 3; // Default to middle score if nothing assessed
-  const saScore = Math.round(((saAvg - 1) / 4) * 100); // 1→0%, 3→50%, 5→100%
+    : 3;
+  const saScore = Math.round(((saAvg - 1) / 4) * 100);
 
-  // Determine weights based on education level
+  // ==========================================
+  // การรวมคะแนนถ่วงน้ำหนักตามระดับชั้น (ม.ต้น vs ม.ปลาย)
+  // ==========================================
   const skillWeight = isJunior ? 0.30 : 0.20;
   const portfolioWeight = isJunior ? 0.60 : 0.70;
   const saWeight = 0.10;
 
-  // Weighted combination
   const readiness = Math.round(
     skillMatch * skillWeight +
     portfolioScore * portfolioWeight +

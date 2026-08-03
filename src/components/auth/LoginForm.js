@@ -17,7 +17,7 @@ export default function LoginForm() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  // Auto-redirect if already logged in
+  // ระบบสลับหน้าอัตโนมัติหากเข้าสู่ระบบอยู่แล้ว
   useEffect(() => {
     if (!authLoading && user) {
       getUserProfile(user.uid).then(profile => {

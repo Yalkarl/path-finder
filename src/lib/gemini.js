@@ -1,9 +1,12 @@
+// ==========================================
+// ฟังก์ชันจัดการการดึงข้อมูลพร้อมระบบ Retry และ Fallback อัตโนมัติ
+// ==========================================
 async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000) {
   let delay = initialDelay;
   for (let i = 0; i < maxRetries; i++) {
     try {
       const res = await fetch(url, options);
-      // Retry on 503 (service unavailable) or 429 (rate limit)
+      // ลองใหม่อัตโนมัติหากเจอสถานะ 503 หรือ 429
       if (res.status === 503 || res.status === 429) {
         await new Promise(resolve => setTimeout(resolve, delay));
         delay *= 2;
@@ -19,6 +22,9 @@ async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 1000)
   return fetch(url, options);
 }
 
+// ==========================================
+// การเรียกใช้งาน Google Gemini API พร้อมระบบสลับโมเดลอัตโนมัติ
+// ==========================================
 export const getGeminiModel = (modelName = 'gemini-3.1-flash-lite', systemInstruction = null) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -55,7 +61,7 @@ export const getGeminiModel = (modelName = 'gemini-3.1-flash-lite', systemInstru
 
       let res = await callApi(primaryModel);
 
-      // If primary model failed with 404, 429, or 503, fallback automatically
+      // หากโมเดลหลักขัดข้องหรือติด Rate Limit ให้สลับไปใช้โมเดลสำรองอัตโนมัติ
       if (!res.ok && primaryModel !== fallbackModel) {
         console.warn(`Primary Gemini model (${primaryModel}) failed with status ${res.status}. Falling back to ${fallbackModel}...`);
         res = await callApi(fallbackModel);

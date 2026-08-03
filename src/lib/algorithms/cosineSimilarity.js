@@ -1,7 +1,6 @@
-/**
- * Standard cosine similarity between two vectors.
- * Returns a value between -1 and 1 (typically 0 to 1 for non-negative vectors).
- */
+// ==========================================
+// การคำนวณ Cosine Similarity มาตรฐาน
+// ==========================================
 export function cosineSimilarity(vecA, vecB) {
   if (vecA.length !== vecB.length) {
     throw new Error('Vectors must have the same length');
@@ -25,25 +24,20 @@ export function cosineSimilarity(vecA, vecB) {
   return dotProduct / (magnitudeA * magnitudeB);
 }
 
-/**
- * Sigmoid scaling function to spread out similarity scores.
- * Centers at 0.82 with steepness of 15 — scores above 0.82 get pushed higher,
- * scores below 0.82 get pushed lower, creating better separation.
- */
+// ==========================================
+// การปรับสเกลคะแนนความสอดคล้องด้วย Sigmoid (x0=0.82, slope=15)
+// ==========================================
 function sigmoidScale(rawSimilarity) {
   return 1 / (1 + Math.exp(-(rawSimilarity - 0.82) * 15));
 }
 
-/**
- * Gap penalty: for each dimension where |userVector[i] - benchmark[i]| > 0.25,
- * multiply the penalty factor by 0.90. This penalizes profiles with large
- * mismatches in individual dimensions even if overall cosine is high.
- */
+// ==========================================
+// การคำนวณหักคะแนนส่วนขาด (Gap Penalty 10% ต่อมิติที่ตกเกณฑ์เกิน 0.25)
+// ==========================================
 function calculateGapPenalty(userVector, benchmark) {
   let penaltyFactor = 1.0;
 
   for (let i = 0; i < userVector.length; i++) {
-    // Only penalize if user's skill is below the benchmark requirement
     const gap = benchmark[i] - userVector[i];
     if (gap > 0.25) {
       penaltyFactor *= 0.90;
@@ -53,10 +47,22 @@ function calculateGapPenalty(userVector, benchmark) {
   return penaltyFactor;
 }
 
+// ==========================================
+// การคำนวณเปอร์เซ็นต์ความเหมาะสมสุทธิ (Skill Match Rate %)
+// ==========================================
 export function calculateMatchPercentage(userVector, benchmark) {
   const rawSimilarity = cosineSimilarity(userVector, benchmark);
   const adjustedScore = sigmoidScale(rawSimilarity);
   const penaltyFactor = calculateGapPenalty(userVector, benchmark);
+
+  const sumUser = userVector.reduce((a, b) => a + b, 0);
+  const sumBenchmark = benchmark.reduce((a, b) => a + b, 0);
+  const capabilityFactor = sumBenchmark > 0 ? Math.min(1.0, sumUser / sumBenchmark) : 1.0;
+
+  const finalMatch = Math.min(100, Math.max(0, Math.round(adjustedScore * penaltyFactor * capabilityFactor * 100)));
+
+  return finalMatch;
+}
 
   // Absolute Capability Factor: Compare the total magnitude/sum of user skills to the required benchmark.
   // This prevents cases where getting worse/lower grades in other subjects increases the match percentage

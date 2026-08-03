@@ -14,7 +14,7 @@ export async function POST(req) {
       const pathObj = JUNIOR_PATHS[userContext.targetPath] || SENIOR_PATHS[userContext.targetPath] || { name: userContext.targetPath };
       const targetName = pathObj.name;
 
-      // Combine and format standard portfolio and custom activities for user context
+      // รวมรายการผลงานมาตรฐานและกิจกรรมเพิ่มเติมสำหรับบริบท AI
       const allItems = [
         ...(userContext.portfolio || []),
         ...(userContext.customActivities || [])
@@ -24,7 +24,7 @@ export async function POST(req) {
         if (!item) return '';
         if (typeof item === 'string') return item;
         
-        // POSN camp formatting
+        // รูปแบบข้อมูลค่าย สอวน.
         if (item.posnCamp) {
           const campLabels = {
             camp1: 'ค่าย 1',
@@ -36,7 +36,7 @@ export async function POST(req) {
           return `${item.text} (สาขา: ${item.posnSubject || 'ทั่วไป'}, ระดับ: ${campStr})`;
         }
 
-        // Standard/Custom activity formatting
+        // รูปแบบข้อมูลกิจกรรมทั่วไปและรางวัล
         const levelLabels = {
           international: 'ระดับนานาชาติ',
           national: 'ระดับชาติ',
@@ -216,17 +216,15 @@ export async function POST(req) {
 
     const model = getGeminiModel('gemini-3.1-flash-lite', systemInstruction);
 
-    // Format history for Gemini
+    // จัดรูปแบบประวัติการสนทนาสำหรับ Gemini API
     const formattedHistory = messages.map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }]
     }));
 
-    // Start chat session with history
-    // Gemini history must strictly alternate user/model and start with user.
-    // Since our app's messages start with a model greeting, we prepend a dummy user message.
+    // ตรวจสอบและจัดลำดับประวัติการสนทนาให้ถูกต้อง
     let validHistory = [];
-    const chatMessages = formattedHistory.slice(0, -1); // All except the latest
+    const chatMessages = formattedHistory.slice(0, -1);
 
     if (chatMessages.length > 0 && chatMessages[0].role === 'model') {
       validHistory.push({ role: 'user', parts: [{ text: 'สวัสดีครับ Mr. Path' }] });
@@ -240,10 +238,10 @@ export async function POST(req) {
 
     const latestMessage = messages[messages.length - 1].content;
 
-    // Use streaming for better UX
+    // การส่งข้อมูลตอบกลับแบบ Streaming อัตโนมัติ
     const result = await chat.sendMessageStream(latestMessage);
     
-    // Create a readable stream
+    // สร้าง ReadableStream ส่งผลลัพธ์แบบเรียลไทม์
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
