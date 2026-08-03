@@ -1,0 +1,373 @@
+/* PathFinder Design System */
+
+:root {
+  --primary: #7C5CFC;
+  --primary-light: #A78BFA;
+  --primary-bg: #F5F0FF;
+  --accent: #FFB347;
+  --success: #4CAF50;
+  --warning: #FF9800;
+  --danger: #E91E63;
+  --text-primary: #2D3748;
+  --text-secondary: #718096;
+  --surface: #FFFFFF;
+  --surface-glass: rgba(255, 255, 255, 0.7);
+  --border: #E2E8F0;
+  --font-noto: 'Noto Sans Thai', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--primary-bg);
+  color: var(--text-primary);
+  font-family: var(--font-noto), var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-light);
+}
+
+/* ======================== */
+/*        COMPONENTS        */
+/* ======================== */
+
+/* Card */
+.card {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  transition: box-shadow 0.3s ease;
+}
+.card:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Glassmorphism */
+.glass {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, #9F7AEA 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(124, 92, 252, 0.4);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+
+/* Inputs */
+.input-field {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--surface);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15);
+}
+.input-field::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* ======================== */
+/*       ANIMATIONS         */
+/* ======================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Utility animation classes */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ======================== */
+/*       RESPONSIVE         */
+/* ======================== */
+
+@media (max-width: 992px) {
+  .card {
+    padding: 1.25rem 1rem !important;
+    border-radius: 12px;
+  }
+  
+  /* Make sidebar behave like a slide-out drawer on mobile */
+  .sidebar-drawer {
+    display: flex !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1050 !important;
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 85vw !important;
+    border-radius: 0 24px 24px 0 !important;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.15) !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .sidebar-drawer.open {
+    transform: translateX(0) !important;
+  }
+
+  /* Show close button in sidebar drawer on mobile */
+  .mobile-close-btn {
+    display: flex !important;
+  }
+
+  /* Hide backdrop on mobile since hamburger header is removed */
+  .sidebar-backdrop {
+    display: none !important;
+  }
+
+  /* Hide mobile header completely (as requested by user) */
+  .mobile-header {
+    display: none !important;
+  }
+
+  /* Hide desktop profile dropdown on mobile to prevent overlap */
+  .desktop-profile-dropdown {
+    display: none !important;
+  }
+  
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+  
+  /* Responsive main container padding (no header now) */
+  .main-content {
+    padding: 1.5rem 1rem 5.5rem 1rem !important;
+  }
+
+  /* Chat page takes full viewport except bottom nav */
+  .main-content.is-chat {
+    padding: 0 0 5.5rem 0 !important;
+  }
+
+  /* Make main content container full width on mobile */
+  main > div {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* Squeeze responsive tab buttons */
+  .responsive-tabs {
+    gap: 0.5rem !important;
+  }
+
+  /* Chat overlay on mobile */
+  .chat-container {
+    position: relative !important;
+    height: calc(100vh - 5.5rem) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  /* Make children in chat container full-screen square */
+  .chat-container > div {
+    border-radius: 0 !important;
+  }
+  
+  .conversations-panel {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100 !important;
+    width: 85% !important;
+    max-width: 300px !important;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.15) !important;
+    border-radius: 0 16px 16px 0 !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .conversations-panel.open {
+    transform: translateX(0) !important;
+  }
+
+  .conversations-panel.closed {
+    transform: translateX(calc(-100% - 24px)) !important;
+    pointer-events: none !important;
+  }
+}
+@media (max-width: 480px) {
+  /* Stack list rows or header buttons on extremely narrow screens if needed */
+  .responsive-rank-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+}
+
+/* Radix Avatar Tailwind Utility classes */
+.relative { position: relative; }
+.flex { display: flex; }
+.size-10 { width: 2.5rem; height: 2.5rem; }
+.shrink-0 { flex-shrink: 0; }
+.overflow-hidden { overflow: hidden; }
+.rounded-full { border-radius: 9999px; }
+.aspect-square { aspect-ratio: 1 / 1; }
+.size-full { width: 100%; height: 100%; }
+.bg-muted { background-color: var(--border); }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+
+/* ImageWithFallback Tailwind Utility classes */
+.inline-block { display: inline-block; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.text-center { text-align: center; }
+.align-middle { vertical-align: middle; }
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* Background Floating Animations */
+@keyframes float-idle-1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+.animate-float-1 {
+  animation: float-idle-1 5s ease-in-out infinite;
+}
+
+@keyframes float-idle-2 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-2deg); }
+}
+.animate-float-2 {
+  animation: float-idle-2 6s ease-in-out infinite;
+}
+
+@keyframes float-idle-3 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+.animate-float-3 {
+  animation: float-idle-3 7s ease-in-out infinite;
+}
+
+@keyframes float-idle-4 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-1.5deg); }
+}
+.animate-float-4 {
+  animation: float-idle-4 5.5s ease-in-out infinite;
+}
+
+/* Base utility for background decorative elements to prevent blocking clicks */
+.bg-deco-object {
+  position: absolute !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  z-index: 0 !important;
+}
+
+@media (min-width: 993px) {
+  .desktop-hide-logout {
+    display: none !important;
+  }
+}

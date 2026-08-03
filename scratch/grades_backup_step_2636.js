@@ -1,0 +1,1 @@
+"const fs = require('fs');\nconst filePath = 'c:\\\\Users\\\\User\\\\OneDrive\\\\Desktop\\\\Path-Finder\\\\src\\\\app\\\\setup\\\\grades\\\\page.js';\nconst buf = fs.readFileSync(filePath);\nconst text = buf.toString('utf8');\nfs.writeFileSync(filePath, text, 'utf8');\nconsole.log('Repair completed!');\n"
