@@ -8,18 +8,18 @@ import { useEffect, useRef, useState } from 'react';
  */
 export default function AssessmentMusicPlayer({ audioPath = '/audio/quiz_music.mp3' }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.35); // Default to 35%
+  const [volume, setVolume] = useState(0.35); // ระดับเสียงเริ่มต้น 35%
   const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef(null);
 
-  // Sync volume state to actual audio element
+  // ซิงค์ระดับเสียงกับตัวเล่นเสียง Audio Element
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
     }
   }, [volume]);
 
-  // Attempt to autoplay when page loads
+  // พยายามเล่นเพลงอัตโนมัติเมื่อโหลดหน้าเว็บ
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -195,14 +195,14 @@ export default function AssessmentMusicPlayer({ audioPath = '/audio/quiz_music.m
         title={isPlaying ? 'ปิดเพลงพื้นหลัง' : 'เปิดเพลงพื้นหลัง'}
       >
         {isMuted ? (
-          // Muted Icon
+          // ไอคอนปิดเสียง
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <line x1="23" y1="9" x2="17" y2="15"></line>
             <line x1="17" y1="9" x2="23" y2="15"></line>
           </svg>
         ) : (
-          // Volume Speaker On Icon
+          // ไอคอนเปิดเสียง
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>

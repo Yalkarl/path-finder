@@ -57,7 +57,7 @@ export default function AssessmentPage() {
       setProfile(userProfile);
 
       if (userProfile.analysisMode === 'target-lock' && userProfile.targetPath) {
-        // Targeted role-play stage 1
+        // ด่านประเมินสถานการณ์เฉพาะสาย 1
         const clusterKey = TARGET_CLUSTERS[userProfile.targetPath] || 'engineering';
         const themes = TARGETED_STAGE_THEMES[clusterKey] || [];
         const theme = themes[0];
@@ -66,7 +66,7 @@ export default function AssessmentPage() {
         setCurrentTheme(theme);
         setScenarios(stageQuestions);
       } else {
-        // Randomly pick 1 theme out of 12 for the setup assessment
+        // สุ่มเลือก 1 ธีมจาก 12 ธีมสำหรับแบบทดสอบเริ่มต้น
         const randomStageId = Math.floor(Math.random() * 12) + 1;
         const theme = STAGE_THEMES.find(t => t.id === randomStageId);
         const stageQuestions = ASSESSMENT_BANK.filter(q => q.stageId === randomStageId);
@@ -98,7 +98,7 @@ export default function AssessmentPage() {
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
       const rankings = matchPaths(skillVector, pathsObject);
       
-      // Save used question IDs
+      // บันทึกรหัสข้อคำถามที่ทำแล้ว
       const questionIds = scenarios.map(s => s.id);
 
       await updateUserProfile(user.uid, {
@@ -286,7 +286,7 @@ export default function AssessmentPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {currentScenario.options.map((option, idx) => {
             const colorScheme = OPTION_COLORS[idx % OPTION_COLORS.length];
-            // Split option text to extract title and description
+            // แยกข้อความตัวเลือกเป็นหัวข้อและคำอธิบาย
             const parts = option.text.split(' ');
             const prefix = parts[0]; // ก., ข., etc.
             const rest = parts.slice(1).join(' ');

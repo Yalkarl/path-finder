@@ -7,11 +7,11 @@ export function analyzeGaps(userVector, targetBenchmark) {
     const target = Math.round(targetBenchmark[index] * 100);
     const gap = target - current;
     
-    let status = 'strong'; // Green
+    let status = 'strong'; // สีเขียว
     if (gap > 0 && gap <= 15) {
-      status = 'developing'; // Yellow
+      status = 'developing'; // สีเหลือง
     } else if (gap > 15) {
-      status = 'weak'; // Red
+      status = 'weak'; // สีแดง
     }
 
     return {
@@ -19,7 +19,7 @@ export function analyzeGaps(userVector, targetBenchmark) {
       label: labels[index],
       current,
       target,
-      gap: Math.max(0, gap), // Only care about positive gaps
+      gap: Math.max(0, gap), // พิจารณาเฉพาะส่วนขาดที่เป็นบวก
       status
     };
   });

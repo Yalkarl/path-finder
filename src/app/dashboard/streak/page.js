@@ -14,7 +14,7 @@ export default function StreakPage() {
     if (user) {
       getUserProfile(user.uid).then(async (profile) => {
         if (profile) {
-          // Streak calculation logic
+          // ระบบคำนวณความต่อเนื่องการเข้าใช้งาน (Streak)
           const today = new Date().toISOString().split('T')[0];
           let currentStreak = profile.streak?.current || 0;
           let lastLogin = profile.streak?.lastLogin || null;
@@ -29,14 +29,14 @@ export default function StreakPage() {
               if (diffDays === 1) {
                 currentStreak += 1;
               } else {
-                currentStreak = 1; // reset streak if missed a day
+                currentStreak = 1; // รีเซ็ตจำนวนวันเมื่อไม่ได้เข้าใช้งานเกิน 1 วัน
               }
             } else {
-              currentStreak = 1; // first time login
+              currentStreak = 1; // การเข้าใช้งานวันแรกสุด
             }
             lastLogin = today;
 
-            // Save new streak
+            // บันทึกจำนวนวันความต่อเนื่องใหม่
             await updateUserProfile(user.uid, {
               streak: { current: currentStreak, lastLogin }
             });
@@ -92,7 +92,7 @@ export default function StreakPage() {
             const isPast = idx < todayIndex;
             const isToday = idx === todayIndex;
             const isLogged = isPast || (isToday && streakData.current > 0);
-            // Simulate past days logic based on streak
+            // คำนวณจำลองสถานะวันย้อนหลังตามความต่อเนื่อง
             const loggedIn = isLogged && (streakData.current >= (todayIndex - idx + 1));
 
             return (

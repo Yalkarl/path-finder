@@ -107,7 +107,7 @@ function calculateItemWeight(item) {
   const isPosn = item.posnCamp || item.text.includes('สอวน.') || item.text.includes('โอลิมปิกวิชาการ');
   
   if (isPosn) {
-    let baseWeight = 3.0; // Default Camp 1
+    let baseWeight = 3.0; // ค่าย 1 สอวน. เริ่มต้น
     const camp = item.posnCamp || 'camp1';
     
     if (camp === 'camp1') baseWeight = 3.0;
@@ -115,7 +115,7 @@ function calculateItemWeight(item) {
     else if (camp === 'national') baseWeight = 9.0;
     else if (camp === 'team') baseWeight = 12.0;
 
-    // Apply diminishing returns multiplier for repeated attempts (e.g., repeating Camp 2)
+    // คำนวณการลดทอนค่าน้ำหนักกรณีทำกิจกรรมเดิมซ้ำ
     const count = Math.max(1, item.count || 1);
     const multiplier = 1 + (count - 1) * 0.5;
     return baseWeight * multiplier;
@@ -127,7 +127,7 @@ function calculateItemWeight(item) {
   let bonus = 0.0;
 
   if (isComp) {
-    // Base Level Weight
+    // ค่าน้ำหนักระดับความสำคัญของกิจกรรม
     if (item.level === 'international') baseWeight = 5.0;
     else if (item.level === 'national') baseWeight = 3.0;
     else if (item.level === 'regional') baseWeight = 2.0;
@@ -145,7 +145,7 @@ function calculateItemWeight(item) {
       bonus = 0.0;
     }
   } else {
-    // Base Level Weight
+    // ค่าน้ำหนักระดับความสำคัญของกิจกรรม
     if (item.level === 'international') baseWeight = 3.0;
     else if (item.level === 'national') baseWeight = 2.0;
     else if (item.level === 'regional') baseWeight = 1.5;

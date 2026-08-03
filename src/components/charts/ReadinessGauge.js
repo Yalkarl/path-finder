@@ -18,21 +18,21 @@ export default function ReadinessGauge({ percentage = 0, size = 200, strokeWidth
   const circumference = radius * 2 * Math.PI;
   const offset = circumference - (animatedValue / 100) * circumference;
 
-  // Dynamic colors
-  let strokeColor = '#FF6B6B'; // Red for low readiness
+  // การกำหนดสีไดนามิกตามระดับความพร้อม
+  let strokeColor = '#FF6B6B'; // สีแดงสำหรับความพร้อมระดับต้องเร่งพัฒนา
   let statusText = 'ต้องพัฒนาอีกมาก';
   let bgLight = 'rgba(255, 107, 107, 0.1)';
   
   if (percentage >= 75) {
-    strokeColor = '#10B981'; // Emerald for high readiness
+    strokeColor = '#10B981'; // สีเขียวสำหรับความพร้อมระดับสูง
     statusText = 'พร้อมมาก! ลุยเลย';
     bgLight = 'rgba(16, 185, 129, 0.1)';
   } else if (percentage >= 50) {
-    strokeColor = '#7C5CFC'; // Primary purple for medium-high
+    strokeColor = '#7C5CFC'; // สีม่วงสำหรับความพร้อมระดับดีมาก
     statusText = 'ความพร้อมดี';
     bgLight = 'rgba(124, 92, 252, 0.1)';
   } else if (percentage >= 35) {
-    strokeColor = '#FFBE1A'; // Yellow/Orange for developing
+    strokeColor = '#FFBE1A'; // สีส้ม/เหลืองสำหรับความพร้อมระดับปานกลาง
     statusText = 'กำลังเตรียมความพร้อม';
     bgLight = 'rgba(255, 190, 26, 0.1)';
   }

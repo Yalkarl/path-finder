@@ -13,7 +13,7 @@ export default function ProfileStep() {
     const savedLevel = localStorage.getItem('setup_educationLevel');
     if (savedLevel) {
       setLevel(savedLevel);
-      // Restore profile name and grade if they exist in localStorage
+      // ดึงชื่อและระดับชั้นจาก localStorage มาใช้ใหม่
       const savedName = localStorage.getItem('setup_name');
       const savedGrade = localStorage.getItem('setup_grade');
       if (savedName) setName(savedName);

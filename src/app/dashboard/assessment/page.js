@@ -114,7 +114,7 @@ export default function DashboardAssessmentPage() {
     }
   };
 
-  // Dynamic themes and question bank based on analysisMode
+  // คลังคำถามและธีมไดนามิกตามโหมดการวิเคราะห์
   const activeThemes = profile?.analysisMode === 'target-lock' && profile?.targetPath
     ? (TARGETED_STAGE_THEMES[TARGET_CLUSTERS[profile.targetPath] || 'engineering'] || [])
     : STAGE_THEMES;
@@ -126,7 +126,7 @@ export default function DashboardAssessmentPage() {
   const getRecommendedStages = () => {
     if (!profile || profile.analysisMode !== 'target-lock' || !profile.targetPath) return [];
     
-    // In target-lock mode, the custom stages are already 100% specific, so no recommendation badges needed.
+    // ในโหมด Target Lock ด่านทดสอบจะตรงสาย 100% อยู่แล้ว
     if (profile.analysisMode === 'target-lock') return [];
     
     const paths = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
@@ -152,7 +152,7 @@ export default function DashboardAssessmentPage() {
     if (!user) return;
     getUserProfile(user.uid).then(p => {
       if (p) {
-        // Run migration on responses format
+        // ย้ายรูปแบบข้อมูลคำตอบเดิมเข้าสู่รูปแบบใหม่
         const migrated = migrateResponses(p);
         const hasChanges = JSON.stringify(migrated) !== JSON.stringify(p.assessment?.responses || []);
         
@@ -171,7 +171,7 @@ export default function DashboardAssessmentPage() {
         const usedIds = new Set(p.usedQuestionIds || []);
         const completed = new Set();
         
-        // Compute completed using user profile mode state
+        // คำนวณสถานะความเสร็จสมบูรณ์จากโปรไฟล์ผู้ใช้
         const currentThemes = p.analysisMode === 'target-lock' && p.targetPath
           ? (TARGETED_STAGE_THEMES[TARGET_CLUSTERS[p.targetPath] || 'engineering'] || [])
           : STAGE_THEMES;
@@ -224,7 +224,7 @@ export default function DashboardAssessmentPage() {
       const stageQuestions = scenarios.map(s => s.id);
       const stageQuestionSet = new Set(stageQuestions);
 
-      // Filter out old responses belonging to this stage
+      // กรองข้อมูลคำตอบเดิมของด่านนี้ออกก่อนบันทึกใหม่
       const oldResponses = profile.assessment?.responses || [];
       const filteredOldResponses = oldResponses.filter(r => !stageQuestionSet.has(r.questionId));
       
@@ -250,7 +250,7 @@ export default function DashboardAssessmentPage() {
         }
       });
 
-      // Update local state
+      // อัปเดตสถานะในตัวแปรท้องถิ่น
       setProfile(prev => ({
         ...prev,
         usedQuestionIds: updatedUsedIds,
@@ -259,7 +259,7 @@ export default function DashboardAssessmentPage() {
       }));
       setCompletedStages(prev => new Set(prev).add(selectedTheme.id));
       
-      // Redirect directly to the dashboard main page to view updated results
+      // เปลี่ยนหน้าไปยังแดชบอร์ดหลักเพื่อดูผลลัพธ์ใหม่
       router.push('/dashboard');
     } catch (err) {
       console.error('Error saving stage:', err);
@@ -422,7 +422,7 @@ export default function DashboardAssessmentPage() {
     );
   }
 
-  // Stages View
+  // ส่วนแสดงผลด่านแบบทดสอบ
   const targetPathObj = profile?.analysisMode === 'target-lock' && profile?.targetPath
     ? ((profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS)[profile.targetPath])
     : null;

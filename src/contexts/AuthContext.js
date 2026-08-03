@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
       setLoading(false);
       
-      // Auto redirect logic
+      // ระบบเปลี่ยนหน้าอัตโนมัติ
       if (!currentUser && !pathname.startsWith('/login') && pathname !== '/') {
         router.push('/login');
       }

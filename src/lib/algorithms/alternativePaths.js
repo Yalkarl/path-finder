@@ -19,7 +19,7 @@ export function findAlternativePaths(userVector, targetPathId, allPathsObject, t
     .map(candidate => {
       const matchPercentage = calculateMatchPercentage(userVector, candidate.benchmark);
       
-      // Dynamically generate a reason why this alternative is a good backup plan
+      // สร้างเหตุผลแนะนำสำหรับเส้นทางสำรอง
       const matchingDims = [];
       for (let i = 0; i < userVector.length; i++) {
         // If the path needs this dimension and the user is good at it
@@ -32,7 +32,7 @@ export function findAlternativePaths(userVector, targetPathId, allPathsObject, t
       if (matchingDims.length > 0) {
         reason = `เน้นการใช้ทักษะด้าน ${matchingDims.slice(0, 2).join(' และ ')} ที่คุณถนัดเช่นกัน`;
       } else {
-        // Fallback: find the dimension with the smallest gap
+        // ค้นหาเส้นทางสำรองจากมิติที่มีส่วนขาดน้อยที่สุด
         let minGapIdx = 0;
         let minGap = 999;
         for (let i = 0; i < userVector.length; i++) {

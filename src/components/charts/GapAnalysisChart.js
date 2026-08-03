@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 
 export default function GapAnalysisChart({ gapData }) {
-  // Map data to Recharts format
+  // แปลงรูปแบบข้อมูลเข้าสู่ Recharts
   const data = gapData.map(gap => ({
     subject: gap.label,
     'คะแนนของคุณ': gap.current,
@@ -20,7 +20,7 @@ export default function GapAnalysisChart({ gapData }) {
     rawGap: gap.gap
   }));
 
-  // Custom tooltips to explain status
+  // กล่องอธิบายสถานะเพิ่มเติม (Tooltip)
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload;

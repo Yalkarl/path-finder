@@ -8,7 +8,7 @@ import GapAnalysisChart from '@/components/charts/GapAnalysisChart';
 import { analyzeGaps } from '@/lib/algorithms/gapAnalysis';
 import { MrPath } from '@/components/ui/mr-path';
 
-// Target Lock imports
+// นำเข้าข้อมูลสำหรับโหมด Target Lock
 import { findAlternativePaths } from '@/lib/algorithms/alternativePaths';
 import ReadinessGauge from '@/components/charts/ReadinessGauge';
 import { calculateMatchPercentage, matchPaths } from '@/lib/algorithms/cosineSimilarity';
@@ -34,7 +34,7 @@ export default function DashboardPage() {
           return;
         }
         
-        // Self-healing: if results is an array (due to the old edit-save bug)
+        // ระบบซ่อมแซมข้อมูลอัตโนมัติหากรูปแบบผลลัพธ์ไม่ถูกต้อง
         if (p && Array.isArray(p.results)) {
           const healedResults = {
             skillVector: p.skillVector || [0, 0, 0, 0, 0],
@@ -50,7 +50,7 @@ export default function DashboardPage() {
         setLoading(false);
         if (p?.resultsUpdated) {
           setIsUpdated(true);
-          // Clear the flag after showing
+          // รีเซ็ตสถานะแจ้งเตือนหลังแสดงผล
           updateUserProfile(user.uid, { resultsUpdated: false });
         }
       });
@@ -77,7 +77,7 @@ export default function DashboardPage() {
   const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
   const matchRankings = matchPaths(skillVector, pathsObject);
 
-  // Target Lock Computations
+  // การคำนวณคะแนนสำหรับโหมด Target Lock
   const targetPathObj = isTargetLock && profile.targetPath ? (matchRankings.find(p => p.id === profile.targetPath) || pathsObject[profile.targetPath]) : null;
   const readinessPercentage = targetPathObj ? calculateReadiness(skillVector, targetPathObj.benchmark, profile.portfolio, profile.selfAssessment, profile.customActivities || [], profile.targetPath, profile.educationLevel) : 0;
   
@@ -87,7 +87,7 @@ export default function DashboardPage() {
     const pObj = matchRankings.find(p => p.id === pathId) || pathsObject[pathId];
     if (!pObj) return null;
 
-    // Calculate specific skill vector for this junior path to filter targeted questions
+    // คำนวณ Skill Vector เพื่อกรองชุดคำถามเฉพาะสายม.ต้น
     const pathSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], pathId);
     const readiness = calculateReadiness(pathSkillVector, pObj.benchmark, profile.portfolio, profile.selfAssessment, profile.customActivities || [], pathId, profile.educationLevel);
     return {

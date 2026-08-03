@@ -65,7 +65,7 @@ export default function AchievementsPage() {
           const unlocked = checkAchievements(profile);
           setUnlockedIds(unlocked);
 
-          // Update profile if new achievements unlocked
+          // อัปเดตโปรไฟล์เมื่อปลดล็อกความสำเร็จใหม่
           const currentSaved = profile.achievements || [];
           const newUnlocks = unlocked.filter(id => !currentSaved.includes(id));
           

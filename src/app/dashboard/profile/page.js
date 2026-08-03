@@ -62,7 +62,7 @@ export default function ProfilePage() {
       const isJunior = ['m1', 'm2', 'm3'].includes(grade);
       const educationLevel = isJunior ? 'junior' : 'senior';
       
-      // Calculate new results based on the new educationLevel
+      // คำนวณผลลัพธ์ใหม่ตามระดับชั้นที่อัปเดต
       const finalGrades = {
         math: parseFloat(profile.academics?.math || 0),
         science: parseFloat(profile.academics?.science || 0),
@@ -83,7 +83,7 @@ export default function ProfilePage() {
         newTargetPath = rankings[0]?.id || '';
       }
 
-      // Reset or set targetProgramType accordingly
+      // ตั้งค่าหรือรีเซ็ตประเภทแผนการเรียนเป้าหมาย
       let newTargetProgramType = profile.targetProgramType || null;
       if (educationLevel === 'junior') {
         if (!newTargetProgramType) newTargetProgramType = 'regular-program';
@@ -91,7 +91,7 @@ export default function ProfilePage() {
         newTargetProgramType = null;
       }
 
-      // Reset portfolio and custom activities if level changed to prevent cross-contamination
+      // รีเซ็ตรายการผลงานเมื่อเปลี่ยนระดับชั้นเพื่อป้องกันข้อมูลสับสน
       let newPortfolio = profile.portfolio || [];
       let newCustomActivities = profile.customActivities || [];
       if (educationLevel !== profile.educationLevel) {
@@ -101,7 +101,7 @@ export default function ProfilePage() {
 
       await updateUserProfile(user.uid, { 
         grade, 
-        gradeLevel: grade, // kept for backward compatibility
+        gradeLevel: grade, // รองรับความเข้ากันได้ย้อนหลัง
         educationLevel,
         targetPath: newTargetPath,
         targetProgramType: newTargetProgramType,
@@ -115,7 +115,7 @@ export default function ProfilePage() {
         updatedAt: new Date().toISOString()
       });
 
-      // Update local profile state
+      // อัปเดตข้อมูลโปรไฟล์ในสถานะท้องถิ่น
       setProfile(prev => ({
         ...prev,
         grade,

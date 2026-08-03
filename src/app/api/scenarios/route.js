@@ -8,8 +8,8 @@ export async function POST(req) {
   try {
     const { educationLevel } = await req.json();
     
-    // We try to generate dynamic scenarios using Gemini.
-    // If it fails or takes too long, we can fall back to the static ones.
+    // ลองสร้างแบบทดสอบสถานการณ์แบบไดนามิกด้วย Gemini
+    // หากล้มเหลวหรือรอนานเกินไป ให้ใช้ชุดคำถามสำรอง
     
     const prompt = `
     คุณคือผู้เชี่ยวชาญด้านการแนะแนวการศึกษา (Holland's Theory)
@@ -48,7 +48,7 @@ export async function POST(req) {
     return NextResponse.json({ scenarios });
   } catch (error) {
     console.error('Error generating scenarios:', error);
-    // Fallback to static scenarios on error
-    return NextResponse.json({ scenarios: FALLBACK_SCENARIOS }, { status: 200 }); // Status 200 to keep it working seamlessly for the user
+    // ใช้ชุดคำถามแบบทดสอบสำรองเมื่อเกิดข้อผิดพลาด
+    return NextResponse.json({ scenarios: FALLBACK_SCENARIOS }, { status: 200 }); // ส่งสถานะ 200 เพื่อให้แอปทำงานได้ราบรื่นไม่สะดุด
   }
 }

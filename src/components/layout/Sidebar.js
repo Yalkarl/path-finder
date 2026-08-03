@@ -50,7 +50,7 @@ export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
             fontSize: '1.5rem',
             cursor: 'pointer',
             color: 'var(--text-secondary)',
-            display: 'none', // Managed in globals.css
+            display: 'none', // ควบคุมสไตล์ผ่าน globals.css
             alignItems: 'center',
             justifyContent: 'center',
             padding: '4px',

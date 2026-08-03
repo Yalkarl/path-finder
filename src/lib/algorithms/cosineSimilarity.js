@@ -64,8 +64,8 @@ export function calculateMatchPercentage(userVector, benchmark) {
   return finalMatch;
 }
 
-  // Absolute Capability Factor: Compare the total magnitude/sum of user skills to the required benchmark.
-  // This prevents cases where getting worse/lower grades in other subjects increases the match percentage
+  // การคำนวณ Absolute Capability Factor เปรียบเทียบผลรวมทักษะกับเกณฑ์
+  // ช่วยป้องกันกรณีคะแนนเกรดวิชาอื่นต่ำลงแล้วทำให้เปอร์เซ็นต์สอดคล้องสูงขึ้นผิดปกติ
   // by artificially skewing the vector angle.
   const sumUser = userVector.reduce((a, b) => a + b, 0);
   const sumBenchmark = benchmark.reduce((a, b) => a + b, 0);

@@ -108,7 +108,7 @@ export default function DashboardLayout({ children }) {
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
             zIndex: 1040,
-            display: 'none', // Managed in globals.css
+            display: 'none', // ควบคุมสไตล์ผ่าน globals.css
           }}
         />
       )}
@@ -122,7 +122,7 @@ export default function DashboardLayout({ children }) {
         <div 
           className="mobile-header"
           style={{
-            display: 'none', // Managed in globals.css
+            display: 'none', // ควบคุมสไตล์ผ่าน globals.css
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0.85rem 1rem',
@@ -348,7 +348,7 @@ export default function DashboardLayout({ children }) {
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: '1px solid var(--border)',
-          display: 'none', // Managed responsively by globals.css
+          display: 'none', // ควบคุมสไตล์ตอบสนองหน้าจอผ่าน globals.css
           justifyContent: 'space-around',
           alignItems: 'center',
           zIndex: 1001,

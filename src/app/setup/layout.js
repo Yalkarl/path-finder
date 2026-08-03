@@ -27,7 +27,7 @@ export default function SetupLayout({ children }) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center', // Centered vertically
+      justifyContent: 'center', // จัดกึ่งกลางแนวตั้ง
       padding: '2rem 1rem',
       background: 'linear-gradient(135deg, #F2F0FF 0%, #E8E4FF 50%, rgba(255, 234, 167, 0.15) 100%)',
       position: 'relative',

@@ -20,7 +20,7 @@ import { MrPath } from '@/components/ui/mr-path';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
-// Inner component that uses useSearchParams (must be wrapped in Suspense)
+// คอมโพเนนต์ภายในที่ใช้ useSearchParams
 function ChatPageInner() {
   const { user } = useAuth();
   const router = useRouter();
@@ -33,7 +33,7 @@ function ChatPageInner() {
   const [isInitializing, setIsInitializing] = useState(true);
   const messagesEndRef = useRef(null);
 
-  // Conversation management state
+  // สถานะจัดการรายการบทสนทนา
   const [conversations, setConversations] = useState([]);
   const [activeConvId, setActiveConvId] = useState(null);
   const [editingConvId, setEditingConvId] = useState(null);
@@ -41,7 +41,7 @@ function ChatPageInner() {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [convsPanelOpen, setConvsPanelOpen] = useState(true);
 
-  // Track if consultPath has been handled to avoid re-triggering
+  // ตรวจสอบการแนะนำเส้นทางเรียนเพื่อไม่ให้ยิงซ้ำ
   const consultPathHandled = useRef(false);
 
   const getQuickReplies = () => {
@@ -86,7 +86,7 @@ function ChatPageInner() {
     return `สวัสดีครับน้อง${p.name}! ผม Mr. Path เองครับ\n\nจากผลการวิเคราะห์ น้องมีความโดดเด่นด้าน **${topMatch}** มากเลยครับ วันนี้มีเรื่องอะไรอยากปรึกษา หรือให้ผมช่วยวางแผนการเรียนให้ไหมครับ?`;
   }, []);
 
-  // Refresh the conversations list
+  // โหลดรายการบทสนทนาใหม่
   const refreshConversations = useCallback(async () => {
     if (!user) return [];
     const list = await getConversations(user.uid);
@@ -94,7 +94,7 @@ function ChatPageInner() {
     return list;
   }, [user]);
 
-  // Load a specific conversation
+  // โหลดบทสนทนาที่เลือก
   const loadConversation = useCallback(async (convId) => {
     if (!user || !profile) return;
     const conv = await getConversation(user.uid, convId);
@@ -111,7 +111,7 @@ function ChatPageInner() {
     }
   }, [user, profile, makeGreeting]);
 
-  // Create a new conversation and set it as active
+  // สร้างบทสนทนาใหม่และตั้งเป็นบทสนทนาปัจจุบัน
   const handleNewConversation = useCallback(async (customTitle, initialMsgs) => {
     if (!user || !profile) return null;
     const greeting = [{ role: 'model', content: makeGreeting(profile) }];
@@ -127,7 +127,7 @@ function ChatPageInner() {
     return convId;
   }, [user, profile, makeGreeting, refreshConversations]);
 
-  // Close conversation panel by default on mobile screens
+  // ซ่อนแผงบทสนทนาบนหน้าจอมือถือเป็นค่าเริ่มต้น
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth <= 992) {
       setConvsPanelOpen(false);
@@ -141,7 +141,7 @@ function ChatPageInner() {
     let cancelled = false;
 
     (async () => {
-      // Always fetch latest profile from Firestore for name sync
+      // ดึงข้อมูลโปรไฟล์ล่าสุดจาก Firestore เพื่ออัปเดตชื่อผู้ใช้
       const p = await getUserProfile(user.uid);
       if (cancelled) return;
 
@@ -151,15 +151,15 @@ function ChatPageInner() {
       }
       setProfile(p);
 
-      // Load conversations
+      // โหลดรายการบทสนทนา
       const convList = await getConversations(user.uid);
       if (cancelled) return;
       setConversations(convList);
 
-      // Migration: if old chatHistory exists but no conversations yet
+      // ย้ายข้อมูลแชตเดิมหากยังไม่มีบทสนทนาใน Firestore
       if (convList.length === 0 && p.chatHistory && p.chatHistory.length > 0) {
         const migratedId = await createConversation(user.uid, 'สนทนาเก่า', p.chatHistory);
-        // Remove old chatHistory from profile
+        // ลบประวัติแชตเดิมออกจากโปรไฟล์
         await updateUserProfile(user.uid, { chatHistory: [] });
         if (cancelled) return;
         const updatedList = await getConversations(user.uid);
@@ -167,7 +167,7 @@ function ChatPageInner() {
         setMessages(p.chatHistory);
         setActiveConvId(migratedId);
       } else if (convList.length > 0) {
-        // Load most recent conversation and update greeting name
+        // โหลดบทสนทนาล่าสุดพร้อมอัปเดตชื่อทักทาย
         let msgs = convList[0].messages || [];
         if (msgs.length > 0 && msgs[0].role === 'model') {
           msgs = [
@@ -178,7 +178,7 @@ function ChatPageInner() {
         setMessages(msgs);
         setActiveConvId(convList[0].id);
       } else {
-        // No conversations at all — create a greeting one
+        // หากยังไม่มีบทสนทนา ให้สร้างบทสนทนาเริ่มต้นทักทาย
         const greeting = [{ role: 'model', content: makeGreeting(p) }];
         const newId = await createConversation(user.uid, 'สนทนาใหม่', greeting);
         if (cancelled) return;
@@ -212,9 +212,9 @@ function ChatPageInner() {
       setActiveConvId(convId);
       await refreshConversations();
 
-      // Auto-send a consult message
+      // ส่งข้อความปรึกษาแผนการเรียนให้อัตโนมัติ
       const autoMsg = `ช่วยแนะนำแนวทางเพื่อเข้าสาย${consultPath}ให้หน่อยครับ โดยอ้างอิงจากผลวิเคราะห์ skill vector และ gap analysis ของผม`;
-      // Use a timeout so the state is settled before calling handleSubmit
+      // ใช้การหน่วงเวลาเพื่อให้สถานะพร้อมก่อนส่งข้อความ
       setTimeout(() => {
         handleSubmitForConv(autoMsg, convId, greeting);
       }, 100);
@@ -230,11 +230,11 @@ function ChatPageInner() {
     scrollToBottom();
   }, [messages]);
 
-  // Core submit handler — can accept explicit convId + msgs for consultPath flow
+  // ระบบจัดการส่งข้อความหลักของแชต
   const handleSubmitForConv = async (text, explicitConvId, explicitMsgs) => {
     if (!text.trim() || isLoading || !profile) return;
 
-    // Daily token limit check
+    // ตรวจสอบขีดจำกัดจำนวนคำถามรายวัน
     const usage = await getDailyTokenUsage(user.uid);
     if (usage >= DAILY_TOKEN_LIMIT) {
       const limitMsg = { role: 'model', content: 'จำนวนครั้งการใช้งาน Mr.Path ของคุณในวันนี้ครบจำนวนจำกัดแล้ว' };
@@ -252,7 +252,7 @@ function ChatPageInner() {
     setIsLoading(true);
 
     try {
-      // Always use latest profile name
+      // ใช้ชื่อโปรไฟล์ล่าสุดเสมอ
       const freshProfile = await getUserProfile(user.uid);
       if (freshProfile) {
         setProfile(freshProfile);
@@ -314,12 +314,12 @@ function ChatPageInner() {
 
       const finalMessagesList = [...updatedMessagesWithUser, { role: 'model', content: aiText }];
 
-      // Increment daily token usage after successful API call
+      // เพิ่มจำนวนคำถามที่ใช้วันนี้หลังส่งสำเร็จ
       await incrementDailyTokenUsage(user.uid);
 
-      // Save conversation to Firestore
+      // บันทึกบทสนทนาลง Firestore
       if (currentConvId) {
-        // Auto-title if still default
+        // ตั้งชื่อบทสนทนาให้อัตโนมัติหากยังใช้ชื่อเริ่มต้น
         let titleUpdate = {};
         const conv = conversations.find(c => c.id === currentConvId);
         if (conv && conv.title === 'สนทนาใหม่' && text.length > 0) {
@@ -332,7 +332,7 @@ function ChatPageInner() {
         });
       }
 
-      // Track achievements
+      // ตรวจสอบและอัปเดตความสำเร็จ
       const currentAchievements = profile.achievements || [];
       const newAchievements = [...currentAchievements];
       let achievementsUpdated = false;
@@ -364,7 +364,7 @@ function ChatPageInner() {
 
   const handleSubmit = (text) => handleSubmitForConv(text);
 
-  // Conversation panel actions
+  // ฟังก์ชันการทำงานของแผงบทสนทนา
   const handleRenameConv = async (convId) => {
     if (!editTitle.trim()) return;
     await updateConversation(user.uid, convId, { title: editTitle.trim() });
@@ -391,7 +391,7 @@ function ChatPageInner() {
         setMessages(msgs);
         setActiveConvId(updatedList[0].id);
       } else {
-        // Create a fresh conversation
+        // สร้างห้องสนทนาใหม่
         await handleNewConversation();
       }
     }
@@ -676,7 +676,7 @@ function ChatPageInner() {
   );
 }
 
-// Wrap in Suspense for useSearchParams
+// ครอบ Suspense รองรับ useSearchParams
 export default function ChatPage() {
   return (
     <Suspense fallback={

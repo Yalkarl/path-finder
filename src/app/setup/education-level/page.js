@@ -18,7 +18,7 @@ export default function EducationLevelStep() {
   const handleSelect = (level) => {
     setSelected(level);
     localStorage.setItem('setup_educationLevel', level);
-    // Brief delay to show selected state before navigating
+    // หน่วงเวลาสั้นๆ แสดงสถานะการเลือกก่อนเปลี่ยนหน้า
     setTimeout(() => {
       router.push('/setup/profile');
     }, 350);
