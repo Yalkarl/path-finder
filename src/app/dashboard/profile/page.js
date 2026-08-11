@@ -341,12 +341,56 @@ export default function ProfilePage() {
       <div className="card" style={{ padding: '2rem' }}>
         <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 250px' }}>
-            <h2 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.5rem', fontSize: '1.25rem' }}>เกรดวิชาหลัก</h2>
+            <h2 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.5rem', fontSize: '1.25rem' }}>เกรดเฉลี่ยสะสม (GPAX)</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6' }}>
-              เกรดจะถูกแปลงเป็นเวกเตอร์ฐานรากทางวิชาการ (Academic Vector) เพื่อวิเคราะห์ช่องว่างสมรรถนะ (Gap Analysis)
+              GPAX สะสมรายกลุ่มสาระวิชา (4-5 เทอม) จะถูกแปลงเป็นเวกเตอร์ฐานรากทางวิชาการ (Academic Vector) เพื่อวิเคราะห์ช่องว่างสมรรถนะ (Gap Analysis)
             </p>
           </div>
           <div style={{ flex: '1 1 350px' }}>
+            {/* Overall GPAX Badge */}
+            {(() => {
+              const acad = profile.academics || {};
+              const vals = [acad.math, acad.science, acad.thai, acad.english, acad.social]
+                .map(v => parseFloat(v))
+                .filter(v => !isNaN(v));
+              const hasGpax = vals.length > 0;
+              const avgGpax = hasGpax ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '-';
+
+              return (
+                <div style={{
+                  background: 'var(--primary-bg)',
+                  borderRadius: '16px',
+                  padding: '1.25rem 1.5rem',
+                  color: 'var(--text-primary)',
+                  marginBottom: '1.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  border: '1px solid var(--border)'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      เกรดเฉลี่ยสะสมรวม (GPAX)
+                    </div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: '800', marginTop: '0.2rem', color: 'var(--primary)' }}>
+                      {avgGpax} <span style={{ fontSize: '1rem', fontWeight: '500', color: 'var(--text-secondary)' }}>/ 4.00</span>
+                    </div>
+                  </div>
+                  <div style={{
+                    background: '#FFFFFF',
+                    border: '1px solid var(--border)',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    color: 'var(--text-primary)'
+                  }}>
+                    {vals.length} วิชาหลัก
+                  </div>
+                </div>
+              );
+            })()}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {SUBJECTS.map(subject => (
                 <div key={subject.key} style={{

@@ -13,7 +13,8 @@ import AssessmentMusicPlayer from '@/components/ui/AssessmentMusicPlayer';
 import { 
   Sparkles, Star, Award, CheckCircle, RotateCcw, Target, Info, ArrowLeft,
   Home, Gamepad2, GraduationCap, Users, Puzzle, Cpu, Palette, MessageSquare, FlaskConical, Crown, Globe, Compass,
-  Microscope, Scale, Dna, Terminal, Clock, Lightbulb, Leaf, LineChart, TrendingUp, Coins, Plane, Film
+  Microscope, Scale, Dna, Terminal, Clock, Lightbulb, Leaf, LineChart, TrendingUp, Coins, Plane, Film,
+  Activity, Zap, Bot, Database, Atom, Rocket, Megaphone, Truck, Layout, Eye, Feather, Radio, Brain, FileText, Heart
 } from 'lucide-react';
 
 const OPTION_COLORS = [
@@ -25,7 +26,8 @@ const OPTION_COLORS = [
 
 const STAGE_ICON_MAP = {
   Home, Gamepad2, GraduationCap, Users, Puzzle, Cpu, Palette, MessageSquare, FlaskConical, Crown, Globe, Compass,
-  Microscope, Scale, Dna, Terminal, Clock, Lightbulb, Leaf, LineChart, TrendingUp, Coins, Plane, Film, Sparkles
+  Microscope, Scale, Dna, Terminal, Clock, Lightbulb, Leaf, LineChart, TrendingUp, Coins, Plane, Film, Sparkles,
+  Activity, Zap, Bot, Database, Atom, Rocket, Megaphone, Truck, Layout, Eye, Feather, Radio, Brain, FileText, Heart
 };
 
 function renderStageIcon(iconName, props = {}) {
@@ -63,6 +65,8 @@ export default function DashboardAssessmentPage() {
   const [completedStages, setCompletedStages] = useState(new Set());
   const [retakeConfirmId, setRetakeConfirmId] = useState(null);
   const [resetting, setResetting] = useState(false);
+  const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
+  const [customText, setCustomText] = useState('');
 
   const handleResetAssessment = async () => {
     if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตคำตอบแบบทดสอบทั้งหมด? การรีเซ็ตนี้จะลบประวัติคำตอบแบบทดสอบทุกด่านของคุณในระบบ และเริ่มคำนวณใหม่จากศูนย์')) {
@@ -207,9 +211,15 @@ export default function DashboardAssessmentPage() {
     startStage(theme);
   };
 
-  const handleSelectOption = async (weights) => {
-    const newResponses = [...responses, { questionId: scenarios[currentIndex].id, weights }];
+  const handleSelectOption = async (weights, customTextVal = null) => {
+    const responseObj = { questionId: scenarios[currentIndex].id, weights };
+    if (customTextVal) {
+      responseObj.customText = customTextVal;
+    }
+    const newResponses = [...responses, responseObj];
     setResponses(newResponses);
+    setIsCustomInputOpen(false);
+    setCustomText('');
 
     if (currentIndex < scenarios.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -237,7 +247,31 @@ export default function DashboardAssessmentPage() {
       
       const updatedUsedIds = [...new Set([...(profile.usedQuestionIds || []), ...stageQuestions])];
 
-      await updateUserProfile(user.uid, {
+      // เรียกใช้ AI Evaluation API เพื่อประมวลผลคำตอบทั้งหมด (รวมข้อ 4, 5, 6 และคำตอบอิสระ)
+      let aiEvalResult = null;
+      try {
+        const aiRes = await fetch('/api/ai-evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            responses: allResponses,
+            academics: profile.academics,
+            portfolio: profile.portfolio,
+            customActivities: profile.customActivities,
+            targetPath: profile.targetPath,
+            analysisMode: profile.analysisMode,
+            educationLevel: profile.educationLevel
+          })
+        });
+        const aiData = await aiRes.json();
+        if (aiData.success && aiData.evaluation) {
+          aiEvalResult = aiData.evaluation;
+        }
+      } catch (aiErr) {
+        console.warn('AI evaluation API call failed:', aiErr);
+      }
+
+      const updatePayload = {
         usedQuestionIds: updatedUsedIds,
         resultsUpdated: true,
         assessment: {
@@ -245,17 +279,24 @@ export default function DashboardAssessmentPage() {
           completedAt: new Date().toISOString()
         },
         results: {
-          skillVector,
+          skillVector: (aiEvalResult?.skillVector && aiEvalResult.skillVector.length === 5) ? aiEvalResult.skillVector : skillVector,
           matchRankings: rankings
         }
-      });
+      };
+
+      if (aiEvalResult) {
+        updatePayload.aiEvaluation = aiEvalResult;
+      }
+
+      await updateUserProfile(user.uid, updatePayload);
 
       // อัปเดตสถานะในตัวแปรท้องถิ่น
       setProfile(prev => ({
         ...prev,
         usedQuestionIds: updatedUsedIds,
         assessment: { responses: allResponses, completedAt: new Date().toISOString() },
-        results: { skillVector, matchRankings: rankings }
+        results: { skillVector: updatePayload.results.skillVector, matchRankings: rankings },
+        aiEvaluation: aiEvalResult || prev.aiEvaluation
       }));
       setCompletedStages(prev => new Set(prev).add(selectedTheme.id));
       
@@ -415,6 +456,114 @@ export default function DashboardAssessmentPage() {
                 </button>
               );
             })}
+
+          {/* Floating AI Idea Trigger (Discovery Mode Style) */}
+          <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+            {!isCustomInputOpen ? (
+              <button
+                type="button"
+                onClick={() => setIsCustomInputOpen(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '24px',
+                  background: 'linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(233, 30, 99, 0.08))',
+                  border: '1.5px solid rgba(124, 92, 252, 0.25)',
+                  color: 'var(--primary)',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 3px 10px rgba(124, 92, 252, 0.06)'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(124, 92, 252, 0.15), rgba(233, 30, 99, 0.15))'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(233, 30, 99, 0.08))'; }}
+              >
+                <Sparkles size={16} style={{ color: 'var(--primary)' }} />
+                <span>✨ พิมพ์ตอบด้วยไอเดียของคุณเอง (AI วิเคราะห์)</span>
+              </button>
+            ) : (
+              <div style={{
+                width: '100%',
+                background: '#FFFFFF',
+                border: '2px solid var(--primary)',
+                borderRadius: '16px',
+                padding: '1.1rem',
+                boxShadow: '0 8px 24px rgba(124, 92, 252, 0.12)',
+                animation: 'fadeIn 0.3s ease'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700', fontSize: '0.875rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                  <Sparkles size={16} /> พิมพ์ไอเดียแนวทางของคุณ (AI จะตีความสมรรถนะให้อัตโนมัติ):
+                </div>
+                <textarea
+                  rows={3}
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value)}
+                  placeholder="เช่น ผมจะสร้างสคริปต์โปรแกรมอัตโนมัติมาช่วยแก้ปัญหานี้..."
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid var(--border)',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.5',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setIsCustomInputOpen(false); setCustomText(''); }}
+                    style={{
+                      padding: '0.45rem 1rem',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border)',
+                      background: '#F7FAFC',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!customText.trim()}
+                    onClick={() => {
+                      if (customText.trim()) {
+                        handleSelectOption(null, customText.trim());
+                        setIsCustomInputOpen(false);
+                        setCustomText('');
+                      }
+                    }}
+                    style={{
+                      padding: '0.45rem 1.25rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: customText.trim() ? 'var(--primary)' : '#CBD5E1',
+                      color: 'white',
+                      cursor: customText.trim() ? 'pointer' : 'not-allowed',
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      transition: 'all 0.2s ease',
+                      boxShadow: customText.trim() ? '0 4px 12px rgba(124, 92, 252, 0.25)' : 'none'
+                    }}
+                  >
+                    ยืนยัน
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           </div>
         </div>
         <AssessmentMusicPlayer />
@@ -481,27 +630,50 @@ export default function DashboardAssessmentPage() {
         ยิ่งทำแบบทดสอบเยอะ ยิ่งได้ผลวิเคราะห์ที่แม่นยำขึ้น เลือกด่านที่คุณสนใจเพื่อทดสอบความถนัด
       </p>
 
-      {/* Upgraded Target Lock Banner with Linear Gradient */}
+      {/* Target Lock Mode Header Banner (Solid Brand Purple) */}
       {profile?.analysisMode === 'target-lock' && targetPathObj && (
         <div style={{
-          background: 'linear-gradient(135deg, #7C5CFC 0%, #FF6B8B 100%)',
+          background: 'var(--primary)',
           borderRadius: '20px',
-          padding: '1.25rem 1.75rem',
-          boxShadow: '0 10px 25px rgba(124, 92, 252, 0.22)',
-          marginBottom: '2.5rem',
+          padding: '1.5rem 1.75rem',
+          boxShadow: '0 8px 24px rgba(124, 92, 252, 0.25)',
+          marginBottom: '2rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '1rem',
+          gap: '1.25rem',
           color: '#FFFFFF',
           animation: 'fadeIn 0.4s ease-out'
         }}>
-          <Target size={36} style={{ color: '#FFFFFF', filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.15))' }} />
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '14px',
+            background: 'rgba(255, 255, 255, 0.2)',
+            color: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <Target size={28} />
+          </div>
           <div>
-            <div style={{ fontWeight: '800', fontSize: '1.1rem', letterSpacing: '0.5px' }}>
-              โหมดประเมินความพร้อมสอบเข้า: {targetPathObj.name}
+            <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#FFFFFF', letterSpacing: '0.2px', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <span>โหมดประเมินความพร้อมสอบเข้า:</span>
+              <span style={{ 
+                background: '#FFFFFF',
+                color: 'var(--primary)',
+                padding: '0.25rem 0.85rem',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                fontWeight: '800',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}>
+                {targetPathObj.name}
+              </span>
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.9)', marginTop: '0.25rem', lineHeight: '1.4' }}>
-              ทำแบบทดสอบให้ครบทุกด่านเพื่อวิเคราะห์ความพร้อมของคุณอย่างละเอียด! ด่านเหล่านี้ได้รับการจำลองสถานการณ์เฉพาะวิชาชีพให้เหมาะสมกับเป้าหมายของคุณ
+            <div style={{ fontSize: '0.88rem', color: 'rgba(255, 255, 255, 0.92)', marginTop: '0.4rem', lineHeight: '1.5' }}>
+              ทำแบบทดสอบให้ครบทุกด่านเพื่อวิเคราะห์ความพร้อมของคุณอย่างละเอียด สถานการณ์ในแต่ละด่านได้รับการจำลองตามความต้องการของสายวิชาชีพ
             </div>
           </div>
         </div>
@@ -724,12 +896,12 @@ export default function DashboardAssessmentPage() {
             })}
           </div>
 
-          {/* Right Column (30%): Mr. Path Vertical long bar */}
-          <div style={{ flex: '1 1 28%', minWidth: '260px', display: 'flex' }}>
+          {/* Right Column (30%): Mr. Path Compact Sticky Sidebar */}
+          <div style={{ flex: '1 1 28%', minWidth: '260px', display: 'flex', alignSelf: 'flex-start' }}>
             <div style={{
               background: '#FFFFFF',
               borderRadius: '24px',
-              padding: '2.5rem 1.5rem',
+              padding: '1.75rem 1.25rem',
               boxShadow: '0 10px 30px rgba(0, 0, 0, 0.04)',
               border: '1px solid var(--border)',
               textAlign: 'center',
@@ -740,16 +912,16 @@ export default function DashboardAssessmentPage() {
               position: 'sticky',
               top: '2rem',
               width: '100%',
-              minHeight: '100%'
+              height: 'fit-content'
             }}>
               <img 
                 src="/images/mr_path_mascot.png" 
                 alt="Mr. Path Mascot" 
                 style={{
-                  width: '110px',
-                  height: '110px',
+                  width: '90px',
+                  height: '90px',
                   objectFit: 'contain',
-                  marginBottom: '2rem',
+                  marginBottom: '1rem',
                   filter: 'drop-shadow(0 8px 16px rgba(124, 92, 252, 0.15))',
                 }} 
               />
@@ -758,23 +930,22 @@ export default function DashboardAssessmentPage() {
                 width: '100%',
                 background: 'var(--primary-bg)',
                 borderRadius: '20px',
-                padding: '1.5rem 1.25rem',
+                padding: '1.25rem 1.15rem',
                 fontSize: '0.88rem',
                 lineHeight: '1.7',
                 color: 'var(--text-primary)',
                 border: '1px solid var(--primary-light)',
                 textAlign: 'left',
-                position: 'relative',
-                flex: 1
+                position: 'relative'
               }}>
-                {/* Speech bubble arrow pointing left */}
+                {/* Speech bubble arrow pointing top-left */}
                 <div style={{
                   position: 'absolute',
                   left: '-8px',
-                  top: '50px',
+                  top: '24px',
                   transform: 'rotate(45deg)',
-                  width: '16px',
-                  height: '16px',
+                  width: '14px',
+                  height: '14px',
                   background: 'var(--primary-bg)',
                   borderLeft: '1px solid var(--primary-light)',
                   borderBottom: '1px solid var(--primary-light)',
@@ -792,9 +963,32 @@ export default function DashboardAssessmentPage() {
                   <Sparkles size={16} /> คำแนะนำจาก Mr. Path:
                 </span>
                 
-                ด่านจำลองการทำงานสาย <strong>{targetPathObj.name}</strong> ทั้ง 3 ด่านนี้ ได้รับการออกแบบตามความสามารถที่วิชาชีพนั้นต้องการจริงๆ นะครับ! 
+                ด่านจำลองการทำงานสาย <strong>{targetPathObj.name}</strong> ทั้ง 6 ด่านนี้ ได้รับการออกแบบตามความสามารถและเคสจำลองสถานการณ์จริงที่สายวิชาชีพนั้นต้องการนะครับ! 
                 <br /><br />
-                ทำกี่ครั้งก็ได้ตามความชอบเพื่ออัปเกรดผลความเข้ากันของระบบ ไม่ต้องกดดันนะครับ ลุยกันเลยครับ!
+                {/* Progress bar widget */}
+                <div style={{
+                  background: 'white',
+                  borderRadius: '12px',
+                  padding: '0.75rem',
+                  border: '1px solid var(--border)',
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.4rem', color: 'var(--text-primary)' }}>
+                    <span>ความคืบหน้าแบบทดสอบ</span>
+                    <span style={{ color: 'var(--primary)' }}>{completedStages.size} / {activeThemes.length} ด่าน</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: '#E2E8F0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${Math.round((completedStages.size / activeThemes.length) * 100)}%`,
+                      height: '100%',
+                      background: 'var(--primary)',
+                      borderRadius: '4px',
+                      transition: 'width 0.4s ease'
+                    }} />
+                  </div>
+                </div>
+
+                ทำกี่ครั้งก็ได้ตามความชอบเพื่อประเมินความพร้อมและอัปเกรดผลความเข้ากันของระบบครับ! ลุยกันเลย!
               </div>
             </div>
           </div>

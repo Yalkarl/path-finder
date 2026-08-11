@@ -1,8 +1,9 @@
 // ==========================================
-// การคำนวณ 5D Skill Vector จากเกรด (30%) และแบบทดสอบ (70%)
+// การคำนวณ 5D Skill Vector จาก GPAX สะสมรายกลุ่มสาระวิชา (30%) และแบบทดสอบ (70%)
 // ==========================================
 
 import { TARGET_CLUSTERS } from '../constants/targetedAssessment';
+import { isProfanityOrGibberish } from '../utils/contentSafety';
 
 // เมทริกซ์ถ่วงน้ำหนักรายวิชาเรียนเข้าสู่ 5 มิติทักษะ
 const ACADEMIC_WEIGHT_MATRIX = {
@@ -17,7 +18,7 @@ const ACADEMIC_WEIGHT = 0.30;
 const ASSESSMENT_WEIGHT = 0.70;
 
 export function calculateSkillVector(academicGrades, assessmentResponses, targetPath = null) {
-  // แปลงสเกลเกรดเฉลี่ย (0-4) เป็นช่วง 0.0 - 1.0
+  // แปลงสเกล GPAX รายวิชาสะสม (0.00-4.00) เป็นช่วง 0.0 - 1.0
   const normGrades = {
     math: (academicGrades.math || 0) / 4,
     science: (academicGrades.science || 0) / 4,
@@ -50,12 +51,12 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
       const clusterKey = TARGET_CLUSTERS[targetPath];
       if (clusterKey) {
         const TARGETED_PREFIXES = {
-          'medical': ['M101', 'M102', 'M103'],
-          'engineering': ['E201', 'E202', 'E203'],
-          'science': ['S301', 'S302', 'S303'],
-          'business': ['B401', 'B402', 'B403'],
-          'creative': ['C501', 'C502', 'C503'],
-          'social': ['L601', 'L602', 'L603']
+          'medical': ['M101', 'M102', 'M103', 'M104', 'M105', 'M106'],
+          'engineering': ['E201', 'E202', 'E203', 'E204', 'E205', 'E206'],
+          'science': ['S301', 'S302', 'S303', 'S304', 'S305', 'S306'],
+          'business': ['B401', 'B402', 'B403', 'B404', 'B405', 'B406'],
+          'creative': ['C501', 'C502', 'C503', 'C504', 'C505', 'C506'],
+          'social': ['L601', 'L602', 'L603', 'L604', 'L605', 'L606']
         };
         const allowedPrefixes = TARGETED_PREFIXES[clusterKey] || [];
 
@@ -77,25 +78,52 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
 
     if (relevantResponses.length > 0) {
       const accumulated = [0, 0, 0, 0, 0];
+      let validCount = 0;
+
+      // นับจำนวนคำตอบอิสระที่พิมพ์ข้อความซ้ำกัน
+      const customTextFrequency = {};
+      relevantResponses.forEach(r => {
+        if (r.customText) {
+          const norm = r.customText.trim().toLowerCase();
+          customTextFrequency[norm] = (customTextFrequency[norm] || 0) + 1;
+        }
+      });
 
       relevantResponses.forEach(response => {
+        let isInvalid = false;
+        if (response.customText) {
+          const norm = response.customText.trim().toLowerCase();
+          // หากเป็นคำหยาบ/ข้อความมั่ว/คำคุยเล่น หรือพิมพ์คำตอบอิสระซ้ำกันมากกว่า 1 ข้อ ให้ถือว่า invalid
+          if (isProfanityOrGibberish(response.customText) || customTextFrequency[norm] > 1) {
+            isInvalid = true;
+          }
+        }
+
+        if (!isInvalid) {
+          validCount++;
+          dimKeys.forEach((dim, index) => {
+            let val = response[dim] !== undefined ? response[dim] : (response.weights?.[dim] || 0);
+            if (val === 0 && response.customText) {
+              val = 0.4;
+            }
+            accumulated[index] += val;
+          });
+        }
+      });
+
+      if (validCount > 0) {
+        // การคำนวณ Progress Factor ตามสัดส่วนจำนวนข้อที่ทำเสร็จ
+        const totalExpected = targetPath ? 36 : 144;
+        const progressRatio = Math.min(1, validCount / totalExpected);
+        const progressFactor = 0.3 + 0.7 * progressRatio;
+
         dimKeys.forEach((dim, index) => {
-          const val = response[dim] !== undefined ? response[dim] : (response.weights?.[dim] || 0);
-          accumulated[index] += val;
+          // คำนวณค่าน้ำหนักเฉลี่ยรายข้อในมิตินั้นๆ (อิงสเกลเกณฑ์อ้างอิงเฉลี่ย 0.55)
+          const avgWeight = accumulated[index] / validCount;
+          const normalizedDim = Math.min(1, avgWeight / 0.55);
+          baseVector[index] += normalizedDim * ASSESSMENT_WEIGHT * progressFactor;
         });
-      });
-
-      const maxVal = Math.max(1.0, ...accumulated);
-      
-      // การคำนวณ Progress Factor ตามสัดส่วนจำนวนข้อที่ทำเสร็จ
-      const totalExpected = targetPath ? 18 : 144;
-      const progressRatio = Math.min(1, relevantResponses.length / totalExpected);
-      const progressFactor = 0.3 + 0.7 * progressRatio;
-
-      dimKeys.forEach((dim, index) => {
-        const normalizedDim = Math.min(1, accumulated[index] / maxVal);
-        baseVector[index] += normalizedDim * ASSESSMENT_WEIGHT * progressFactor;
-      });
+      }
     }
   }
 

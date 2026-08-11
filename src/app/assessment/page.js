@@ -79,9 +79,20 @@ export default function AssessmentPage() {
     init();
   }, [user, router]);
 
-  const handleSelectOption = async (weights) => {
-    const newResponses = [...responses, { questionId: scenarios[currentIndex].id, weights }];
+  const [customText, setCustomText] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
+  const handleSelectOption = async (weights, customString = null) => {
+    const responseObj = {
+      questionId: scenarios[currentIndex].id,
+      weights: weights || { logic: 0.2, science: 0.2, language: 0.2, art: 0.2, management: 0.2 },
+      ...(customString ? { customText: customString } : {})
+    };
+
+    const newResponses = [...responses, responseObj];
     setResponses(newResponses);
+    setShowCustomInput(false);
+    setCustomText('');
 
     if (currentIndex < scenarios.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -94,11 +105,41 @@ export default function AssessmentPage() {
     setSaving(true);
     try {
       const targetPathForFiltering = profile.analysisMode === 'target-lock' && profile.targetPath ? profile.targetPath : null;
-      const skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering);
+      let skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering);
+      let aiEvaluationData = null;
+
+      // Call AI Evaluation Endpoint for Holistic Semantic Analysis
+      try {
+        const aiRes = await fetch('/api/ai-evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            responses: finalResponses,
+            academics: profile.academics,
+            portfolio: profile.portfolio,
+            customActivities: profile.customActivities,
+            targetPath: profile.targetPath,
+            analysisMode: profile.analysisMode,
+            educationLevel: profile.educationLevel
+          })
+        });
+
+        if (aiRes.ok) {
+          const aiJson = await aiRes.json();
+          if (aiJson.success && aiJson.evaluation) {
+            aiEvaluationData = aiJson.evaluation;
+            if (Array.isArray(aiEvaluationData.skillVector) && aiEvaluationData.skillVector.length === 5) {
+              skillVector = aiEvaluationData.skillVector;
+            }
+          }
+        }
+      } catch (aiErr) {
+        console.warn('AI evaluation API call failed, falling back to standard calculation:', aiErr);
+      }
+
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
       const rankings = matchPaths(skillVector, pathsObject);
       
-      // บันทึกรหัสข้อคำถามที่ทำแล้ว
       const questionIds = scenarios.map(s => s.id);
 
       await updateUserProfile(user.uid, {
@@ -108,6 +149,7 @@ export default function AssessmentPage() {
           responses: finalResponses,
           completedAt: new Date().toISOString()
         },
+        aiEvaluation: aiEvaluationData,
         results: {
           skillVector,
           matchRankings: rankings
@@ -335,6 +377,107 @@ export default function AssessmentPage() {
               </button>
             );
           })}
+
+          {/* Floating AI Idea Trigger (Design Option 3) */}
+          <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+            {!showCustomInput ? (
+              <button
+                type="button"
+                onClick={() => setShowCustomInput(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '24px',
+                  background: 'linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(233, 30, 99, 0.08))',
+                  border: '1.5px solid rgba(124, 92, 252, 0.25)',
+                  color: 'var(--primary)',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 3px 10px rgba(124, 92, 252, 0.06)'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(124, 92, 252, 0.15), rgba(233, 30, 99, 0.15))'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(233, 30, 99, 0.08))'; }}
+              >
+                <Sparkles size={16} style={{ color: 'var(--primary)' }} />
+                <span>✨ พิมพ์ตอบด้วยไอเดียของคุณเอง (AI วิเคราะห์)</span>
+              </button>
+            ) : (
+              <div style={{
+                width: '100%',
+                background: '#FFFFFF',
+                border: '2px solid var(--primary)',
+                borderRadius: '16px',
+                padding: '1.1rem',
+                boxShadow: '0 8px 24px rgba(124, 92, 252, 0.12)',
+                animation: 'fadeIn 0.3s ease'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700', fontSize: '0.875rem', color: 'var(--primary)', marginBottom: '0.5rem' }}>
+                  <Sparkles size={16} /> พิมพ์ไอเดียแนวทางของคุณ (AI จะตีความสมรรถนะให้อัตโนมัติ):
+                </div>
+                <textarea
+                  rows={3}
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value)}
+                  placeholder="เช่น ผมจะสร้างสคริปต์โปรแกรมอัตโนมัติมาช่วยแก้ปัญหานี้..."
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid var(--border)',
+                    fontSize: '0.9rem',
+                    outline: 'none',
+                    resize: 'vertical',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.5'
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCustomInput(false); setCustomText(''); }}
+                    style={{
+                      padding: '0.45rem 1rem',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border)',
+                      background: '#F7FAFC',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customText.trim()) {
+                        handleSelectOption(null, customText.trim());
+                      }
+                    }}
+                    disabled={!customText.trim()}
+                    style={{
+                      padding: '0.45rem 1.25rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: customText.trim() ? 'var(--primary)' : '#CBD5E0',
+                      color: 'white',
+                      cursor: customText.trim() ? 'pointer' : 'not-allowed',
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      boxShadow: customText.trim() ? '0 4px 12px rgba(124, 92, 252, 0.25)' : 'none'
+                    }}
+                  >
+                    ยืนยัน
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>

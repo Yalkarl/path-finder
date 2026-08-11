@@ -16,7 +16,144 @@ import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { calculateReadiness } from '@/lib/algorithms/readinessCalculator';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects';
-import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight } from 'lucide-react';
+import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
+
+const PROFILE_THAI_MAP = {
+  'Autonomous Strategic Analyst': 'นักวิเคราะห์กลยุทธ์อิสระ (Autonomous Strategic Analyst)',
+  'Analytical Innovator': 'นักคิดนวัตกรรมเชิงวิเคราะห์ (Analytical Innovator)',
+  'Data-Driven Strategist': 'นักวางกลยุทธ์ขับเคลื่อนด้วยข้อมูล (Data-Driven Strategist)',
+  'Creative Innovation Leader': 'ผู้นำสร้างสรรค์นวัตกรรม (Creative Innovation Leader)',
+  'Systems Problem Solver': 'นักแก้ปัญหาเชิงระบบ (Systems Problem Solver)',
+  'Empathic People Leader': 'ผู้นำทีมมุ่งเน้นความเข้าใจผู้คน (Empathic People Leader)',
+  'Pragmatic Problem Solver': 'นักแก้ปัญหาเชิงปฏิบัติการ (Pragmatic Problem Solver)',
+  'Strategic Tech Innovator': 'นักสร้างสรรค์เทคโนโลยีเชิงกลยุทธ์ (Strategic Tech Innovator)',
+  'Analytical Thinker': 'นักคิดวิเคราะห์เชิงกลยุทธ์ (Analytical Thinker)'
+};
+
+function formatHybridProfileTitle(rawTitle) {
+  if (!rawTitle) return 'นักคิดวิเคราะห์เชิงกลยุทธ์ (Analytical Thinker)';
+  if (PROFILE_THAI_MAP[rawTitle]) return PROFILE_THAI_MAP[rawTitle];
+  if (/[\u0E00-\u0E7F]/.test(rawTitle)) return rawTitle;
+  return `${rawTitle} (${rawTitle})`;
+}
+
+function AIQualitativeInsightsSection({ aiEval }) {
+  if (!aiEval) return null;
+  const hasInsights = Array.isArray(aiEval.qualitativeInsights) && aiEval.qualitativeInsights.length > 0;
+  const hasAdvice = Array.isArray(aiEval.actionableAdvice) && aiEval.actionableAdvice.length > 0;
+  
+  if (!hasInsights && !hasAdvice) return null;
+
+  return (
+    <div style={{
+      marginTop: '1.75rem',
+      paddingTop: '1.5rem',
+      borderTop: '1px solid var(--border)',
+    }}>
+      {/* Qualitative Insights Section */}
+      {hasInsights && (
+        <div style={{ marginBottom: hasAdvice ? '1.25rem' : '0' }}>
+          <h3 style={{ 
+            fontSize: '1rem', 
+            fontWeight: '700', 
+            color: 'var(--text-primary)', 
+            marginTop: 0, 
+            marginBottom: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem'
+          }}>
+            <Sparkles size={18} style={{ color: 'var(--primary)' }} />
+            บทวิเคราะห์เชิงพฤติกรรมจาก AI (Qualitative Insights)
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.2rem' }}>
+            {aiEval.qualitativeInsights.map((insight, idx) => (
+              <div key={idx} style={{ 
+                fontSize: '0.9rem', 
+                color: 'var(--text-primary)', 
+                lineHeight: '1.6', 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '0.65rem' 
+              }}>
+                <span style={{ 
+                  display: 'inline-block', 
+                  width: '6px', 
+                  height: '6px', 
+                  borderRadius: '50%', 
+                  background: 'var(--primary)', 
+                  marginTop: '0.55rem', 
+                  flexShrink: 0 
+                }} />
+                <span>{insight}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inconsistency Warning (if detected) */}
+      {aiEval.inconsistencyDetected && (
+        <div style={{
+          marginBottom: hasAdvice ? '1.25rem' : '0',
+          padding: '0.85rem 1.1rem',
+          borderRadius: '14px',
+          background: '#FFF5F5',
+          border: '1.5px solid #FEB2B2',
+          color: '#C53030',
+          fontSize: '0.85rem',
+          lineHeight: '1.4'
+        }}>
+          <strong>แจ้งเตือน AI ตรวจพบความขัดแย้งพฤติกรรม (Inconsistency Detected):</strong>
+          <div style={{ marginTop: '0.25rem', color: '#9B2C2C' }}>
+            {aiEval.inconsistencyReason || 'การเลือกตอบคำถามบางข้อมีทัศนคติขัดแย้งกันเอง หรือมีความแตกต่างระหว่างคำตอบกับ GPAX สะสม'}
+          </div>
+        </div>
+      )}
+
+      {/* Actionable Advice Section */}
+      {hasAdvice && (
+        <div style={{ 
+          padding: '1.1rem 1.25rem', 
+          borderRadius: '14px', 
+          background: 'var(--primary-bg)', 
+          border: '1px dashed var(--primary)' 
+        }}>
+          <h4 style={{ 
+            fontSize: '0.9rem', 
+            fontWeight: '700', 
+            color: 'var(--primary)', 
+            marginTop: 0, 
+            marginBottom: '0.6rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.45rem'
+          }}>
+            <Compass size={16} />
+            ข้อแนะนำสำหรับเติมทักษะ (AI Action Roadmap)
+          </h4>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+            {aiEval.actionableAdvice.map((advice, idx) => (
+              <div key={idx} style={{ 
+                fontSize: '0.875rem', 
+                color: 'var(--text-primary)', 
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.55rem'
+              }}>
+                <span style={{ color: 'var(--primary)', fontWeight: '700', flexShrink: 0 }}>—</span>
+                <span>{advice}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -73,7 +210,14 @@ export default function DashboardPage() {
   const isTargetLock = profile.analysisMode === 'target-lock';
   const targetPathForFiltering = isTargetLock && profile.targetPath ? profile.targetPath : null;
 
-  const skillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], targetPathForFiltering);
+  const computedSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], targetPathForFiltering);
+  const aiVector = profile.aiEvaluation?.skillVector;
+  const hasAiVector = Array.isArray(aiVector) && aiVector.length === 5 && aiVector.some(v => v > 0);
+
+  // ผสมผสานค่าน้ำหนักจาก AI (60%) และอัลกอริทึมที่เสถียร (40%) เพื่อให้กราฟนิ่งไม่วูบวาบ
+  const skillVector = hasAiVector
+    ? computedSkillVector.map((compVal, idx) => Math.min(1, Math.max(0, compVal * 0.4 + (aiVector[idx] || 0) * 0.6)))
+    : computedSkillVector;
   const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
   const matchRankings = matchPaths(skillVector, pathsObject);
 
@@ -112,6 +256,8 @@ export default function DashboardPage() {
       #ใหม่
     </span>
   );
+
+  const aiEval = profile.aiEvaluation || null;
 
   return (
     <div style={{ animation: 'fadeIn 0.5s ease' }}>
@@ -252,6 +398,9 @@ export default function DashboardPage() {
             {targetPathObj && (
               <GapAnalysisChart gapData={analyzeGaps(skillVector, targetPathObj.benchmark)} />
             )}
+
+            {/* AI Qualitative Insights Section (Target Lock Mode) */}
+            <AIQualitativeInsightsSection aiEval={aiEval} />
           </div>
 
           {/* Portfolio & Self-Assessment Checklist Card */}
@@ -519,8 +668,11 @@ export default function DashboardPage() {
               {isUpdated && <UpdateBadge />}
             </h2>
             <div style={{ marginTop: '1.5rem' }}>
-              <SkillRadarChart vector={skillVector} />
+              <SkillRadarChart vector={skillVector} academics={profile.academics} aiEval={aiEval} />
             </div>
+
+            {/* AI Qualitative Insights Section (Discovery Mode) */}
+            <AIQualitativeInsightsSection aiEval={aiEval} />
           </div>
 
           {/* Match Rankings */}

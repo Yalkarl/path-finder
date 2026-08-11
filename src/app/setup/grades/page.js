@@ -263,7 +263,31 @@ function GradesContent() {
         const pathsObject = level === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
         const rankings = matchPaths(skillVector, pathsObject);
 
-        await updateUserProfile(user.uid, {
+        // เรียกใช้ AI Evaluation API เพื่อสร้างบทวิเคราะห์เชิงพฤติกรรมคำแนะนำชุดใหม่สำหรับสายเป้าหมายใหม่
+        let aiEvaluationData = null;
+        try {
+          const aiRes = await fetch('/api/ai-evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              responses: assessmentResponses,
+              academics: finalGrades,
+              portfolio: analysisMode === 'target-lock' ? portfolio : [],
+              customActivities: analysisMode === 'target-lock' ? customList : [],
+              targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
+              analysisMode,
+              educationLevel: level
+            })
+          });
+          const aiJson = await aiRes.json();
+          if (aiJson.success && aiJson.evaluation) {
+            aiEvaluationData = aiJson.evaluation;
+          }
+        } catch (e) {
+          console.warn('AI re-evaluation failed on setup update:', e);
+        }
+
+        const updatePayload = {
           academics: finalGrades,
           analysisMode,
           targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
@@ -273,12 +297,18 @@ function GradesContent() {
           selfAssessment: analysisMode === 'target-lock' ? selfAssessment : {},
           targetProgramType: level === 'junior' && analysisMode === 'target-lock' ? targetProgramType : null,
           results: {
-            skillVector,
+            skillVector: (aiEvaluationData?.skillVector && aiEvaluationData.skillVector.length === 5) ? aiEvaluationData.skillVector : skillVector,
             matchRankings: rankings
           },
           resultsUpdated: true,
           updatedAt: new Date().toISOString()
-        });
+        };
+
+        if (aiEvaluationData) {
+          updatePayload.aiEvaluation = aiEvaluationData;
+        }
+
+        await updateUserProfile(user.uid, updatePayload);
 
         router.push('/dashboard');
       } else {
@@ -413,7 +443,7 @@ function GradesContent() {
         }
       `}</style>
 
-      <MrPathGreeting message="ใส่เกรดวิชาหลักและผลงานของคุณได้เลยครับ หมอพร้อมวิเคราะห์เส้นทางที่ดีที่สุดให้ทันที! 🧠✨" />
+      <MrPathGreeting message="ใส่ GPAX สะสมรายกลุ่มวิชาหลักและผลงานของคุณได้เลยครับ หมอพร้อมวิเคราะห์เส้นทางที่ดีที่สุดให้ทันที! 🧠✨" />
 
       <form onSubmit={handleSubmit} style={{ width: '100%', marginTop: '1rem' }}>
         <div className={`grades-grid ${isTargetLock ? 'split-view' : ''}`}>
@@ -422,9 +452,59 @@ function GradesContent() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Card 1: Grade Inputs */}
             <div className="card" style={{ padding: '1.5rem', borderRadius: '20px' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', fontSize: '1.1rem', fontWeight: '700' }}>
-                <BookOpen size={20} style={{ color: 'var(--primary)' }} /> เกรดรายวิชาหลักเทอมล่าสุด
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, marginBottom: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', fontSize: '1.1rem', fontWeight: '700' }}>
+                <BookOpen size={20} style={{ color: 'var(--primary)' }} /> เกรดเฉลี่ยสะสมรายกลุ่มวิชา (GPAX 4-5 เทอม)
               </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '1rem', lineHeight: '1.4' }}>
+                กรอก GPAX สะสมรายกลุ่มสาระวิชา (0.00 - 4.00) เช่น 3.50 หรือ 3.85 เพื่อใช้ในการวิเคราะห์ความพร้อม
+              </p>
+
+              {/* Real-time Overall GPAX Badge */}
+              {(() => {
+                const vals = [grades.math, grades.science, grades.thai, grades.english, grades.social]
+                  .map(v => parseFloat(v))
+                  .filter(v => !isNaN(v) && v >= 0 && v <= 4);
+                const hasVals = vals.length > 0;
+                const realtimeGPAX = hasVals ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : null;
+
+                return (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(124, 92, 252, 0.08) 0%, rgba(233, 30, 99, 0.08) 100%)',
+                    borderRadius: '16px',
+                    padding: '1rem 1.25rem',
+                    marginBottom: '1.25rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    border: '1px solid rgba(124, 92, 252, 0.2)'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: '700' }}>
+                        เกรดเฉลี่ยสะสมรวม (GPAX สองตำแหน่ง)
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                        {realtimeGPAX ? 'คำนวณเรียลไทม์อัตโนมัติจาก 5 วิชาหลัก' : 'กรอกเกรดวิชาเพื่อคำนวณเรียลไทม์'}
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: '1.4rem',
+                      fontWeight: '800',
+                      color: realtimeGPAX ? 'var(--primary)' : '#CBD5E1',
+                      background: '#FFFFFF',
+                      padding: '0.35rem 0.9rem',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 8px rgba(124, 92, 252, 0.12)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}>
+                      {realtimeGPAX ? realtimeGPAX : '0.00'}
+                      <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>/ 4.00</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {subjects.map((subj) => (
                   <div key={subj.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #F7FAFC', paddingBottom: '0.5rem' }}>
@@ -436,8 +516,13 @@ function GradesContent() {
                         {subj.label}
                       </span>
                     </div>
-                    <div style={{ position: 'relative', width: '100px' }}>
-                      <select
+                    <div style={{ position: 'relative', width: '110px' }}>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="4"
+                        placeholder="0.00"
                         value={grades[subj.id]}
                         onChange={(e) => setGrades({ ...grades, [subj.id]: e.target.value })}
                         style={{
@@ -450,16 +535,10 @@ function GradesContent() {
                           color: 'var(--primary)',
                           textAlign: 'center',
                           outline: 'none',
-                          cursor: 'pointer',
+                          fontSize: '0.95rem'
                         }}
                         required
-                      >
-                        {GRADE_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt === '' ? 'เลือกเกรด' : opt}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </div>
                 ))}

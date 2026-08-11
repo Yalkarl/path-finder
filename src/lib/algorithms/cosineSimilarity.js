@@ -55,6 +55,8 @@ export function calculateMatchPercentage(userVector, benchmark) {
   const adjustedScore = sigmoidScale(rawSimilarity);
   const penaltyFactor = calculateGapPenalty(userVector, benchmark);
 
+  // การคำนวณ Absolute Capability Factor เปรียบเทียบผลรวมทักษะกับเกณฑ์
+  // ช่วยป้องกันกรณีคะแนนเกรดวิชาอื่นต่ำลงแล้วทำให้เปอร์เซ็นต์สอดคล้องสูงขึ้นผิดปกติ
   const sumUser = userVector.reduce((a, b) => a + b, 0);
   const sumBenchmark = benchmark.reduce((a, b) => a + b, 0);
   const capabilityFactor = sumBenchmark > 0 ? Math.min(1.0, sumUser / sumBenchmark) : 1.0;
@@ -62,18 +64,6 @@ export function calculateMatchPercentage(userVector, benchmark) {
   const finalMatch = Math.min(100, Math.max(0, Math.round(adjustedScore * penaltyFactor * capabilityFactor * 100)));
 
   return finalMatch;
-}
-
-  // การคำนวณ Absolute Capability Factor เปรียบเทียบผลรวมทักษะกับเกณฑ์
-  // ช่วยป้องกันกรณีคะแนนเกรดวิชาอื่นต่ำลงแล้วทำให้เปอร์เซ็นต์สอดคล้องสูงขึ้นผิดปกติ
-  // by artificially skewing the vector angle.
-  const sumUser = userVector.reduce((a, b) => a + b, 0);
-  const sumBenchmark = benchmark.reduce((a, b) => a + b, 0);
-  const capabilityFactor = sumBenchmark > 0 ? Math.min(1.0, sumUser / sumBenchmark) : 1.0;
-
-  const matchPercentage = Math.round(adjustedScore * penaltyFactor * capabilityFactor * 100);
-
-  return Math.min(100, Math.max(0, matchPercentage));
 }
 
 /**

@@ -20,6 +20,8 @@ import { MrPath } from '@/components/ui/mr-path';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
+import { findAlternativePaths } from '@/lib/algorithms/alternativePaths';
+import { calculateReadiness } from '@/lib/algorithms/readinessCalculator';
 // คอมโพเนนต์ภายในที่ใช้ useSearchParams
 function ChatPageInner() {
   const { user } = useAuth();
@@ -268,6 +270,43 @@ function ChatPageInner() {
       const topSkills = ['ตรรกะ', 'วิทยาศาสตร์', 'ภาษา', 'ศิลปะ', 'การบริหาร']
         .filter((_, i) => skillVector[i] > 0.6);
 
+      // คำนวณคะแนนความพร้อมและ Gap Analysis สำหรับใช้ใน Mr. Path Coach Prompt
+      let readinessPercentage = 0;
+      let gapAnalysis = [];
+      const targetPathObj = currentProfile.analysisMode === 'target-lock' && currentProfile.targetPath
+        ? (matchRankings.find(p => p.id === currentProfile.targetPath) || pathsObject[currentProfile.targetPath])
+        : null;
+
+      if (targetPathObj) {
+        readinessPercentage = calculateReadiness(
+          skillVector,
+          targetPathObj.benchmark,
+          currentProfile.portfolio,
+          currentProfile.selfAssessment,
+          currentProfile.customActivities || [],
+          currentProfile.targetPath,
+          currentProfile.educationLevel
+        );
+
+        const dimNames = ['ตรรกะ', 'วิทยาศาสตร์', 'ภาษา', 'ศิลปะ', 'การบริหาร'];
+        gapAnalysis = dimNames.map((dim, idx) => {
+          const userVal = Math.round(skillVector[idx] * 100);
+          const benchVal = Math.round((targetPathObj.benchmark[idx] || 0) * 100);
+          const gap = benchVal - userVal;
+          return {
+            dimension: dim,
+            userScore: userVal,
+            benchmarkScore: benchVal,
+            gap: gap > 0 ? gap : 0,
+            status: gap > 15 ? 'ต้องพัฒนาเพิ่มเติม (ห่าง > 15%)' : gap > 0 ? 'ใกล้เคียงเกณฑ์' : 'ผ่านเกณฑ์มาตรฐาน'
+          };
+        });
+      }
+
+      const alternativePaths = currentProfile.analysisMode === 'target-lock' && currentProfile.targetPath
+        ? findAlternativePaths(skillVector, currentProfile.targetPath, pathsObject, 3)
+        : [];
+
       const payload = {
         messages: updatedMessagesWithUser,
         userContext: {
@@ -277,6 +316,18 @@ function ChatPageInner() {
           topMatch: matchRankings[0],
           analysisMode: currentProfile.analysisMode || 'discovery',
           targetPath: currentProfile.targetPath || null,
+          targetPathName: targetPathObj?.name || currentProfile.targetPath || null,
+          readinessPercentage,
+          gapAnalysis,
+          alternativePaths: alternativePaths.map(p => ({
+            name: p.name,
+            matchPercentage: p.matchPercentage,
+            reason: p.reason
+          })),
+          qualitativeInsights: currentProfile.aiEvaluation?.qualitativeInsights || [],
+          actionableAdvice: currentProfile.aiEvaluation?.actionableAdvice || [],
+          inconsistencyDetected: currentProfile.aiEvaluation?.inconsistencyDetected || false,
+          inconsistencyReason: currentProfile.aiEvaluation?.inconsistencyReason || '',
           portfolio: currentProfile.portfolio || [],
           customActivities: currentProfile.customActivities || [],
           selfAssessment: currentProfile.selfAssessment || {},
