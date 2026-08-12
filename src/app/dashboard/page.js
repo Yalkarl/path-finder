@@ -17,6 +17,7 @@ import { calculateReadiness } from '@/lib/algorithms/readinessCalculator';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects';
 import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
+import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
 
 const PROFILE_THAI_MAP = {
   'Autonomous Strategic Analyst': 'นักวิเคราะห์กลยุทธ์อิสระ (Autonomous Strategic Analyst)',
@@ -37,12 +38,72 @@ function formatHybridProfileTitle(rawTitle) {
   return `${rawTitle} (${rawTitle})`;
 }
 
-function AIQualitativeInsightsSection({ aiEval }) {
-  if (!aiEval) return null;
-  const hasInsights = Array.isArray(aiEval.qualitativeInsights) && aiEval.qualitativeInsights.length > 0;
-  const hasAdvice = Array.isArray(aiEval.actionableAdvice) && aiEval.actionableAdvice.length > 0;
-  
-  if (!hasInsights && !hasAdvice) return null;
+function AIQualitativeInsightsSection({ aiEval, profile }) {
+  const likes = Array.isArray(profile?.likes) ? profile.likes : [];
+  const dislikes = Array.isArray(profile?.dislikes) ? profile.dislikes : [];
+
+  let rawInsights = Array.isArray(aiEval?.qualitativeInsights) ? [...aiEval.qualitativeInsights] : [];
+  let rawAdvice = Array.isArray(aiEval?.actionableAdvice) ? [...aiEval.actionableAdvice] : [];
+
+  // หากล้างข้อมูลสิ่งชอบออก ให้ลบข้อความแคชเก่าของ AI ที่เคยพูดถึงสิ่งชอบออกทันที
+  if (likes.length === 0) {
+    rawInsights = rawInsights.filter(i => !i.includes('มีความสนใจและแรงจูงใจเด่นชัดในด้าน') && !i.includes('ความสนใจด้าน'));
+    rawAdvice = rawAdvice.filter(a => !a.includes('เน้นการทำโปรเจกต์หรือสะสมผลงาน') && !a.includes('ความชอบด้าน'));
+  }
+
+  // หากล้างข้อมูลสิ่งที่ไม่ชอบออก ให้ลบข้อความแคชเก่าของ AI ที่เคยพูดถึงสิ่งที่ไม่อินออกทันที
+  if (dislikes.length === 0) {
+    rawInsights = rawInsights.filter(i => !i.includes('ขอบเขตความสนใจชัดเจนโดยระบุไม่อินกับกิจกรรมด้าน') && !i.includes('ไม่อินกับ'));
+  }
+
+  let insights = rawInsights;
+  let advice = rawAdvice;
+
+  // เพิ่มบทวิเคราะห์เชิงลึกที่เชื่อมโยงกับสิ่งที่ชอบและสิ่งที่ไม่อินปัจจุบันเท่านั้น
+  if (likes.length > 0) {
+    const likesText = likes.join(', ');
+    const prefInsight = `มีความสนใจและแรงจูงใจเด่นชัดในด้าน ${likesText} ซึ่งเป็นฐานทัพสำคัญในการต่อยอดทักษะตรงสายการเรียน`;
+    if (!insights.some(i => i.includes(likesText))) {
+      insights.unshift(prefInsight);
+    }
+  }
+
+  if (dislikes.length > 0) {
+    const dislikesText = dislikes.join(', ');
+    const dislikeInsight = `ขอบเขตความสนใจชัดเจนโดยระบุไม่อินกับกิจกรรมด้าน ${dislikesText} ช่วยกรองสาขาที่ไม่ตอบโจทย์ออกได้อย่างตรงจุด`;
+    if (!insights.some(i => i.includes(dislikesText))) {
+      if (insights.length > 1) {
+        insights.splice(1, 0, dislikeInsight);
+      } else {
+        insights.push(dislikeInsight);
+      }
+    }
+  }
+
+  if (likes.length > 0) {
+    const likesText = likes[0];
+    const prefAdvice = `เน้นการทำโปรเจกต์หรือสะสมผลงาน (Project-based) ที่เกี่ยวข้องกับ ${likesText} เพื่อเพิ่มจุดเด่นในพอร์ตโฟลิโอ`;
+    if (!advice.some(a => a.includes(likesText))) {
+      advice.unshift(prefAdvice);
+    }
+  }
+
+  if (insights.length === 0) {
+    insights = [
+      'มีความสามารถโดดเด่นในการตัดสินใจและวางแผนจัดการเชิงกลยุทธ์ ซึ่งเป็นทักษะสำคัญในระดับบริหารและจัดการโครงการ',
+      'ควรเน้นพัฒนาทักษะด้านวิชาการหลักและตรรกะเชิงวิเคราะห์ให้เข้มข้นขึ้นเพื่อเพิ่มความแม่นยำในการตัดสินใจ'
+    ];
+  }
+
+  if (advice.length === 0) {
+    advice = [
+      'เริ่มต้นด้วยการศึกษาพื้นฐานการจัดการธุรกิจ หรือภาวะผู้นำ เพื่อต่อยอดทักษะการบริหารที่มี',
+      'เข้าร่วมกิจกรรมชมรมหรือทำโปรเจกต์กลุ่มเพื่อประยุกต์ใช้ทักษะการสื่อสารและการวางแผน'
+    ];
+  }
+
+  const hasInsights = insights.length > 0;
+  const hasAdvice = advice.length > 0;
 
   return (
     <div style={{
@@ -68,7 +129,7 @@ function AIQualitativeInsightsSection({ aiEval }) {
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.2rem' }}>
-            {aiEval.qualitativeInsights.map((insight, idx) => (
+            {insights.map((insight, idx) => (
               <div key={idx} style={{ 
                 fontSize: '0.9rem', 
                 color: 'var(--text-primary)', 
@@ -94,7 +155,7 @@ function AIQualitativeInsightsSection({ aiEval }) {
       )}
 
       {/* Inconsistency Warning (if detected) */}
-      {aiEval.inconsistencyDetected && (
+      {aiEval?.inconsistencyDetected && (
         <div style={{
           marginBottom: hasAdvice ? '1.25rem' : '0',
           padding: '0.85rem 1.1rem',
@@ -128,14 +189,14 @@ function AIQualitativeInsightsSection({ aiEval }) {
             marginBottom: '0.6rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.45rem'
+            gap: '0.4rem'
           }}>
             <Compass size={16} />
             ข้อแนะนำสำหรับเติมทักษะ (AI Action Roadmap)
           </h4>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-            {aiEval.actionableAdvice.map((advice, idx) => (
+            {advice.map((item, idx) => (
               <div key={idx} style={{ 
                 fontSize: '0.875rem', 
                 color: 'var(--text-primary)', 
@@ -145,7 +206,7 @@ function AIQualitativeInsightsSection({ aiEval }) {
                 gap: '0.55rem'
               }}>
                 <span style={{ color: 'var(--primary)', fontWeight: '700', flexShrink: 0 }}>—</span>
-                <span>{advice}</span>
+                <span>{item}</span>
               </div>
             ))}
           </div>
@@ -210,16 +271,17 @@ export default function DashboardPage() {
   const isTargetLock = profile.analysisMode === 'target-lock';
   const targetPathForFiltering = isTargetLock && profile.targetPath ? profile.targetPath : null;
 
-  const computedSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], targetPathForFiltering);
+  const computedSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], targetPathForFiltering, profile.likes || [], profile.dislikes || []);
   const aiVector = profile.aiEvaluation?.skillVector;
   const hasAiVector = Array.isArray(aiVector) && aiVector.length === 5 && aiVector.some(v => v > 0);
+  const hasLikesOrDislikes = (Array.isArray(profile.likes) && profile.likes.length > 0) || (Array.isArray(profile.dislikes) && profile.dislikes.length > 0);
 
-  // ผสมผสานค่าน้ำหนักจาก AI (60%) และอัลกอริทึมที่เสถียร (40%) เพื่อให้กราฟนิ่งไม่วูบวาบ
+  // ผสมผสานค่าน้ำหนักหลักจากเกรด+แบบทดสอบ (50%) ร่วมกับ AI (50%) เพื่อให้กราฟนิ่ง เป็นธรรมชาติ และสมจริง
   const skillVector = hasAiVector
-    ? computedSkillVector.map((compVal, idx) => Math.min(1, Math.max(0, compVal * 0.4 + (aiVector[idx] || 0) * 0.6)))
+    ? computedSkillVector.map((compVal, idx) => Math.min(1, Math.max(0, compVal * 0.5 + (aiVector[idx] || 0) * 0.5)))
     : computedSkillVector;
   const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-  const matchRankings = matchPaths(skillVector, pathsObject);
+  const matchRankings = matchPaths(skillVector, pathsObject, profile.likes || [], profile.dislikes || []);
 
   // การคำนวณคะแนนสำหรับโหมด Target Lock
   const targetPathObj = isTargetLock && profile.targetPath ? (matchRankings.find(p => p.id === profile.targetPath) || pathsObject[profile.targetPath]) : null;
@@ -661,6 +723,54 @@ export default function DashboardPage() {
             โหมด DISCOVERY (ค้นหาตัวเองดั้งเดิม)
             ──────────────────────────────────────────────────────── */
         <>
+          {/* Kahoot Avatar Welcome Header Card */}
+          <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', background: 'linear-gradient(135deg, rgba(124,92,252,0.06), rgba(124,92,252,0.02))', border: '1px solid rgba(124,92,252,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '50%',
+                background: 'var(--surface)',
+                border: '2px solid var(--primary-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'center',
+                overflow: 'hidden',
+                boxShadow: '0 4px 12px rgba(124,92,252,0.15)',
+                flexShrink: 0
+              }}>
+                <KahootCharacterSvg type={profile.characterId || 'penguin'} accessory={profile.accessoryId || 'none'} size={48} />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+                  สวัสดีครับ, {profile.name || 'ผู้เรียน'}!
+                </h2>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  ระดับชั้น: {profile.educationLevel === 'junior' ? 'มัธยมศึกษาตอนต้น (ม.1-ม.3)' : 'มัธยมศึกษาตอนปลาย (ม.4-ม.6)'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/dashboard/profile')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '12px',
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                color: 'var(--primary)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              ปรับแต่งตัวละคร
+            </button>
+          </div>
+
           {/* Skill Matrix */}
           <div className="card" style={{ marginBottom: '2rem' }}>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
@@ -672,7 +782,7 @@ export default function DashboardPage() {
             </div>
 
             {/* AI Qualitative Insights Section (Discovery Mode) */}
-            <AIQualitativeInsightsSection aiEval={aiEval} />
+            <AIQualitativeInsightsSection aiEval={aiEval} profile={profile} />
           </div>
 
           {/* Match Rankings */}
@@ -697,42 +807,65 @@ export default function DashboardPage() {
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
                       onClick={() => setExpandedRank(isExpanded ? null : index)}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: 0, paddingRight: '0.5rem' }}>
                         <div style={{ 
                           width: '40px', height: '40px', 
                           background: isTop ? 'var(--accent)' : 'var(--primary-bg)', 
                           color: isTop ? 'white' : 'var(--primary)',
                           borderRadius: '50%',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontWeight: 'bold', fontSize: '1.25rem'
+                          fontWeight: 'bold', fontSize: '1.25rem',
+                          flexShrink: 0
                         }}>
                           #{index + 1}
                         </div>
-                        <div>
-                          <h3 style={{ margin: 0 }}>{path.name}</h3>
-                          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{path.description}</p>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{path.name}</h3>
+                          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{path.description}</p>
                         </div>
                       </div>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0, marginLeft: '1rem' }}>
                         <div style={{ 
                           background: isTop ? '#FFF3E0' : 'var(--primary-bg)', 
                           color: isTop ? '#E65100' : 'var(--primary)', 
-                          padding: '0.25rem 0.75rem', 
+                          padding: '0.35rem 0.85rem', 
                           borderRadius: '20px', 
-                          fontWeight: 'bold' 
+                          fontWeight: '700',
+                          fontSize: '0.875rem',
+                          whiteSpace: 'nowrap'
                         }}>
                           {path.matchPercentage}% Match
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                          <ChevronRight size={18} style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'all 0.2s' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                          <ChevronRight size={20} style={{ transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'all 0.2s' }} />
                         </div>
                       </div>
                     </div>
 
-                    {/* Gap Analysis section (Expanded) */}
+                    {/* Gap Analysis section & Match Reason (Expanded Only) */}
                     {isExpanded && (
                       <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border)', animation: 'fadeIn 0.3s' }}>
+                        {/* Match Reason Banner */}
+                        {path.matchReason && (
+                          <div style={{
+                            marginBottom: '1.5rem',
+                            padding: '0.85rem 1.1rem',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, rgba(124,92,252,0.08), rgba(124,92,252,0.04))',
+                            border: '1px solid rgba(124,92,252,0.2)',
+                            fontSize: '0.875rem',
+                            lineHeight: '1.5'
+                          }}>
+                            <div style={{ color: 'var(--primary)', fontWeight: '700', marginBottom: '0.2rem' }}>
+                              เหตุผลในการ Match สำหรับคณะนี้:
+                            </div>
+                            <div style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                              {path.matchReason}
+                            </div>
+                          </div>
+                        )}
+
                         <h4 style={{ margin: '0 0 1rem 0' }}>วิเคราะห์ช่องว่างทักษะ (Gap Analysis)</h4>
                         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
                           เปรียบเทียบคะแนนทักษะของคุณกับเกณฑ์เฉลี่ยที่แนะนำสำหรับ{path.name}

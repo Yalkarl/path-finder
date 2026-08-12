@@ -241,9 +241,9 @@ export default function DashboardAssessmentPage() {
       const allResponses = [...filteredOldResponses, ...newResponses];
 
       const targetPathForFiltering = profile.analysisMode === 'target-lock' && profile.targetPath ? profile.targetPath : null;
-      const skillVector = calculateSkillVector(profile.academics, allResponses, targetPathForFiltering);
+      const skillVector = calculateSkillVector(profile.academics, allResponses, targetPathForFiltering, profile.likes || [], profile.dislikes || []);
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-      const rankings = matchPaths(skillVector, pathsObject);
+      const rankings = matchPaths(skillVector, pathsObject, profile.likes || [], profile.dislikes || []);
       
       const updatedUsedIds = [...new Set([...(profile.usedQuestionIds || []), ...stageQuestions])];
 
@@ -260,7 +260,9 @@ export default function DashboardAssessmentPage() {
             customActivities: profile.customActivities,
             targetPath: profile.targetPath,
             analysisMode: profile.analysisMode,
-            educationLevel: profile.educationLevel
+            educationLevel: profile.educationLevel,
+            likes: profile.likes || [],
+            dislikes: profile.dislikes || []
           })
         });
         const aiData = await aiRes.json();
@@ -271,6 +273,9 @@ export default function DashboardAssessmentPage() {
         console.warn('AI evaluation API call failed:', aiErr);
       }
 
+      const finalSkillVector = (aiEvalResult?.skillVector && aiEvalResult.skillVector.length === 5) ? aiEvalResult.skillVector : skillVector;
+      const finalRankings = matchPaths(finalSkillVector, pathsObject, profile.likes || [], profile.dislikes || []);
+
       const updatePayload = {
         usedQuestionIds: updatedUsedIds,
         resultsUpdated: true,
@@ -279,8 +284,8 @@ export default function DashboardAssessmentPage() {
           completedAt: new Date().toISOString()
         },
         results: {
-          skillVector: (aiEvalResult?.skillVector && aiEvalResult.skillVector.length === 5) ? aiEvalResult.skillVector : skillVector,
-          matchRankings: rankings
+          skillVector: finalSkillVector,
+          matchRankings: finalRankings
         }
       };
 
@@ -295,7 +300,7 @@ export default function DashboardAssessmentPage() {
         ...prev,
         usedQuestionIds: updatedUsedIds,
         assessment: { responses: allResponses, completedAt: new Date().toISOString() },
-        results: { skillVector: updatePayload.results.skillVector, matchRankings: rankings },
+        results: { skillVector: finalSkillVector, matchRankings: finalRankings },
         aiEvaluation: aiEvalResult || prev.aiEvaluation
       }));
       setCompletedStages(prev => new Set(prev).add(selectedTheme.id));
@@ -363,8 +368,37 @@ export default function DashboardAssessmentPage() {
 
           {/* Progress Bar */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-              <span style={{ color: 'var(--primary)', fontWeight: '600' }}>ข้อที่ {currentIndex + 1}/{scenarios.length}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: 'var(--primary)', fontWeight: '600' }}>ข้อที่ {currentIndex + 1}/{scenarios.length}</span>
+                {currentIndex > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCurrentIndex(prev => Math.max(0, prev - 1));
+                      setResponses(prev => prev.slice(0, -1));
+                      setIsCustomInputOpen(false);
+                      setCustomText('');
+                    }}
+                    style={{
+                      background: 'rgba(124, 92, 252, 0.1)',
+                      border: 'none',
+                      color: 'var(--primary)',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      padding: '2px 8px',
+                      borderRadius: '8px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.2rem',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    ← ย้อนกลับ
+                  </button>
+                )}
+              </div>
               <span style={{ 
                 background: selectedTheme.color, 
                 color: 'white', 

@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
-import { User, Settings, Edit2, Compass, BookOpen, Globe, BookMarked, FlaskConical, Target } from 'lucide-react';
+import { User, Settings, Edit2, Compass, BookOpen, Globe, BookMarked, FlaskConical, Target, Bot, Laptop, Palette, Stethoscope, GraduationCap, Rocket, Sparkles, LogOut } from 'lucide-react';
+import { signOut } from '@/lib/firebaseAuth';
 
 const SUBJECTS = [
   { key: 'math', name: 'คณิตศาสตร์', icon: <Compass size={18} />, color: '#E91E63' },
@@ -21,14 +22,59 @@ const GRADE_LEVELS = [
   { value: 'm4', label: 'ม.4' }, { value: 'm5', label: 'ม.5' }, { value: 'm6', label: 'ม.6' },
 ];
 
+const AVATARS = [
+  { id: 'pathfinder', icon: <Bot size={24} />, name: 'Bot Master', badge: 'เริ่มต้น', bg: '#864CBF', shadow: '#5B2B8E' },
+  { id: 'scientist', icon: <FlaskConical size={24} />, name: 'Lab Scientist', badge: 'นักวิจัย', bg: '#26890C', shadow: '#1B5B08' },
+  { id: 'coder', icon: <Laptop size={24} />, name: 'Cyber Hacker', badge: 'สายไอที', bg: '#1368CE', shadow: '#0C4288' },
+  { id: 'artist', icon: <Palette size={24} />, name: 'Creative Designer', badge: 'ดีไซเนอร์', bg: '#E6007A', shadow: '#990051' },
+  { id: 'captain', icon: <Compass size={24} />, name: 'Space Captain', badge: 'ผู้นำทีม', bg: '#E21B3C', shadow: '#960E25' },
+  { id: 'doctor', icon: <Stethoscope size={24} />, name: 'Medical Hero', badge: 'สายสุขภาพ', bg: '#2A9D8F', shadow: '#1C675E' },
+  { id: 'scholar', icon: <GraduationCap size={24} />, name: 'High Scholar', badge: 'นักเรียนทุน', bg: '#D89E00', shadow: '#8C6700' },
+  { id: 'astronomer', icon: <Rocket size={24} />, name: 'Star Navigator', badge: 'นักสำรวจ', bg: '#E76F51', shadow: '#B34A31' }
+];
+
+import KahootAvatarStudio from '@/components/ui/KahootAvatarStudio';
+import { useRef } from 'react';
+
+const PRESET_LIKES = [
+  'AI & เทคโนโลยี', 'เขียนโปรแกรม/โค้ดดิ้ง', 'วิทยาศาสตร์ & การทดลอง', 
+  'การวางแผน & บริหารธุรกิจ', 'ศิลปะ & ออกแบบ', 'ภาษา & การสื่อสาร', 
+  'ดนตรี & การแสดง', 'เกม & E-Sports', 'กีฬา & ฟิตเนส', 'การทำอาหาร'
+];
+
+const PRESET_DISLIKES = [
+  'งานท่องจำตำราหนักๆ', 'งานที่ต้องเจอเลือด/บาดแผล/ศพ', 'การคิดคำนวณคณิตซับซ้อน', 
+  'การพูดโต้ตอบคนเยอะๆ/สปีช', 'งานทำความสะอาด/ใช้แรงกายหนัก', 'งานเอกสาร/ระเบียบเป๊ะๆ', 'การทำงานคนเดียวโดดเดี่ยว'
+];
+
 export default function ProfilePage() {
   const { user } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState(null);
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
+  const [characterId, setCharacterId] = useState('robot');
+  const [accessoryId, setAccessoryId] = useState('none');
+  const [likes, setLikes] = useState([]);
+  const [dislikes, setDislikes] = useState([]);
+  const [likeInput, setLikeInput] = useState('');
+  const [dislikeInput, setDislikeInput] = useState('');
+  const [showLikeDropdown, setShowLikeDropdown] = useState(false);
+  const [showDislikeDropdown, setShowDislikeDropdown] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const likeRef = useRef(null);
+  const dislikeRef = useRef(null);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -37,10 +83,67 @@ export default function ProfilePage() {
           setProfile(p);
           setName(p.name || '');
           setGrade(p.grade || p.gradeLevel || '');
+          setCharacterId(p.characterId || 'robot');
+          setAccessoryId(p.accessoryId || 'none');
+          setLikes(p.likes || []);
+          setDislikes(p.dislikes || []);
         }
       });
     }
+
+    const handleClickOutside = (e) => {
+      if (likeRef.current && !likeRef.current.contains(e.target)) {
+        setShowLikeDropdown(false);
+      }
+      if (dislikeRef.current && !dislikeRef.current.contains(e.target)) {
+        setShowDislikeDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [user]);
+
+  const addLike = (item) => {
+    if (item && !likes.includes(item)) setLikes(prev => [...prev, item]);
+    setLikeInput('');
+    setShowLikeDropdown(false);
+  };
+
+  const removeLike = (item) => setLikes(prev => prev.filter(i => i !== item));
+
+  const addDislike = (item) => {
+    if (item && !dislikes.includes(item)) setDislikes(prev => [...prev, item]);
+    setDislikeInput('');
+    setShowDislikeDropdown(false);
+  };
+
+  const removeDislike = (item) => setDislikes(prev => prev.filter(i => i !== item));
+
+  const handleLikeKeyDown = (e) => {
+    if (e.key === 'Enter' && likeInput.trim()) {
+      e.preventDefault();
+      addLike(likeInput.trim());
+    }
+  };
+
+  const handleDislikeKeyDown = (e) => {
+    if (e.key === 'Enter' && dislikeInput.trim()) {
+      e.preventDefault();
+      addDislike(dislikeInput.trim());
+    }
+  };
+
+  const handleSaveKahootAvatar = async ({ characterId, accessoryId }) => {
+    setCharacterId(characterId);
+    setAccessoryId(accessoryId);
+    if (!user) return;
+    try {
+      await updateUserProfile(user.uid, { characterId, accessoryId });
+      setProfile(prev => ({ ...prev, characterId, accessoryId }));
+    } catch (e) {
+      console.error('Error saving avatar:', e);
+    }
+  };
 
   const handleSaveName = async () => {
     if (!name.trim()) return;
@@ -186,16 +289,16 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Section 1: User Info */}
+      {/* Section 1: User Info & Avatar Studio */}
       <div className="card" style={{ marginBottom: '2rem', padding: '2rem' }}>
-        <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 250px' }}>
+        <div style={{ display: 'flex', gap: '3rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          {/* Left Column: User Information & Account Settings */}
+          <div style={{ flex: '1 1 320px' }}>
             <h2 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.5rem', fontSize: '1.25rem' }}>ข้อมูลผู้ใช้</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginBottom: '1.75rem' }}>
               ข้อมูลนี้จะถูกใช้ใน PathFinder เพื่อให้ Mr. Path สามารถเรียกชื่อคุณได้อย่างถูกต้อง
             </p>
-          </div>
-          <div style={{ flex: '1 1 350px' }}>
+
             {/* Name */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
@@ -247,14 +350,393 @@ export default function ProfilePage() {
               </select>
             </div>
 
+            {/* Likes / Interests Section - Sleek Dropdown */}
+            <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', position: 'relative' }} ref={likeRef}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', color: '#16A34A', fontWeight: '700' }}>
+                  สิ่งชอบ / ความสนใจของคุณ
+                </label>
+                {likes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setLikes([])}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#6B7280',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: 0
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = '#DC2626'}
+                    onMouseLeave={(e) => e.target.style.color = '#6B7280'}
+                    title="ลบสิ่งชอบทั้งหมดที่เลือกไว้"
+                  >
+                    ล้างสิ่งที่ชอบทั้งหมด
+                  </button>
+                )}
+              </div>
+              {likes.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                  {likes.map(item => (
+                    <span
+                      key={item}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justify: 'center',
+                        gap: '0.35rem',
+                        padding: '0.2rem 0.45rem 0.2rem 0.65rem',
+                        borderRadius: '16px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        lineHeight: 1,
+                        background: 'rgba(22, 163, 74, 0.12)',
+                        color: '#16A34A',
+                        border: '1px solid rgba(22, 163, 74, 0.3)'
+                      }}
+                    >
+                      ✓ {item}
+                      <button
+                        type="button"
+                        onClick={() => removeLike(item)}
+                        style={{
+                          background: 'rgba(22, 163, 74, 0.25)',
+                          border: 'none',
+                          color: '#16A34A',
+                          cursor: 'pointer',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justify: 'center',
+                          padding: 0,
+                          margin: 0,
+                          lineHeight: 0,
+                          flexShrink: 0,
+                          appearance: 'none',
+                          WebkitAppearance: 'none'
+                        }}
+                        title="คลิกเพื่อลบสิ่งชอบนี้ออก"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: 'auto' }}>
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                type="text"
+                className="input-field"
+                placeholder="พิมพ์หรือคลิกเลือกสิ่งชอบ..."
+                value={likeInput}
+                onFocus={() => setShowLikeDropdown(true)}
+                onChange={(e) => { setLikeInput(e.target.value); setShowLikeDropdown(true); }}
+                onKeyDown={handleLikeKeyDown}
+                style={{ fontSize: '0.85rem', width: '100%' }}
+              />
+              {showLikeDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  background: 'var(--surface, #FFF)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  zIndex: 100,
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  padding: '0.4rem'
+                }}>
+                  {PRESET_LIKES.filter(p => !likes.includes(p) && p.toLowerCase().includes(likeInput.toLowerCase())).map(preset => (
+                    <div
+                      key={preset}
+                      onClick={() => addLike(preset)}
+                      style={{
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.85rem',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--text-primary)',
+                        fontWeight: '500',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'var(--primary-bg)'}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                      + {preset}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Dislikes / Non-interests Section - Sleek Dropdown */}
+            <div style={{ marginBottom: '1.75rem', position: 'relative' }} ref={dislikeRef}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', color: '#DC2626', fontWeight: '700' }}>
+                  สิ่งที่ไม่อิน / ไม่ชอบ
+                </label>
+                {dislikes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setDislikes([])}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#6B7280',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      padding: 0
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = '#DC2626'}
+                    onMouseLeave={(e) => e.target.style.color = '#6B7280'}
+                    title="ลบสิ่งที่ไม่ชอบทั้งหมดที่เลือกไว้"
+                  >
+                    ล้างสิ่งที่ไม่ชอบทั้งหมด
+                  </button>
+                )}
+              </div>
+              {dislikes.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                  {dislikes.map(item => (
+                    <span
+                      key={item}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justify: 'center',
+                        gap: '0.35rem',
+                        padding: '0.2rem 0.45rem 0.2rem 0.65rem',
+                        borderRadius: '16px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        lineHeight: 1,
+                        background: 'rgba(220, 38, 38, 0.12)',
+                        color: '#DC2626',
+                        border: '1px solid rgba(220, 38, 38, 0.3)'
+                      }}
+                    >
+                      ✕ {item}
+                      <button
+                        type="button"
+                        onClick={() => removeDislike(item)}
+                        style={{
+                          background: 'rgba(220, 38, 38, 0.25)',
+                          border: 'none',
+                          color: '#DC2626',
+                          cursor: 'pointer',
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justify: 'center',
+                          padding: 0,
+                          margin: 0,
+                          lineHeight: 0,
+                          flexShrink: 0,
+                          appearance: 'none',
+                          WebkitAppearance: 'none'
+                        }}
+                        title="คลิกเพื่อลบสิ่งที่ไม่ชอบนี้ออก"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: 'auto' }}>
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <input
+                type="text"
+                className="input-field"
+                placeholder="พิมพ์หรือคลิกเลือกสิ่งที่ไม่ชอบ..."
+                value={dislikeInput}
+                onFocus={() => setShowDislikeDropdown(true)}
+                onChange={(e) => { setDislikeInput(e.target.value); setShowDislikeDropdown(true); }}
+                onKeyDown={handleDislikeKeyDown}
+                style={{ fontSize: '0.85rem', width: '100%' }}
+              />
+              {showDislikeDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  background: 'var(--surface, #FFF)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  zIndex: 100,
+                  maxHeight: '180px',
+                  overflowY: 'auto',
+                  padding: '0.4rem'
+                }}>
+                  {PRESET_DISLIKES.filter(p => !dislikes.includes(p) && p.toLowerCase().includes(dislikeInput.toLowerCase())).map(preset => (
+                    <div
+                      key={preset}
+                      onClick={() => addDislike(preset)}
+                      style={{
+                        padding: '0.5rem 0.75rem',
+                        fontSize: '0.85rem',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        color: 'var(--text-primary)',
+                        fontWeight: '500',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'var(--primary-bg)'}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                      + {preset}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Save Changes Button at the bottom below Dislikes */}
             <button
               className="btn-primary"
-              onClick={() => { handleSaveName(); handleSaveGrade(); }}
+              onClick={async () => {
+                setSaving(true);
+                await handleSaveName();
+                await handleSaveGrade();
+                if (user && profile) {
+                  const updatedGrades = profile.academics || {};
+                  const updatedResponses = profile.assessment?.responses || [];
+                  const targetPathForFiltering = profile.analysisMode === 'target-lock' && profile.targetPath ? profile.targetPath : null;
+
+                  // คำนวณ Skill Vector และ Match Rankings ใหม่ด้วยอัลกอริทึมท้องถิ่นแบบรวดเร็วทันที (ใช้เวลาเพียง <5ms)
+                  const newSkillVector = calculateSkillVector(updatedGrades, updatedResponses, targetPathForFiltering, likes, dislikes);
+                  const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
+                  const newRankings = matchPaths(newSkillVector, pathsObject, likes, dislikes);
+
+                  const isCleared = likes.length === 0 && dislikes.length === 0;
+
+                  const updatePayload = {
+                    likes,
+                    dislikes,
+                    results: {
+                      skillVector: newSkillVector,
+                      matchRankings: newRankings
+                    },
+                    resultsUpdated: true,
+                    updatedAt: new Date().toISOString()
+                  };
+
+                  if (isCleared) {
+                    // เมื่อล้างข้อมูลสิ่งชอบ/ไม่ชอบออกทั้งหมด ให้รีเซ็ตค่าแคชเก่าของ AI ออกเพื่อให้อันดับคำนวณจากเกรดและแบบทดสอบจริงทันที
+                    updatePayload.aiEvaluation = null;
+                    setProfile(prev => ({
+                      ...prev,
+                      likes: [],
+                      dislikes: [],
+                      aiEvaluation: null,
+                      results: {
+                        skillVector: newSkillVector,
+                        matchRankings: newRankings
+                      }
+                    }));
+                  }
+
+                  // อัปเดตข้อมูลลง Firestore ทันที
+                  await updateUserProfile(user.uid, updatePayload);
+
+                  // เรียก AI Evaluate เบื้องหลังโดยไม่รอส่งผลกระทบต่อความเร็วการเปลี่ยนหน้า (Background AI Evaluation)
+                  fetch('/api/ai-evaluate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      responses: updatedResponses,
+                      academics: updatedGrades,
+                      portfolio: profile.portfolio,
+                      customActivities: profile.customActivities,
+                      targetPath: profile.targetPath,
+                      analysisMode: profile.analysisMode,
+                      educationLevel: profile.educationLevel,
+                      likes,
+                      dislikes
+                    })
+                  }).then(res => res.json()).then(aiData => {
+                    if (aiData.success && aiData.evaluation && user) {
+                      const bgVector = (aiData.evaluation.skillVector && aiData.evaluation.skillVector.length === 5) ? aiData.evaluation.skillVector : newSkillVector;
+                      const bgRankings = matchPaths(bgVector, pathsObject, likes, dislikes);
+                      updateUserProfile(user.uid, {
+                        aiEvaluation: aiData.evaluation,
+                        results: {
+                          skillVector: bgVector,
+                          matchRankings: bgRankings
+                        }
+                      });
+                    }
+                  }).catch(() => {});
+                }
+                setSaving(false);
+                setSaveSuccess(true);
+                router.push('/dashboard');
+              }}
               disabled={saving}
-              style={{ padding: '0.6rem 2rem', fontSize: '0.9rem' }}
+              style={{ width: '100%', padding: '0.75rem 2rem', fontSize: '0.9rem', marginBottom: '1.5rem' }}
             >
-              {saving ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}
+              {saving ? 'กำลังบันทึกข้อมูล...' : 'บันทึกการเปลี่ยนแปลง'}
             </button>
+
+            {/* Logout Button */}
+            <div style={{ paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                  background: 'rgba(239, 68, 68, 0.06)',
+                  color: '#EF4444',
+                  fontWeight: '700',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s ease',
+                  fontFamily: 'inherit'
+                }}
+              >
+                <LogOut size={16} /> ออกจากระบบ
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Kahoot Avatar Customization Studio */}
+          <div style={{ flex: '1 1 350px' }}>
+            <div style={{ marginBottom: '1.75rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.75rem' }}>
+                <Sparkles size={14} style={{ color: 'var(--primary)' }} /> ปรับแต่งตัวละคร
+              </label>
+              <KahootAvatarStudio
+                initialCharacterId={characterId}
+                initialAccessoryId={accessoryId}
+                onSave={handleSaveKahootAvatar}
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -228,9 +228,13 @@ body {
     display: none !important;
   }
 
-  /* Hide desktop profile dropdown on mobile to prevent overlap */
+  /* Show compact profile badge on mobile so users can tap to logout */
   .desktop-profile-dropdown {
-    display: none !important;
+    display: block !important;
+    position: absolute !important;
+    top: 0.75rem !important;
+    right: 0.75rem !important;
+    z-index: 1000 !important;
   }
   
   /* Show mobile bottom nav */
@@ -301,6 +305,24 @@ body {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 1rem !important;
+  }
+}
+
+/* Mobile Responsive Optimization for Smartphones */
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+  .card {
+    padding: 1.2rem !important;
+    border-radius: 16px !important;
+  }
+  button, input, select, textarea {
+    min-height: 44px;
+  }
+  .dashboard-grid, .grades-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
   }
 }
 

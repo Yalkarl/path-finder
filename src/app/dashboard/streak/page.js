@@ -89,11 +89,16 @@ export default function StreakPage() {
         <p style={{ fontWeight: '600', marginBottom: '1rem' }}>สถิติสัปดาห์นี้</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
           {days.map((day, idx) => {
-            const isPast = idx < todayIndex;
             const isToday = idx === todayIndex;
-            const isLogged = isPast || (isToday && streakData.current > 0);
-            // คำนวณจำลองสถานะวันย้อนหลังตามความต่อเนื่อง
-            const loggedIn = isLogged && (streakData.current >= (todayIndex - idx + 1));
+            const isPast = idx < todayIndex;
+            // คำนวณวันที่มีการเข้าใช้งานย้อนหลังอย่างแม่นยำตามจำนวนวัน Streak
+            let loggedIn = false;
+            if (isToday) {
+              loggedIn = streakData.current > 0;
+            } else if (isPast) {
+              const daysAgo = todayIndex - idx;
+              loggedIn = daysAgo < streakData.current;
+            }
 
             return (
               <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>

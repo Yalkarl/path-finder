@@ -87,14 +87,7 @@ export default function DashboardLayout({ children }) {
       overflow: 'hidden',
     }}>
       {/* Floating background decorative objects - Hidden on chat page for clean look */}
-      {!isChat && (
-        <>
-          <div className="bg-deco-object animate-float-1" style={{ top: '10%', left: '8%', fontSize: '2.5rem', opacity: 0.25 }}>⭐</div>
-          <div className="bg-deco-object animate-float-2" style={{ top: '22%', right: '10%', fontSize: '2.2rem', opacity: 0.2 }}>🔮</div>
-          <div className="bg-deco-object animate-float-3" style={{ bottom: '25%', left: '10%', fontSize: '2rem', opacity: 0.2 }}>✨</div>
-          <div className="bg-deco-object animate-float-4" style={{ bottom: '15%', right: '8%', fontSize: '2.2rem', opacity: 0.15 }}>🎓</div>
-        </>
-      )}
+      {/* Clean Background Layout */}
 
       {/* Sidebar Backdrop Overlay on Mobile */}
       {sidebarOpen && (

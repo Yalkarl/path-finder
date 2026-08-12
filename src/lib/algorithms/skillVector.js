@@ -1,5 +1,5 @@
 // ==========================================
-// การคำนวณ 5D Skill Vector จาก GPAX สะสมรายกลุ่มสาระวิชา (30%) และแบบทดสอบ (70%)
+// การคำนวณ 5D Skill Vector จาก GPAX สะสมรายกลุ่มสาระวิชา (30%), แบบทดสอบ (70%) และสิ่งชอบ/ไม่ชอบ
 // ==========================================
 
 import { TARGET_CLUSTERS } from '../constants/targetedAssessment';
@@ -17,7 +17,7 @@ const ACADEMIC_WEIGHT_MATRIX = {
 const ACADEMIC_WEIGHT = 0.30;
 const ASSESSMENT_WEIGHT = 0.70;
 
-export function calculateSkillVector(academicGrades, assessmentResponses, targetPath = null) {
+export function calculateSkillVector(academicGrades, assessmentResponses, targetPath = null, likes = [], dislikes = []) {
   // แปลงสเกล GPAX รายวิชาสะสม (0.00-4.00) เป็นช่วง 0.0 - 1.0
   const normGrades = {
     math: (academicGrades.math || 0) / 4,
@@ -93,7 +93,6 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
         let isInvalid = false;
         if (response.customText) {
           const norm = response.customText.trim().toLowerCase();
-          // หากเป็นคำหยาบ/ข้อความมั่ว/คำคุยเล่น หรือพิมพ์คำตอบอิสระซ้ำกันมากกว่า 1 ข้อ ให้ถือว่า invalid
           if (isProfanityOrGibberish(response.customText) || customTextFrequency[norm] > 1) {
             isInvalid = true;
           }
@@ -112,18 +111,47 @@ export function calculateSkillVector(academicGrades, assessmentResponses, target
       });
 
       if (validCount > 0) {
-        // การคำนวณ Progress Factor ตามสัดส่วนจำนวนข้อที่ทำเสร็จ
         const totalExpected = targetPath ? 36 : 144;
         const progressRatio = Math.min(1, validCount / totalExpected);
         const progressFactor = 0.3 + 0.7 * progressRatio;
 
         dimKeys.forEach((dim, index) => {
-          // คำนวณค่าน้ำหนักเฉลี่ยรายข้อในมิตินั้นๆ (อิงสเกลเกณฑ์อ้างอิงเฉลี่ย 0.55)
           const avgWeight = accumulated[index] / validCount;
           const normalizedDim = Math.min(1, avgWeight / 0.55);
           baseVector[index] += normalizedDim * ASSESSMENT_WEIGHT * progressFactor;
         });
       }
+    }
+  }
+
+  // ปรับค่าน้ำหนักเสริมเบาๆ จากสิ่งชอบ (Realistic & Natural Subtle Boost +0.05)
+  // เพื่อไม่ให้กราฟ My Skill Matrix บวมโตบิดเบี้ยวเฟ้อจนเกินความเป็นจริง
+  if (Array.isArray(likes) && likes.length > 0) {
+    const boostAcc = [0, 0, 0, 0, 0];
+    likes.forEach(like => {
+      const norm = like.toLowerCase();
+      if (norm.includes('ai') || norm.includes('โค้ด') || norm.includes('โปรแกรม') || norm.includes('เทคโนโลยี') || norm.includes('ไอที') || norm.includes('คอมพิวเตอร์') || norm.includes('เกม') || norm.includes('esports')) {
+        boostAcc[0] += 0.05; // Subtle Logic Boost (+0.05)
+        boostAcc[1] += 0.03; // Subtle Science Boost (+0.03)
+      }
+      if (norm.includes('บริหาร') || norm.includes('ธุรกิจ') || norm.includes('วางแผน') || norm.includes('การเงิน') || norm.includes('การตลาด')) {
+        boostAcc[4] += 0.05; // Subtle Management Boost (+0.05)
+        boostAcc[0] += 0.03; // Subtle Logic Boost (+0.03)
+      }
+      if (norm.includes('ศิลปะ') || norm.includes('ออกแบบ') || norm.includes('วาด') || norm.includes('ดนตรี') || norm.includes('การแสดง') || norm.includes('กราฟิก')) {
+        boostAcc[3] += 0.05; // Subtle Art Boost (+0.05)
+        boostAcc[2] += 0.03; // Subtle Language Boost (+0.03)
+      }
+      if (norm.includes('ภาษา') || norm.includes('สื่อสาร') || norm.includes('อังกฤษ') || norm.includes('นิเทศ')) {
+        boostAcc[2] += 0.05; // Subtle Language Boost (+0.05)
+      }
+      if (norm.includes('วิทย์') || norm.includes('ทดลอง') || norm.includes('เคมี') || norm.includes('หมอ') || norm.includes('รักษา')) {
+        boostAcc[1] += 0.05; // Subtle Science Boost (+0.05)
+      }
+    });
+
+    for (let i = 0; i < 5; i++) {
+      baseVector[i] = Math.min(1.0, baseVector[i] + Math.min(0.08, boostAcc[i]));
     }
   }
 

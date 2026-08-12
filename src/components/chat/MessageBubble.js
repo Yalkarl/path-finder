@@ -1,10 +1,14 @@
 'use client';
 import ReactMarkdown from 'react-markdown';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { MrPath } from '@/components/ui/mr-path';
+import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
 
-export default function MessageBubble({ message }) {
+export default function MessageBubble({ message, profile }) {
   const isUser = message.role === 'user';
+
+  const charId = profile?.characterId || 'penguin';
+  const accId = profile?.accessoryId || 'none';
 
   return (
     <div style={{
@@ -15,20 +19,28 @@ export default function MessageBubble({ message }) {
       animation: 'fadeIn 0.3s ease-out'
     }}>
       {/* Avatar */}
-      <Avatar>
+      <div style={{ flexShrink: 0 }}>
         {!isUser ? (
-          <MrPath size={40} showBg={false} />
+          <Avatar style={{ width: '40px', height: '40px' }}>
+            <MrPath size={40} showBg={false} />
+          </Avatar>
         ) : (
-          <AvatarFallback style={{
-            background: 'var(--primary)',
-            color: 'white',
-            fontSize: '1.25rem',
-            fontWeight: 'bold',
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: 'var(--primary-bg)',
+            border: '2px solid var(--primary-light)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(124,92,252,0.15)'
           }}>
-            👤
-          </AvatarFallback>
+            <KahootCharacterSvg type={charId} accessory={accId} size={38} />
+          </div>
         )}
-      </Avatar>
+      </div>
 
       {/* Bubble */}
       <div style={{

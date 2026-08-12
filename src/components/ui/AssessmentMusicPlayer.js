@@ -59,15 +59,16 @@ export default function AssessmentMusicPlayer({ audioPath = '/audio/quiz_music.m
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
+      try { localStorage.setItem('pathfinder_audio_muted', 'true'); } catch (e) {}
     } else {
       audio.play()
         .then(() => {
           setIsPlaying(true);
+          try { localStorage.setItem('pathfinder_audio_muted', 'false'); } catch (e) {}
         })
         .catch(err => {
-          console.warn('Audio play failed:', err);
+          console.warn('Audio play failed (file missing or blocked):', err);
           setIsPlaying(false);
-          alert('ไม่พบไฟล์เพลงทดสอบ: กรุณานำไฟล์เพลง .mp3 ของคุณไปวางไว้ที่โฟลเดอร์ public/audio/quiz_music.mp3 ก่อนเปิดเล่นนะครับ 🎵');
         });
     }
   };

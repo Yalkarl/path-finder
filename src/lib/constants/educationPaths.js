@@ -202,7 +202,7 @@ export const SENIOR_PATHS = {
     id: 'sports-science',
     name: 'คณะวิทยาศาสตร์การกีฬา', 
     description: 'วิทยาศาสตร์การเคลื่อนไหว สรีรวิทยาการออกกำลังกาย โภชนาการการกีฬา และการฝึกสอนกีฬา',
-    benchmark: [0.45, 0.75, 0.35, 0.15, 0.60]
+    benchmark: [0.30, 0.65, 0.25, 0.15, 0.45]
   },
   'logistics-industrial-tech': { 
     id: 'logistics-industrial-tech',

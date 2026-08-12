@@ -671,7 +671,7 @@ function ChatPageInner() {
         {/* Messages Area */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
           {messages.map((msg, idx) => (
-            <MessageBubble key={idx} message={msg} />
+            <MessageBubble key={idx} message={msg} profile={profile} />
           ))}
           {isLoading && (
             <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0', paddingLeft: '3rem' }}>
