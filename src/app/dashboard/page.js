@@ -401,7 +401,7 @@ export default function DashboardPage() {
             ) : (
               <>
                 <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
-                  โอกาสความพร้อมสอบเข้า: <span style={{ color: 'var(--primary)' }}>
+                  {profile.educationLevel === 'junior' ? 'โอกาสความพร้อมสอบเข้า ม.4:' : 'โอกาสความพร้อมยื่นพอร์ต TCAS รอบ 1:'} <span style={{ color: 'var(--primary)' }}>
                     {targetPathObj?.name || profile.targetPath}
                   </span>
                   {isUpdated && <UpdateBadge />}
@@ -424,7 +424,7 @@ export default function DashboardPage() {
                 style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.75rem 1.5rem' }}
               >
                 <MrPath size={24} />
-                คุยกับ AI โค้ช เพื่อติวเข้มวางแผนสอบเข้า
+                {profile.educationLevel === 'junior' ? 'คุยกับ AI โค้ช เพื่อติวเข้มสอบเข้า ม.4' : 'คุยกับ AI โค้ช เพื่อวางแผนยื่นพอร์ตโฟลิโอ'}
               </button>
               <button 
                 onClick={() => router.push('/setup/grades?mode=edit')}

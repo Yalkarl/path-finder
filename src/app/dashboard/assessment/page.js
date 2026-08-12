@@ -693,7 +693,7 @@ export default function DashboardAssessmentPage() {
           </div>
           <div>
             <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#FFFFFF', letterSpacing: '0.2px', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <span>โหมดประเมินความพร้อมสอบเข้า:</span>
+              <span>{level === 'junior' ? 'โหมดประเมินความพร้อมสอบเข้า ม.4:' : 'โหมดประเมินความพร้อมยื่นพอร์ต TCAS รอบ 1:'}</span>
               <span style={{ 
                 background: '#FFFFFF',
                 color: 'var(--primary)',
