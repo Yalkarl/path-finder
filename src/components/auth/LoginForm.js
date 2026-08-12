@@ -46,8 +46,9 @@ export default function LoginForm() {
     setLoading(true);
     try {
       if (isForgotPassword) {
-        await resetPassword(email);
-        setSuccessMessage('ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลของคุณสำเร็จแล้ว! 📧\n\n⚠️ หากไม่พบอีเมล กรุณาตรวจสอบในโฟลเดอร์จดหมายขยะ (Spam/Junk) ด้วยนะครับ');
+        const cleanEmail = email.trim().toLowerCase();
+        await resetPassword(cleanEmail);
+        setSuccessMessage('ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลเรียบร้อยแล้ว! 📧\n\n⚠️ หากไม่พบอีเมลใน Inbox กรุณาตรวจสอบ:\n1. โฟลเดอร์ "จดหมายขยะ" (Spam / Junk) หรือแท็บ "โปรโมชัน"\n2. หากสมัครบัญชีด้วย "Google Sign-In" จะไม่มีรหัสผ่าน ให้กดกลับไปกดปุ่ม "Login ด้วย Google" ได้เลยครับ\n3. ตรวจสอบการสะกดชื่ออีเมลให้ถูกต้อง');
       } else {
         let result;
         if (isSignUp) {
