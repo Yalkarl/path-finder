@@ -1,162 +1,113 @@
 import { calculateMatchPercentage } from './cosineSimilarity';
 import { SELF_ASSESSMENT_SUBJECTS } from '../constants/selfAssessmentSubjects';
 
-// ==========================================
-// การแปลงข้อมูลผลงาน (Portfolio Item Normalization)
-// ==========================================
-function normalizePortfolioItem(item) {
+// Weights for portfolio items based on prestige level and type
+const PORTFOLIO_WEIGHTS = {
+  national_award: 1.0,      // รางวัลระดับประเทศ/นานาชาติ
+  provincial_award: 0.7,    // รางวัลระดับจังหวัด/ภาค
+  school_award: 0.4,        // รางวัลระดับโรงเรียน
+  participant: 0.3,         // เข้าร่วมกิจกรรม/อบรม/สัมมนา
+  volunteer: 0.3,           // กิจกรรมจิตอาสา/บำเพ็ญประโยชน์
+  leadership: 0.5,          // ตำแหน่งผู้นำ/ประธาน/หัวหน้า
+  academic_camp: 0.6,       // ค่ายวิชาการ (สอวน. / ค่ายคณะ)
+  project: 0.7,             // โครงงาน/วิจัย/สิ่งประดิษฐ์
+};
+
+// Preset item prestige mapping based on text search
+const PRESET_ITEM_WEIGHTS = {
+  // High prestige (1.0)
+  'สอวน. ค่าย 2 ขึ้นไป': 1.0,
+  'รางวัลระดับประเทศ/นานาชาติ': 1.0,
+  'ชนะเลิศการแข่งขันวิชาการระดับประเทศ': 1.0,
+  'เหรียญรางวัลการแข่งขันระดับชาติ': 1.0,
+
+  // Medium-High prestige (0.6 - 0.7)
+  'สอวน. ค่าย 1': 0.7,
+  'ผ่านการอบรมค่ายวิชาการของมหาวิทยาลัย': 0.6,
+  'โครงงานวิจัย/สิ่งประดิษฐ์มีผลงานเป็นรูปธรรม': 0.7,
+  'รางวัลระดับจังหวัด/ระดับภาค': 0.7,
+  'เกียรติบัตรการแข่งขันทักษะวิชาการระดับเขต/จังหวัด': 0.6,
+
+  // Medium prestige (0.4 - 0.5)
+  'ประธานนักเรียน/หัวหน้าชมรม/ผู้นำกิจกรรม': 0.5,
+  'เกียรติบัตรเรียนดี/ผลการเรียนโดดเด่น': 0.4,
+  'รางวัลระดับโรงเรียน': 0.4,
+  'ผ่านการฝึกงาน/สังเกตการณ์ในสถานพยาบาลหรือหน่วยงานจริง': 0.6,
+  'ผ่านการทดสอบวัดระดับภาษาต่างประเทศ': 0.5,
+  'ผลงานออกแบบ/สื่อ/บทความ/ผลงานสร้างสรรค์': 0.5,
+
+  // Basic participation (0.2 - 0.3)
+  'เข้าร่วมกิจกรรมจิตอาสา/บำเพ็ญประโยชน์': 0.3,
+  'เข้าร่วมค่าย/เสวนา/งานเปิดบ้านมหาวิทยาลัย (Open House)': 0.2,
+  'ผ่านการอบรมคอร์สออนไลน์มีเกียรติบัตร': 0.3,
+  'สมาชิกชมรม/ผู้ร่วมจัดกิจกรรม': 0.2,
+};
+
+/**
+ * Normalizes a portfolio item into a structured object with weight metadata.
+ * Handles both string presets and custom activity objects.
+ * 
+ * @param {string|Object} item - Raw portfolio item from profile
+ * @returns {Object} Normalized item with text, categoryId, level, award, and weight
+ */
+export function normalizePortfolioItem(item) {
   if (typeof item === 'string') {
-    const text = item;
-    let categoryId = 'academic';
-    let level = 'local';
-    let award = 'none';
-    let role = 'member';
-    let count = 1;
-    let posnCamp = null;
-    let posnSubject = null;
-
-    if (text.includes('ค่าย') || text.includes('อบรม')) {
-      categoryId = 'camp';
-    } else if (text.includes('จิตอาสา') || text.includes(' volunteer') || text.includes('ช่วยเหลือ')) {
-      categoryId = 'volunteer';
-    } else if (text.includes('ประธาน') || text.includes('ผู้นำ') || text.includes('กรรมการ') || text.includes('หัวหน้า')) {
-      categoryId = 'leadership';
-    } else if (text.includes('โครงงาน') || text.includes('วิจัย') || text.includes('สิ่งประดิษฐ์')) {
-      categoryId = 'project';
-    }
-
-    if (text.includes('นานาชาติ') || text.includes('ต่างประเทศ')) {
-      level = 'international';
-    } else if (text.includes('ระดับชาติ') || text.includes('ประเทศ')) {
-      level = 'national';
-    } else if (text.includes('ภูมิภาค') || text.includes('จังหวัด') || text.includes('ระดับภาค')) {
-      level = 'regional';
-    }
-
-    if (text.includes('ชนะเลิศ') || text.includes('เหรียญทอง') || text.includes('ประธาน') || text.includes('แกนนำหลัก') || text.includes('หัวหน้า')) {
-      award = 'winner';
-      role = 'leader';
-    } else if (text.includes('รองชนะเลิศอันดับ 1') || text.includes('เหรียญเงิน') || text.includes('รองประธาน') || text.includes('ผู้ช่วยแกนนำ')) {
-      award = 'runner_up_1';
-      role = 'co_leader';
-    } else if (text.includes('รองชนะเลิศอันดับ 2') || text.includes('เหรียญทองแดง') || text.includes('คณะทำงาน') || text.includes('กรรมการ')) {
-      award = 'runner_up_2';
-      role = 'committee';
-    } else if (text.includes('ชมเชย') || text.includes('ผู้ประสานงาน') || text.includes('ช่วยงาน')) {
-      award = 'honorable';
-      role = 'cooperator';
-    }
-
-    if (text.includes('สอวน.') || text.includes('โอลิมปิกวิชาการ')) {
-      posnCamp = 'camp1';
-      if (text.includes('ค่าย 2')) posnCamp = 'camp2';
-      else if (text.includes('ค่าย 3') || text.includes('ผู้แทนศูนย์')) posnCamp = 'national';
-      else if (text.includes('ผู้แทนประเทศ')) posnCamp = 'team';
-    }
-
     return {
-      categoryId,
-      text,
-      level,
-      award,
-      role,
-      count,
-      posnCamp,
-      posnSubject
+      text: item,
+      categoryId: 'preset',
+      weight: PRESET_ITEM_WEIGHTS[item] || 0.3
     };
   }
 
-  // If already an object, return with standard defaults filled in
-  return {
-    categoryId: item.categoryId || 'academic',
-    text: item.text || '',
-    level: item.level || 'local',
-    award: item.award || 'none',
-    role: item.role || 'member',
-    count: typeof item.count === 'number' ? item.count : 1,
-    posnCamp: item.posnCamp || null,
-    posnSubject: item.posnSubject || null,
-    desc: item.desc || ''
-  };
+  if (typeof item === 'object' && item !== null) {
+    const text = item.text || item.title || item.name || '';
+    
+    // Check preset map first
+    if (PRESET_ITEM_WEIGHTS[text]) {
+      return {
+        ...item,
+        text,
+        weight: PRESET_ITEM_WEIGHTS[text]
+      };
+    }
+
+    // Determine weight from level/award attributes
+    let weight = 0.3; // Default participation weight
+
+    if (item.level === 'national' || item.award === 'gold' || item.award === 'first') {
+      weight = PORTFOLIO_WEIGHTS.national_award;
+    } else if (item.level === 'provincial' || item.award === 'silver' || item.award === 'second') {
+      weight = PORTFOLIO_WEIGHTS.provincial_award;
+    } else if (item.level === 'school' || item.award === 'bronze' || item.award === 'third') {
+      weight = PORTFOLIO_WEIGHTS.school_award;
+    } else if (item.categoryId && PORTFOLIO_WEIGHTS[item.categoryId]) {
+      weight = PORTFOLIO_WEIGHTS[item.categoryId];
+    }
+
+    return {
+      ...item,
+      text,
+      weight
+    };
+  }
+
+  return { text: '', categoryId: 'unknown', weight: 0.1 };
 }
 
 /**
- * Calculates the weight score for a normalized portfolio item.
+ * Calculates the weight value for a single portfolio item.
+ * Higher prestige activities get higher weights. Repeated categories get diminishing returns.
  * 
  * @param {Object} item - Normalized portfolio item
- * @returns {number} - Prestige weight
+ * @returns {number} Weight value (0.1 to 1.5)
  */
-function calculateItemWeight(item) {
-  // 0. Junior High Exam Prep Status Mappings
-  const JUNIOR_ITEMS_WEIGHTS = {
-    'เรียนเก็บเนื้อหาบทเรียน ม.ต้น (ม.1-ม.3) ครบถ้วนแล้ว': 2.5,
-    'เริ่มเรียนเนื้อหาล่วงหน้าของ ม.ปลาย บ้างแล้ว': 2.5,
-    'อยู่ในชั่วโมงตะลุยโจทย์ข้อสอบเก่า / ข้อสอบเข้า ม.4': 2.0,
-    'ผ่านคอร์สติวเข้มข้นเฉพาะสายวิชา (เช่น ติวเข้มคณิต-วิทย์ หรือคอร์สเตรียมโดม)': 1.5,
-    'เคยเข้าร่วมการทดสอบ Pre-Test ของโรงเรียนต่าง ๆ (เช่น Pre-Test ม.4 โรงเรียนสตรีพัทลุง หรือโรงเรียนดัง)': 2.0,
-    'เคยแข่งขันทักษะวิชาการระดับ ม.ต้น (เช่น งานศิลปหัตถกรรมนักเรียน)': 1.5,
-    'เคยสอบแข่งขันวัดระดับระดับ ม.ต้น (เช่น สสวท. ม.ต้น, ASMO, TEDET)': 2.5
-  };
-
-  if (JUNIOR_ITEMS_WEIGHTS[item.text] !== undefined) {
-    const count = Math.max(1, item.count || 1);
-    return JUNIOR_ITEMS_WEIGHTS[item.text] * count;
-  }
-
-  // 1. POSN/Olympiad Camp Prestige Weights
-  const isPosn = item.posnCamp || item.text.includes('สอวน.') || item.text.includes('โอลิมปิกวิชาการ');
+export function calculateItemWeight(item) {
+  const baseWeight = item.weight || 0.3;
   
-  if (isPosn) {
-    let baseWeight = 3.0; // ค่าย 1 สอวน. เริ่มต้น
-    const camp = item.posnCamp || 'camp1';
-    
-    if (camp === 'camp1') baseWeight = 3.0;
-    else if (camp === 'camp2') baseWeight = 6.0;
-    else if (camp === 'national') baseWeight = 9.0;
-    else if (camp === 'team') baseWeight = 12.0;
-
-    // คำนวณการลดทอนค่าน้ำหนักกรณีทำกิจกรรมเดิมซ้ำ
-    const count = Math.max(1, item.count || 1);
-    const multiplier = 1 + (count - 1) * 0.5;
-    return baseWeight * multiplier;
-  }
-
-  // 2. Standard Items (Competitions vs General Activities)
-  const isComp = item.categoryId === 'academic' || item.categoryId === 'project';
-  let baseWeight = 1.0;
-  let bonus = 0.0;
-
-  if (isComp) {
-    // ค่าน้ำหนักระดับความสำคัญของกิจกรรม
-    if (item.level === 'international') baseWeight = 5.0;
-    else if (item.level === 'national') baseWeight = 3.0;
-    else if (item.level === 'regional') baseWeight = 2.0;
-    else baseWeight = 1.0;
-
-    // Award Bonus
-    if (item.award === 'winner' || item.award === 'gold') bonus = 2.0;
-    else if (item.award === 'runner_up_1' || item.award === 'runnerup1' || item.award === 'silver') bonus = 1.5;
-    else if (item.award === 'runner_up_2' || item.award === 'runnerup2' || item.award === 'bronze') bonus = 1.0;
-    else if (item.award === 'honorable') bonus = 0.5;
-
-    // Custom check for below standard standardized exams
-    if (item.award === 'below_standard') {
-      baseWeight = 0.5;
-      bonus = 0.0;
-    }
-  } else {
-    // ค่าน้ำหนักระดับความสำคัญของกิจกรรม
-    if (item.level === 'international') baseWeight = 3.0;
-    else if (item.level === 'national') baseWeight = 2.0;
-    else if (item.level === 'regional') baseWeight = 1.5;
-    else baseWeight = 1.0;
-
-    // Role Bonus
-    if (item.role === 'leader' || item.role === 'president') bonus = 1.0;
-    else if (item.role === 'co_leader' || item.role === 'vice_president' || item.role === 'runnerup1') bonus = 0.75;
-    else if (item.role === 'committee' || item.role === 'runnerup2') bonus = 0.5;
-    else if (item.role === 'cooperator' || item.role === 'honorable') bonus = 0.25;
-  }
+  // Bonus weight if description or proof details are provided
+  let bonus = 0;
+  if (item.desc && item.desc.length > 20) bonus += 0.1;
+  if (item.hasProof || item.certificateUrl) bonus += 0.1;
 
   // Apply diminishing returns multiplier for repeated items
   const count = Math.max(1, item.count || 1);
@@ -171,6 +122,9 @@ function calculateItemWeight(item) {
  *   - Portfolio Achievements & Extra-Curricular Track Record (Portfolio Score)
  *   - Self-Assessment Confidence & Specific Subject Competencies (Self-Assessment Score)
  * 
+ * In TCAS Round 1, Portfolio is the MANDATORY GATEKEEPER. If portfolio score is near zero or very low,
+ * a Gatekeeper Multiplier is applied to prevent inflated readiness scores for candidates without portfolio items.
+ * 
  * @param {number[]} skillVector - User's 5-dimension skill vector [logic, science, language, art, management]
  * @param {number[]} benchmark - Target path's benchmark vector
  * @param {Array} portfolio - Array of portfolio items (either strings or objects)
@@ -179,7 +133,7 @@ function calculateItemWeight(item) {
  * @returns {number} - Readiness percentage (0-100)
  */
 export function calculateReadiness(skillVector, benchmark, portfolio, selfAssessment, customActivities = [], targetPath = null, educationLevel = 'senior') {
-  // Factor 1: Skill Match (40% for junior, 20% for senior)
+  // Factor 1: Skill Match Alignment (20% weight)
   const skillMatch = calculateMatchPercentage(skillVector, benchmark);
 
   // Filter portfolio items based on education level to prevent cross-contamination
@@ -208,7 +162,7 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
   ];
 
   // ==========================================
-  // ปัจจัยที่ 2: คะแนนสะสมผลงาน (Portfolio Score: 60% ม.ต้น / 70% ม.ปลาย)
+  // ปัจจัยที่ 2: คะแนนสะสมผลงาน (Portfolio Score: 70% น้ำหนักหลักสำหรับ TCAS รอบ 1)
   // ==========================================
   let portfolioWeightSum = 0;
   allItems.forEach(rawItem => {
@@ -242,17 +196,76 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
   const saScore = Math.round(((saAvg - 1) / 4) * 100);
 
   // ==========================================
-  // การรวมคะแนนถ่วงน้ำหนักตามระดับชั้น (ม.ต้น vs ม.ปลาย)
+  // การรวมคะแนนถ่วงน้ำหนักตามระดับชั้น
   // ==========================================
   const skillWeight = isJunior ? 0.30 : 0.20;
   const portfolioWeight = isJunior ? 0.60 : 0.70;
   const saWeight = 0.10;
 
-  const readiness = Math.round(
+  const rawReadiness = Math.round(
     skillMatch * skillWeight +
     portfolioScore * portfolioWeight +
     saScore * saWeight
   );
 
+  // ==========================================
+  // TCAS Round 1 Portfolio Gatekeeper Multiplier (เงื่อนไขคัดออกคอขวดผลงานพอร์ตโฟลิโอ)
+  // ใน TCAS รอบ 1 แม้เกรดจะสูง แต่ถ้าไม่มีผลงานตรงสาย จะไม่ผ่านการคัดเลือกเอกสารรอบแรก
+  // ==========================================
+  let gatekeeperMultiplier = 1.0;
+  if (!isJunior) {
+    if (portfolioScore < 15) {
+      // ผลงานน้อยมากๆ หรือแทบไม่มีผลงานตรงสาย ถูกบีบเพดานความพร้อมไม่เกิน ~45%
+      gatekeeperMultiplier = 0.45;
+    } else if (portfolioScore < 35) {
+      // ผลงานยังไม่แน่น มีน้อย ถูกบีบเพดานความพร้อมไม่เกิน ~65%
+      gatekeeperMultiplier = 0.65;
+    }
+  }
+
+  const readiness = Math.round(rawReadiness * gatekeeperMultiplier);
+
   return Math.min(100, Math.max(0, readiness));
+}
+
+/**
+ * Categorizes Readiness score into readiness tiers.
+ * 
+ * @param {number} score - Readiness percentage (0-100)
+ * @returns {Object} Tier info with label, color, description, and recommendation
+ */
+export function getReadinessTier(score) {
+  if (score >= 80) {
+    return {
+      tier: 'ready',
+      label: 'พร้อมยื่น TCAS รอบ 1',
+      color: '#16A34A',
+      bgColor: '#DCFCE7',
+      borderColor: '#86EFAC',
+      description: 'ผลงานและทักษะของคุณอยู่ในระดับดีเยี่ยม สอดคล้องกับเกณฑ์การคัดเลือกรอบ Portfolio อย่างสมบูรณ์',
+      recommendation: 'เน้นการจัดรูปเล่มพอร์ตโฟลิโอให้สวยงาม กระชับ และฝึกซ้อมตอบคำถามสอบสัมภาษณ์'
+    };
+  }
+
+  if (score >= 50) {
+    return {
+      tier: 'moderate',
+      label: 'ปานกลาง - ต้องเติมผลงานอีกเล็กน้อย',
+      color: '#D97706',
+      bgColor: '#FEF3C7',
+      borderColor: '#FDE68A',
+      description: 'มีฐานเกรดและทักษะที่ดี แต่ปริมาณหรือความโดดเด่นของผลงานในพอร์ตโฟลิโอยังต้องเสริมให้แน่นขึ้น',
+      recommendation: 'เร่งเข้าร่วมค่ายวิชาการ แข่งขันทักษะ หรือทำโครงงานตรงสายเพิ่มเติมเพื่อเพิ่มคะแนนพอร์ต'
+    };
+  }
+
+  return {
+    tier: 'low',
+    label: 'ต้องเร่งสะสมผลงานด่วน (เสี่ยงไม่ผ่านสกรีนรอบ 1)',
+    color: '#DC2626',
+    bgColor: '#FEE2E2',
+    borderColor: '#FCA5A5',
+    description: 'แม้มิติทักษะจะสอดคล้อง แต่ปริมาณผลงานตรงสายยังน้อยเกินไป ซึ่งใน TCAS รอบ 1 แฟ้มสะสมผลงานคือตัวชี้ขาด',
+    recommendation: 'วางแผนลงทะเบียนอบรมทำโปรเจกต์ ล่าเกียรติบัตร และทำกิจกรรมตรงสายโดยด่วนเพื่อไม่ให้ถูกคัดออกในรอบสกรีนเอกสาร'
+  };
 }
