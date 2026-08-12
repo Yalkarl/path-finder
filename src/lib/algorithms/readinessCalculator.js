@@ -165,11 +165,11 @@ function calculateItemWeight(item) {
 }
 
 /**
- * Calculates the comprehensive readiness percentage for Target Lock mode.
- * Combines 3 factors:
- *   - Skill Match (30%): cosine similarity between user's skill vector and target benchmark
- *   - Portfolio Score (60%): based on number/prestige of activities checked (capped at 10 weight sum = 100%)
- *   - Self-Assessment Score (10%): average of self-assessment ratings (1-5 scale)
+ * Calculates the comprehensive readiness percentage for Target Lock mode (TCAS Round 1: Portfolio Focus).
+ * Evaluates readiness across 3 core TCAS Round 1 portfolio pillars:
+ *   - Skill & Academic Competency Alignment (Skill Match)
+ *   - Portfolio Achievements & Extra-Curricular Track Record (Portfolio Score)
+ *   - Self-Assessment Confidence & Specific Subject Competencies (Self-Assessment Score)
  * 
  * @param {number[]} skillVector - User's 5-dimension skill vector [logic, science, language, art, management]
  * @param {number[]} benchmark - Target path's benchmark vector
