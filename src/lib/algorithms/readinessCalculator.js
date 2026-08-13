@@ -17,12 +17,13 @@ const PORTFOLIO_WEIGHTS = {
 const PRESET_ITEM_WEIGHTS = {
   // High prestige (1.0)
   'สอวน. ค่าย 2 ขึ้นไป': 1.0,
+  'โอลิมปิกวิชาการ (สอวน. ค่าย 1 ขึ้นไป)': 0.85,
   'รางวัลระดับประเทศ/นานาชาติ': 1.0,
   'ชนะเลิศการแข่งขันวิชาการระดับประเทศ': 1.0,
   'เหรียญรางวัลการแข่งขันระดับชาติ': 1.0,
 
   // Medium-High prestige (0.6 - 0.7)
-  'สอวน. ค่าย 1': 0.7,
+  'สอวน. ค่าย 1': 0.75,
   'ผ่านการอบรมค่ายวิชาการของมหาวิทยาลัย': 0.6,
   'โครงงานวิจัย/สิ่งประดิษฐ์มีผลงานเป็นรูปธรรม': 0.7,
   'รางวัลระดับจังหวัด/ระดับภาค': 0.7,
@@ -52,32 +53,29 @@ const PRESET_ITEM_WEIGHTS = {
  */
 export function normalizePortfolioItem(item) {
   if (typeof item === 'string') {
+    const isPosn = item.includes('สอวน.') || item.includes('โอลิมปิกวิชาการ');
     return {
       text: item,
       categoryId: 'preset',
-      weight: PRESET_ITEM_WEIGHTS[item] || 0.3
+      weight: PRESET_ITEM_WEIGHTS[item] || (isPosn ? 0.85 : 0.3)
     };
   }
 
   if (typeof item === 'object' && item !== null) {
     const text = item.text || item.title || item.name || '';
+    const isPosn = text.includes('สอวน.') || text.includes('โอลิมปิกวิชาการ');
     
-    // Check preset map first
-    if (PRESET_ITEM_WEIGHTS[text]) {
-      return {
-        ...item,
-        text,
-        weight: PRESET_ITEM_WEIGHTS[text]
-      };
-    }
-
-    // Determine weight from level/award attributes
     let weight = 0.3; // Default participation weight
 
-    if (item.level === 'national' || item.award === 'gold' || item.award === 'first') {
-      weight = PORTFOLIO_WEIGHTS.national_award;
-    } else if (item.level === 'provincial' || item.award === 'silver' || item.award === 'second') {
-      weight = PORTFOLIO_WEIGHTS.provincial_award;
+    // Check POSN camp attributes (สอวน. ค่าย 1/2/3/ผู้แทนศูนย์)
+    if (item.posnCamp === 'camp3' || item.posnCamp === 'national' || item.level === 'national' || item.award === 'gold' || item.award === 'first') {
+      weight = 1.0; // High prestige national level / POSN Camp 3
+    } else if (item.posnCamp === 'camp2' || item.level === 'provincial' || item.award === 'silver' || item.award === 'second') {
+      weight = 0.9;
+    } else if (item.posnCamp === 'camp1' || isPosn) {
+      weight = 0.75;
+    } else if (PRESET_ITEM_WEIGHTS[text]) {
+      weight = PRESET_ITEM_WEIGHTS[text];
     } else if (item.level === 'school' || item.award === 'bronze' || item.award === 'third') {
       weight = PORTFOLIO_WEIGHTS.school_award;
     } else if (item.categoryId && PORTFOLIO_WEIGHTS[item.categoryId]) {
@@ -171,7 +169,7 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
     portfolioWeightSum += calculateItemWeight(item);
   });
   
-  const portfolioScore = Math.min(100, portfolioWeightSum * 10);
+  const portfolioScore = Math.min(100, portfolioWeightSum * 35);
 
   // ==========================================
   // ปัจจัยที่ 3: คะแนนประเมินตนเอง (Self-Assessment Score: 10%)

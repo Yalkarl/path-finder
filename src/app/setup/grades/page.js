@@ -263,30 +263,6 @@ function GradesContent() {
         const pathsObject = level === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
         const rankings = matchPaths(skillVector, pathsObject);
 
-        // เรียกใช้ AI Evaluation API เพื่อสร้างบทวิเคราะห์เชิงพฤติกรรมคำแนะนำชุดใหม่สำหรับสายเป้าหมายใหม่
-        let aiEvaluationData = null;
-        try {
-          const aiRes = await fetch('/api/ai-evaluate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              responses: assessmentResponses,
-              academics: finalGrades,
-              portfolio: analysisMode === 'target-lock' ? portfolio : [],
-              customActivities: analysisMode === 'target-lock' ? customList : [],
-              targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
-              analysisMode,
-              educationLevel: level
-            })
-          });
-          const aiJson = await aiRes.json();
-          if (aiJson.success && aiJson.evaluation) {
-            aiEvaluationData = aiJson.evaluation;
-          }
-        } catch (e) {
-          console.warn('AI re-evaluation failed on setup update:', e);
-        }
-
         const updatePayload = {
           academics: finalGrades,
           analysisMode,
@@ -297,18 +273,39 @@ function GradesContent() {
           selfAssessment: analysisMode === 'target-lock' ? selfAssessment : {},
           targetProgramType: level === 'junior' && analysisMode === 'target-lock' ? targetProgramType : null,
           results: {
-            skillVector: (aiEvaluationData?.skillVector && aiEvaluationData.skillVector.length === 5) ? aiEvaluationData.skillVector : skillVector,
+            skillVector: skillVector,
             matchRankings: rankings
           },
           resultsUpdated: true,
           updatedAt: new Date().toISOString()
         };
 
-        if (aiEvaluationData) {
-          updatePayload.aiEvaluation = aiEvaluationData;
-        }
-
+        // อัปเดตข้อมูลลง Firestore ทันทีเพื่อเปลี่ยนหน้าอย่างรวดเร็ว
         await updateUserProfile(user.uid, updatePayload);
+
+        // ดึง AI Evaluation เบื้องหลังโดยไม่บล็อกการเปลี่ยนหน้า (Background Async)
+        fetch('/api/ai-evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            responses: assessmentResponses,
+            academics: finalGrades,
+            portfolio: analysisMode === 'target-lock' ? portfolio : [],
+            customActivities: analysisMode === 'target-lock' ? customList : [],
+            targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
+            analysisMode,
+            educationLevel: level
+          })
+        }).then(res => res.json()).then(async (aiJson) => {
+          if (aiJson.success && aiJson.evaluation) {
+            await updateUserProfile(user.uid, {
+              aiEvaluation: aiJson.evaluation,
+              ...(aiJson.evaluation.skillVector && aiJson.evaluation.skillVector.length === 5 ? {
+                'results.skillVector': aiJson.evaluation.skillVector
+              } : {})
+            });
+          }
+        }).catch(e => console.warn('Background AI re-evaluation failed:', e));
 
         router.push('/dashboard');
       } else {
