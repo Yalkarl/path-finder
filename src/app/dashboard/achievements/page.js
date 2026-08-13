@@ -266,8 +266,8 @@ export default function AchievementsPage() {
                 marginBottom: '1.25rem',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '0.75rem', color: isUnlocked ? '#16A34A' : '#D97706', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.3rem' }}>
-                  {isUnlocked ? 'สิ่งที่คุณได้รับแล้ว (Unlocked Reward):' : 'สิ่งที่จะได้รับเมื่อปลดล็อค (Reward Upon Unlock):'}
+                <div style={{ fontSize: '0.8rem', color: isUnlocked ? '#16A34A' : '#D97706', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.3rem' }}>
+                  Reward:
                 </div>
                 <div style={{ fontSize: '0.95rem', color: '#1E293B', fontWeight: '800' }}>
                   {selectedBadge.unlocks || 'ตราเกียรติยศและคะแนนสะสมพิเศษ'}
