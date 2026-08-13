@@ -57,7 +57,7 @@ export function normalizePortfolioItem(item) {
     return {
       text: item,
       categoryId: 'preset',
-      weight: PRESET_ITEM_WEIGHTS[item] || (isPosn ? 0.85 : 0.3)
+      weight: PRESET_ITEM_WEIGHTS[item] || (isPosn ? 1.0 : 0.3)
     };
   }
 
@@ -67,15 +67,19 @@ export function normalizePortfolioItem(item) {
     
     let weight = 0.3; // Default participation weight
 
-    // Check POSN camp attributes (สอวน. ค่าย 1/2/3/ผู้แทนศูนย์)
-    if (item.posnCamp === 'camp3' || item.posnCamp === 'national' || item.level === 'national' || item.award === 'gold' || item.award === 'first') {
-      weight = 1.0; // High prestige national level / POSN Camp 3
+    // Check POSN camp attributes (สอวน. ผู้แทนประเทศ / ค่าย 3 / ค่าย 2 / ค่าย 1) FIRST
+    if (item.posnCamp === 'team' || item.level === 'international') {
+      weight = 2.5; // Highest prestige: National Representative / International
+    } else if (item.posnCamp === 'camp3' || item.posnCamp === 'national' || item.level === 'national' || item.award === 'gold' || item.award === 'first') {
+      weight = 2.0; // POSN Camp 3 / Gold Medal National
     } else if (item.posnCamp === 'camp2' || item.level === 'provincial' || item.award === 'silver' || item.award === 'second') {
-      weight = 0.9;
-    } else if (item.posnCamp === 'camp1' || isPosn) {
-      weight = 0.75;
+      weight = 1.5; // POSN Camp 2 / Provincial Silver
+    } else if (item.posnCamp === 'camp1') {
+      weight = 1.0; // POSN Camp 1
     } else if (PRESET_ITEM_WEIGHTS[text]) {
       weight = PRESET_ITEM_WEIGHTS[text];
+    } else if (isPosn) {
+      weight = 1.0;
     } else if (item.level === 'school' || item.award === 'bronze' || item.award === 'third') {
       weight = PORTFOLIO_WEIGHTS.school_award;
     } else if (item.categoryId && PORTFOLIO_WEIGHTS[item.categoryId]) {
@@ -169,7 +173,7 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
     portfolioWeightSum += calculateItemWeight(item);
   });
   
-  const portfolioScore = Math.min(100, portfolioWeightSum * 35);
+  const portfolioScore = Math.min(100, portfolioWeightSum * 40);
 
   // ==========================================
   // ปัจจัยที่ 3: คะแนนประเมินตนเอง (Self-Assessment Score: 10%)
