@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase/config';
 
 // ==========================================
@@ -38,6 +38,24 @@ export const getUserProfile = async (uid) => {
   } catch (err) {
     console.warn('Firestore getUserProfile error:', err);
     return null;
+  }
+};
+
+export const subscribeUserProfile = (uid, callback) => {
+  try {
+    const userRef = doc(db, 'users', uid);
+    return onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        callback(docSnap.data());
+      } else {
+        callback(null);
+      }
+    }, (err) => {
+      console.warn('Firestore subscribeUserProfile error:', err);
+    });
+  } catch (err) {
+    console.warn('Firestore subscribeUserProfile error:', err);
+    return () => {};
   }
 };
 

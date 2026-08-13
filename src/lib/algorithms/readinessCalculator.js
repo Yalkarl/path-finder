@@ -44,36 +44,95 @@ const PRESET_ITEM_WEIGHTS = {
   'สมาชิกชมรม/ผู้ร่วมจัดกิจกรรม': 0.2,
 };
 
+// Negative, criminal, and trolling keywords that invalidate custom activity score (weight = 0.0)
+const NEGATIVE_TROLL_KEYWORDS = [
+  'สร้างปัญหา', 'ทำลาย', 'ป่วน', 'ก่อกวน', 'ละเมิด', 'โดนไล่ออก', 'โดนพักเรียน', 'โดนทำทัณฑ์บน',
+  'โกง', 'คดโกง', 'ลอกข้อสอบ', 'ทุจริต', 'ปลอมแปลง', 'ซื้อเกียรติบัตร', 'จ้างทำ', 'สวมสิทธิ์',
+  'ระเบิด', 'ปล้น', 'ชิงทรัพย์', 'ลักทรัพย์', 'ขโมย', 'ฆาตกรรม', 'ฆ่า', 'ก่อการร้าย', 'วางเพลิง',
+  'ยาเสพติด', 'สารเสพติด', 'กัญชา', 'กระท่อม', 'ยาเค', 'ยาบ้า', 'ยาไอซ์', 'เฮโรอีน', 'ฝิ่น', 'มอร์ฟีน',
+  'การพนัน', 'แทงบอล', 'บ่อน', 'ทะเลาะวิวาท', 'ตบตี', 'ชกตลุมบอน', 'ดักซุ่ม', 'แฮก', 'แฮกเกอร์',
+  'เจาะระบบ', 'ปล่อยไวรัส', 'มัลแวร์', 'สแปม', 'คุกคาม', 'ข่มขู่', 'ข่มเหง', 'รังแก', 'ระราน', 'หาเรื่อง',
+  'กรรโชก', 'รีดไถ', 'กลั่นแกล้ง', 'บูลลี่', 'ทารุณ', 'ประทุษร้าย', 'อนาจาร', 'ล่วงละเมิด', 'แบล็กเมล',
+  'เอารัดเอาเปรียบ', 'ต่อย', 'ยิง', 'แทง', 'มอมยา', 'สมรู้ร่วมคิด', 'ค้ายา', 'สร้างยา',
+  'โปรแกรมขี้ฉ้อ', 'ขายโปรแกรมโกง', 'โปรแกรมโกง', 'โปรโมชั่นโกง', 'ขายโปรโกง', 'โปรโกง', 'โปรเกม', 'บอทโกง',
+  'โปรมอง', 'โปรล็อคหัว', 'โปรรัศมี', 'ขายโปร', 'โปรบอท', 'แกะโค้ดโกง', 'ขี้ฉ้อ'
+];
+
+// High prestige positive keywords and global organizations that boost custom activity score (weight = 1.8 - 2.5)
+const HIGH_PRESTIGE_KEYWORDS = [
+  // Global & National Organizations
+  'NASA', 'JAXA', 'ESA', 'CERN', 'UN', 'UNESCO', 'UNICEF', 'WHO', 'IEEE', 'ACM',
+  'MIT', 'STANFORD', 'HARVARD', 'OXFORD', 'CAMBRIDGE', 'GOOGLE', 'MICROSOFT', 'APPLE',
+  'AMAZON', 'META', 'NVIDIA', 'INTEL', 'สวทช', 'สสวท', 'กระทรวงอว', 'กระทรวงศึกษาธิการ',
+  'จุฬา', 'ธรรมศาสตร์', 'มหิดล', 'เกษตรศาสตร์', 'เชียงใหม่', 'ขอนแก่น', 'สงขลานครินทร์',
+  
+  // High Prestige Achievements & Awards
+  'โอลิมปิก', 'สอวน', 'เหรียญทอง', 'เหรียญเงิน', 'เหรียญทองแดง', 'ชนะเลิศ', 'รองชนะเลิศ',
+  'อันดับ 1', 'อันดับ 2', 'อันดับ 3', 'ยอดเยี่ยม', 'ระดับประเทศ', 'ระดับชาติ', 'ระดับนานาชาติ',
+  'ระดับโลก', 'เยาวชนแห่งชาติ', 'ผู้แทนประเทศ', 'ผู้แทนประเทศไทย', 'ผู้แทนศูนย์', 'ตัวแทนประเทศ',
+  
+  // Innovations, Research & High Impact
+  'นวัตกรรม', 'งานวิจัย', 'โครงงานวิจัย', 'สิ่งประดิษฐ์', 'บทความวิจัย', 'ตีพิมพ์', 'สิทธิบัตร',
+  'ปัญญาประดิษฐ์', 'AI', 'ROBOTICS', 'หุ่นยนต์', 'HACKATHON', 'PITCHING', 'STARTUP'
+];
+
 /**
  * Normalizes a portfolio item into a structured object with weight metadata.
  * Handles both string presets and custom activity objects.
+ * Supports dynamic AI-evaluated custom activity weights.
  * 
  * @param {string|Object} item - Raw portfolio item from profile
+ * @param {Array} [aiCustomEvaluations=[]] - AI custom activity evaluation array from Gemini
  * @returns {Object} Normalized item with text, categoryId, level, award, and weight
  */
-export function normalizePortfolioItem(item) {
+export function normalizePortfolioItem(item, aiCustomEvaluations = []) {
   if (typeof item === 'string') {
-    const isPosn = item.includes('สอวน.') || item.includes('โอลิมปิกวิชาการ');
-    const isHighPrestige = isPosn || item.includes('ระดับประเทศ') || item.includes('ระดับชาติ') || item.includes('ชนะเลิศ');
+    const textUpper = item.toUpperCase();
+
+    // Check dynamic AI Evaluation FIRST if available
+    const aiEval = (aiCustomEvaluations || []).find(e => e && (e.text === item || e.title === item));
+    if (aiEval) {
+      if (aiEval.isTrollOrIllegal) return { text: item, categoryId: 'preset', weight: 0.0 };
+      if (typeof aiEval.prestigeScore === 'number') return { text: item, categoryId: 'preset', weight: aiEval.prestigeScore };
+    }
+
+    const isNegative = NEGATIVE_TROLL_KEYWORDS.some(kw => item.includes(kw));
+    if (isNegative) {
+      return { text: item, categoryId: 'preset', weight: 0.0 };
+    }
+
+    const isHigh = HIGH_PRESTIGE_KEYWORDS.some(kw => textUpper.includes(kw));
     return {
       text: item,
       categoryId: 'preset',
-      weight: PRESET_ITEM_WEIGHTS[item] || (isHighPrestige ? 1.5 : 0.3)
+      weight: PRESET_ITEM_WEIGHTS[item] || (isHigh ? 1.8 : 0.3)
     };
   }
 
   if (typeof item === 'object' && item !== null) {
     const text = item.text || item.title || item.name || '';
+    const textUpper = text.toUpperCase();
+    
+    // Check dynamic AI Evaluation FIRST if available
+    const aiEval = (aiCustomEvaluations || []).find(e => e && (e.text === text || e.title === text || e.text === item.title));
+    if (aiEval) {
+      if (aiEval.isTrollOrIllegal) return { ...item, text, weight: 0.0 };
+      if (typeof aiEval.prestigeScore === 'number') return { ...item, text, weight: aiEval.prestigeScore };
+    }
+
+    // 1. Check negative / trolling / criminal keywords FIRST
+    const isNegative = NEGATIVE_TROLL_KEYWORDS.some(kw => text.includes(kw));
+    if (isNegative) {
+      return { ...item, text, weight: 0.0 };
+    }
+
     const isPosn = text.includes('สอวน.') || text.includes('โอลิมปิกวิชาการ');
+    const isHighCustom = HIGH_PRESTIGE_KEYWORDS.some(kw => textUpper.includes(kw));
     
-    // Check negative / trolling / destructive keywords in custom activity
-    const isNegativeOrTroll = text.includes('สร้างปัญหา') || text.includes('ทำลาย') || text.includes('ป่วน') || text.includes('โกง') || text.includes('คดโกง') || text.includes('ละเมิด');
-    const isHighCustom = !isNegativeOrTroll && (text.includes('ระดับประเทศ') || text.includes('ระดับชาติ') || text.includes('เหรียญทอง') || text.includes('ชนะเลิศ') || text.includes('นวัตกรรม') || text.includes('งานวิจัย') || (text.includes('NASA') && (text.includes('สร้าง') || text.includes('พัฒนา') || text.includes('แข่งขัน'))));
-    
-    let weight = isNegativeOrTroll ? 0.0 : 0.3; // Default participation weight
+    let weight = 0.3; // Default participation weight
 
     // Check POSN camp attributes (สอวน. ผู้แทนประเทศ / ค่าย 3 / ค่าย 2 / ค่าย 1) FIRST
-    if (item.posnCamp === 'team' || item.level === 'international' || text.includes('ผู้แทนประเทศ')) {
+    if (item.posnCamp === 'team' || item.level === 'international' || text.includes('ผู้แทนประเทศ') || text.includes('ตัวแทนประเทศ')) {
       weight = 2.5; // Highest prestige: National Representative / International
     } else if (item.posnCamp === 'camp3' || item.posnCamp === 'national' || item.level === 'national' || item.award === 'gold' || item.award === 'first') {
       weight = 2.0; // POSN Camp 3 / Gold Medal National
@@ -81,8 +140,6 @@ export function normalizePortfolioItem(item) {
       weight = 1.5; // POSN Camp 2 / Provincial Silver
     } else if (item.posnCamp === 'camp1') {
       weight = 1.0; // POSN Camp 1
-    } else if (isNegativeOrTroll) {
-      weight = 0.0; // Negative/Troll activity gets ZERO weight
     } else if (isHighCustom) {
       weight = 1.8; // High prestige custom activity
     } else if (PRESET_ITEM_WEIGHTS[text]) {
@@ -113,7 +170,8 @@ export function normalizePortfolioItem(item) {
  * @returns {number} Weight value (0.1 to 1.5)
  */
 export function calculateItemWeight(item) {
-  const baseWeight = item.weight || 0.3;
+  const baseWeight = typeof item?.weight === 'number' ? item.weight : 0.3;
+  if (baseWeight === 0) return 0; // Negative or invalid items get absolute ZERO weight
   
   // Bonus weight if description or proof details are provided
   let bonus = 0;
@@ -141,9 +199,12 @@ export function calculateItemWeight(item) {
  * @param {Array} portfolio - Array of portfolio items (either strings or objects)
  * @param {Object} selfAssessment - Object mapping subject IDs to ratings (1-5)
  * @param {Array} [customActivities=[]] - Custom activities array
+ * @param {string} [targetPath=null] - Target path ID
+ * @param {string} [educationLevel='senior'] - Education level
+ * @param {Array} [aiCustomEvaluations=[]] - Dynamic AI activity evaluations array
  * @returns {number} - Readiness percentage (0-100)
  */
-export function calculateReadiness(skillVector, benchmark, portfolio, selfAssessment, customActivities = [], targetPath = null, educationLevel = 'senior') {
+export function calculateReadiness(skillVector, benchmark, portfolio, selfAssessment, customActivities = [], targetPath = null, educationLevel = 'senior', aiCustomEvaluations = []) {
   // Factor 1: Skill Match Alignment (20% weight)
   const skillMatch = calculateMatchPercentage(skillVector, benchmark);
 
@@ -175,7 +236,7 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
   let portfolioWeightSum = 0;
   allItems.forEach(rawItem => {
     if (!rawItem) return;
-    const item = normalizePortfolioItem(rawItem);
+    const item = normalizePortfolioItem(rawItem, aiCustomEvaluations);
     portfolioWeightSum += calculateItemWeight(item);
   });
   

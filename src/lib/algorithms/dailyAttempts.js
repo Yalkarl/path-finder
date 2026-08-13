@@ -1,5 +1,6 @@
 /**
  * Utility functions for managing daily assessment attempt limits (Max 2 times per day).
+ * Properly user-scoped per account to prevent cross-account quota leaking.
  */
 
 export const MAX_DAILY_ATTEMPTS = 2;
@@ -16,8 +17,20 @@ export function getTodayDateString() {
 }
 
 /**
- * Gets today's assessment attempt data from profile or localStorage.
+ * Gets user-specific localStorage key to prevent quota state leaking across different accounts
+ */
+
+function getUserStorageKey(profile) {
+  if (profile?.uid) {
+    return `pathfinder_daily_attempts_${profile.uid}`;
+  }
+  return null;
+}
+
+/**
+ * Gets today's assessment attempt data from profile or user-scoped localStorage.
  * Automatically resets count to 0 if stored date is from a previous day.
+ * Caps count at MAX_DAILY_ATTEMPTS to prevent 3/2 or overflow errors.
  * 
  * @param {Object} [profile] - User profile object from Firestore
  * @returns {Object} { date: string, count: number, attempts: string[] }
@@ -26,24 +39,28 @@ export function getDailyAssessmentAttempts(profile) {
   const today = getTodayDateString();
   let stored = null;
 
-  // 1. Check profile from Firestore first
+  // 1. Check profile from Firestore first (Primary Source of Truth)
   if (profile?.dailyAssessmentAttempts) {
     stored = profile.dailyAssessmentAttempts;
   } else if (typeof window !== 'undefined') {
-    // 2. Fallback to localStorage
-    try {
-      const raw = localStorage.getItem('pathfinder_daily_assessment_attempts');
-      if (raw) stored = JSON.parse(raw);
-    } catch (e) {
-      console.warn('Failed to parse daily attempts from localStorage', e);
+    // 2. Check user-scoped localStorage key only if profile exists
+    const key = getUserStorageKey(profile);
+    if (key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) stored = JSON.parse(raw);
+      } catch (e) {
+        console.warn('Failed to parse daily attempts from localStorage', e);
+      }
     }
   }
 
-  // If date is today, return stored record; otherwise reset to today with 0 count
+  // If date is today, return stored record (capped at MAX_DAILY_ATTEMPTS); otherwise reset to today with 0 count
   if (stored && stored.date === today && typeof stored.count === 'number') {
+    const safeCount = Math.min(Math.max(0, stored.count), MAX_DAILY_ATTEMPTS);
     return {
       date: today,
-      count: stored.count,
+      count: safeCount,
       attempts: Array.isArray(stored.attempts) ? stored.attempts : []
     };
   }
@@ -63,18 +80,19 @@ export function getDailyAssessmentAttempts(profile) {
  */
 export function checkAssessmentQuota(profile) {
   const current = getDailyAssessmentAttempts(profile);
-  const remaining = Math.max(0, MAX_DAILY_ATTEMPTS - current.count);
+  const safeCount = Math.min(current.count, MAX_DAILY_ATTEMPTS);
+  const remaining = Math.max(0, MAX_DAILY_ATTEMPTS - safeCount);
   
   return {
-    canTake: current.count < MAX_DAILY_ATTEMPTS,
-    count: current.count,
+    canTake: safeCount < MAX_DAILY_ATTEMPTS,
+    count: safeCount,
     remaining,
     max: MAX_DAILY_ATTEMPTS
   };
 }
 
 /**
- * Increments today's assessment attempt count and persists to localStorage & Firestore.
+ * Increments today's assessment attempt count and persists to user-scoped localStorage & Firestore.
  * 
  * @param {Object} profile - User profile object
  * @param {Function} [updateProfileFn] - Firestore updateUserProfile function
@@ -84,7 +102,8 @@ export async function recordAssessmentAttempt(profile, updateProfileFn = null) {
   const today = getTodayDateString();
   const current = getDailyAssessmentAttempts(profile);
   
-  const newCount = current.count + 1;
+  // Cap new count strictly at MAX_DAILY_ATTEMPTS (e.g. max 2/2)
+  const newCount = Math.min(current.count + 1, MAX_DAILY_ATTEMPTS);
   const newAttempts = [...current.attempts, new Date().toISOString()];
   
   const record = {
@@ -93,10 +112,15 @@ export async function recordAssessmentAttempt(profile, updateProfileFn = null) {
     attempts: newAttempts
   };
 
-  // 1. Save to localStorage
-  if (typeof window !== 'undefined') {
+  // 1. Save to user-scoped localStorage
+  if (typeof window !== 'undefined' && profile?.uid) {
     try {
-      localStorage.setItem('pathfinder_daily_assessment_attempts', JSON.stringify(record));
+      const key = getUserStorageKey(profile);
+      if (key) {
+        localStorage.setItem(key, JSON.stringify(record));
+      }
+      // Remove any legacy global un-scoped key
+      localStorage.removeItem('pathfinder_daily_assessment_attempts');
     } catch (e) {
       console.warn('Failed to save daily attempts to localStorage', e);
     }

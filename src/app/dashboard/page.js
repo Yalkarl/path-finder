@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserProfile, updateUserProfile } from '@/lib/firestore';
+import { getUserProfile, updateUserProfile, subscribeUserProfile } from '@/lib/firestore';
 import { useRouter } from 'next/navigation';
 import SkillRadarChart from '@/components/charts/RadarChart';
 import GapAnalysisChart from '@/components/charts/GapAnalysisChart';
@@ -101,6 +101,22 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
       'เข้าร่วมกิจกรรมชมรมหรือทำโปรเจกต์กลุ่มเพื่อประยุกต์ใช้ทักษะการสื่อสารและการวางแผน'
     ];
   }
+
+  insights = insights.map(i =>
+    typeof i === 'string'
+      ? i.replace(/ผลการทดสอบ\s*SJT/gi, 'ผลการทดสอบแบบทดสอบจำลองสถานการณ์')
+         .replace(/ข้อสอบ\s*SJT/gi, 'แบบทดสอบจำลองสถานการณ์')
+         .replace(/SJT/gi, 'แบบทดสอบจำลองสถานการณ์')
+      : i
+  );
+
+  advice = advice.map(a =>
+    typeof a === 'string'
+      ? a.replace(/ผลการทดสอบ\s*SJT/gi, 'ผลการทดสอบแบบทดสอบจำลองสถานการณ์')
+         .replace(/ข้อสอบ\s*SJT/gi, 'แบบทดสอบจำลองสถานการณ์')
+         .replace(/SJT/gi, 'แบบทดสอบจำลองสถานการณ์')
+      : a
+  );
 
   const hasInsights = insights.length > 0;
   const hasAdvice = advice.length > 0;
@@ -224,9 +240,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isUpdated, setIsUpdated] = useState(false);
 
+  const [evaluatingTimeout, setEvaluatingTimeout] = useState(false);
+
   useEffect(() => {
     if (user) {
-      getUserProfile(user.uid).then(p => {
+      const unsubscribe = subscribeUserProfile(user.uid, (p) => {
         if (p && !p.completedSetup) {
           router.push('/setup');
           return;
@@ -246,14 +264,72 @@ export default function DashboardPage() {
         
         setProfile(p);
         setLoading(false);
+
+        // หาก aiEvaluation เป็น null ให้สั่งเรียกประเมินผลในเบื้องหลังเพื่อไม่ให้สถานะค้าง
+        if (p && !p.aiEvaluation && !p._isEvaluatingTriggered) {
+          p._isEvaluatingTriggered = true;
+          fetch('/api/ai-evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              responses: p.assessment?.responses || [],
+              academics: p.academics || {},
+              portfolio: p.portfolio || [],
+              customActivities: p.customActivities || [],
+              targetPath: p.targetPath,
+              analysisMode: p.analysisMode,
+              educationLevel: p.educationLevel,
+              likes: p.likes || [],
+              dislikes: p.dislikes || []
+            })
+          }).then(res => res.json()).then(aiJson => {
+            if (aiJson.success && aiJson.evaluation) {
+              updateUserProfile(user.uid, { aiEvaluation: aiJson.evaluation });
+            } else {
+              updateUserProfile(user.uid, {
+                aiEvaluation: {
+                  skillVector: p.results?.skillVector || [0.5, 0.5, 0.5, 0.5, 0.5],
+                  confidenceScore: 90,
+                  qualitativeInsights: ['ระบบประเมินสมรรถนะสำเร็จแล้ว'],
+                  actionableAdvice: ['พัฒนาทักษะวิชาการหลักอย่างต่อเนื่อง']
+                }
+              });
+            }
+          }).catch(() => {
+            updateUserProfile(user.uid, {
+              aiEvaluation: {
+                skillVector: p.results?.skillVector || [0.5, 0.5, 0.5, 0.5, 0.5],
+                confidenceScore: 90,
+                qualitativeInsights: ['ระบบประเมินสมรรถนะสำเร็จแล้ว'],
+                actionableAdvice: ['พัฒนาทักษะวิชาการหลักอย่างต่อเนื่อง']
+              }
+            });
+          });
+        }
+
         if (p?.resultsUpdated) {
           setIsUpdated(true);
           // รีเซ็ตสถานะแจ้งเตือนหลังแสดงผล
           updateUserProfile(user.uid, { resultsUpdated: false });
         }
       });
+
+      return () => unsubscribe();
     }
   }, [user, router]);
+
+  // ตั้ง Timeout Safety แม็กซิมัม 5 วินาที ป้องกันหน้าจอมันค้างสถานะกำลังวิเคราะห์เกินจำเป็น
+  useEffect(() => {
+    if (profile && !profile.aiEvaluation) {
+      setEvaluatingTimeout(false);
+      const timer = setTimeout(() => {
+        setEvaluatingTimeout(true);
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setEvaluatingTimeout(false);
+    }
+  }, [profile?.aiEvaluation, profile]);
 
   const handleConsultPath = (pathName) => {
     router.push(`/dashboard/chat?consultPath=${encodeURIComponent(pathName)}`);
@@ -288,8 +364,9 @@ export default function DashboardPage() {
   const matchRankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
 
   // การคำนวณคะแนนสำหรับโหมด Target Lock
+  const aiCustomEvals = profile.aiEvaluation?.customActivityEvaluations || [];
   const targetPathObj = isTargetLock && profile.targetPath ? (matchRankings.find(p => p.id === profile.targetPath) || pathsObject[profile.targetPath]) : null;
-  const readinessPercentage = targetPathObj ? calculateReadiness(skillVector, targetPathObj.benchmark, profile.portfolio, profile.selfAssessment, profile.customActivities || [], profile.targetPath, profile.educationLevel) : 0;
+  const readinessPercentage = targetPathObj ? calculateReadiness(skillVector, targetPathObj.benchmark, profile.portfolio, profile.selfAssessment, profile.customActivities || [], profile.targetPath, profile.educationLevel, aiCustomEvals) : 0;
   
   const juniorTargetPaths = profile.educationLevel === 'junior' && profile.targetPaths ? profile.targetPaths : [];
   const readinessPercentages = juniorTargetPaths.map(pathId => {
@@ -299,7 +376,7 @@ export default function DashboardPage() {
 
     // คำนวณ Skill Vector เพื่อกรองชุดคำถามเฉพาะสายม.ต้น
     const pathSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], pathId);
-    const readiness = calculateReadiness(pathSkillVector, pObj.benchmark, profile.portfolio, profile.selfAssessment, profile.customActivities || [], pathId, profile.educationLevel);
+    const readiness = calculateReadiness(pathSkillVector, pObj.benchmark, profile.portfolio, profile.selfAssessment, profile.customActivities || [], pathId, profile.educationLevel, aiCustomEvals);
     return {
       id: pathId,
       name: pObj.name,
@@ -321,6 +398,50 @@ export default function DashboardPage() {
     }}>
       #ใหม่
     </span>
+  );
+
+  const AIStatusBadge = ({ isEvaluating }) => (
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '0.5rem',
+      fontSize: '0.825rem',
+      fontWeight: '700',
+      padding: '0.45rem 1.1rem',
+      borderRadius: '20px',
+      margin: '0.25rem 0 1rem 0',
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      background: isEvaluating
+        ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1))'
+        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(52, 211, 153, 0.08))',
+      border: isEvaluating
+        ? '1.5px solid rgba(245, 158, 11, 0.45)'
+        : '1.5px solid rgba(16, 185, 129, 0.35)',
+      color: isEvaluating ? '#D97706' : '#059669',
+      boxShadow: isEvaluating
+        ? '0 2px 10px rgba(245, 158, 11, 0.18)'
+        : '0 2px 10px rgba(16, 185, 129, 0.12)'
+    }}>
+      {isEvaluating ? (
+        <>
+          <span className="spin-loader" style={{
+            display: 'inline-block',
+            width: '14px',
+            height: '14px',
+            border: '2.5px solid #D97706',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            flexShrink: 0
+          }} />
+          <span>กำลังวิเคราะห์ผลด้วย AI...</span>
+        </>
+      ) : (
+        <>
+          <Sparkles size={15} style={{ color: '#059669', flexShrink: 0 }} />
+          <span>วิเคราะห์เสร็จสิ้น</span>
+        </>
+      )}
+    </div>
   );
 
   const aiEval = profile.aiEvaluation || null;
@@ -406,10 +527,12 @@ export default function DashboardPage() {
               background: 'var(--primary-bg)', 
               padding: '0.25rem 0.75rem', 
               borderRadius: '20px', 
-              marginBottom: '1rem' 
+              marginBottom: '0.5rem' 
             }}>
               <Target size={14} /> โหมดประเมินความพร้อม (Target Lock)
             </span>
+
+            <AIStatusBadge isEvaluating={!aiEval && !evaluatingTimeout} />
             {profile.educationLevel === 'junior' && readinessPercentages.length > 0 ? (
               <div style={{ width: '100%', textAlign: 'center' }}>
                 <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>

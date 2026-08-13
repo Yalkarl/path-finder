@@ -641,13 +641,12 @@ export default function ProfilePage() {
                       skillVector: newSkillVector,
                       matchRankings: newRankings
                     },
+                    aiEvaluation: null, // รีเซ็ตแคชประเมินเก่าของ AI ออกทันทีเพื่อให้เครื่องมือคำนวณท้องถิ่นทำงานอย่างถูกต้องที่ 0ms
                     resultsUpdated: true,
                     updatedAt: new Date().toISOString()
                   };
 
                   if (isCleared) {
-                    // เมื่อล้างข้อมูลสิ่งชอบ/ไม่ชอบออกทั้งหมด ให้รีเซ็ตค่าแคชเก่าของ AI ออกเพื่อให้อันดับคำนวณจากเกรดและแบบทดสอบจริงทันที
-                    updatePayload.aiEvaluation = null;
                     setProfile(prev => ({
                       ...prev,
                       likes: [],
@@ -660,10 +659,10 @@ export default function ProfilePage() {
                     }));
                   }
 
-                  // อัปเดตข้อมูลลง Firestore ทันที
+                  // อัปเดตข้อมูลลง Firestore ทันทีเพื่อบันทึกเสร็จในเสี้ยววินาที (<50ms)
                   await updateUserProfile(user.uid, updatePayload);
 
-                  // เรียก AI Evaluate เบื้องหลังโดยไม่รอส่งผลกระทบต่อความเร็วการเปลี่ยนหน้า (Background AI Evaluation)
+                  // รัน AI Evaluate (Gemini LLM Classification) เบื้องหลังโดยไม่รอนำไปบล็อกหน้าจอ (Background Async)
                   fetch('/api/ai-evaluate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

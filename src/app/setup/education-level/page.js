@@ -20,7 +20,7 @@ export default function EducationLevelStep() {
     localStorage.setItem('setup_educationLevel', level);
     // หน่วงเวลาสั้นๆ แสดงสถานะการเลือกก่อนเปลี่ยนหน้า
     setTimeout(() => {
-      router.push('/setup/profile');
+      router.push('/setup/avatar');
     }, 350);
   };
 

@@ -298,7 +298,9 @@ export default function DashboardLayout({ children }) {
               return (
                 <Link key={tab.href} href={tab.href} style={{ textDecoration: 'none' }}>
                   <div style={{
-                    padding: '0.5rem 1.25rem',
+                    padding: '0 1.25rem',
+                    height: '40px',
+                    boxSizing: 'border-box',
                     borderRadius: '20px',
                     background: isActive ? tab.activeColor : 'var(--surface)',
                     color: isActive ? 'white' : 'var(--text-secondary)',
@@ -311,7 +313,9 @@ export default function DashboardLayout({ children }) {
                     alignItems: 'center',
                     gap: '0.5rem',
                     justifyContent: 'center',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                     <span style={{ 
                       display: 'flex', 

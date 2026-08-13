@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
-import { BookOpen, Compass, Target, FolderOpen, Sliders, ChevronDown, Trash2, X, FlaskConical, Globe, BookMarked } from 'lucide-react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { BookOpen, Compass, Target, FolderOpen, Sliders, ChevronDown, Trash2, X, FlaskConical, Globe, BookMarked, ArrowLeft } from 'lucide-react';
 import MrPathGreeting from '@/components/setup/MrPathGreeting';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,17 @@ const subjects = [
   { id: 'thai', label: 'ภาษาไทย', icon: <BookOpen size={18} />, color: '#FF9800' },
   { id: 'english', label: 'ภาษาอังกฤษ', icon: <Globe size={18} />, color: '#2196F3' },
   { id: 'social', label: 'สังคมศึกษาฯ', icon: <BookMarked size={18} />, color: '#9C27B0' },
+];
+
+const PRESET_LIKES = [
+  'AI & เทคโนโลยี', 'เขียนโปรแกรม/โค้ดดิ้ง', 'วิทยาศาสตร์ & การทดลอง', 
+  'การวางแผน & บริหารธุรกิจ', 'ศิลปะ & ออกแบบ', 'ภาษา & การสื่อสาร', 
+  'ดนตรี & การแสดง', 'เกม & E-Sports', 'กีฬา & ฟิตเนส', 'การทำอาหาร'
+];
+
+const PRESET_DISLIKES = [
+  'งานท่องจำตำราหนักๆ', 'งานที่ต้องเจอเลือด/บาดแผล/ศพ', 'การคิดคำนวณคณิตซับซ้อน', 
+  'การพูดโต้ตอบคนเยอะๆ/สปีช', 'งานทำความสะอาด/ใช้แรงกายหนัก', 'งานเอกสาร/ระเบียบเป๊ะๆ', 'การทำงานคนเดียวโดดเดี่ยว'
 ];
 
 function GradesContent() {
@@ -45,6 +56,28 @@ function GradesContent() {
   const [targetProgramType, setTargetProgramType] = useState('regular-program');
   const [customList, setCustomList] = useState([]);
   const [selfAssessment, setSelfAssessment] = useState({});
+  const [likes, setLikes] = useState([]);
+  const [dislikes, setDislikes] = useState([]);
+  const [likeInput, setLikeInput] = useState('');
+  const [dislikeInput, setDislikeInput] = useState('');
+  const [showLikeDropdown, setShowLikeDropdown] = useState(false);
+  const [showDislikeDropdown, setShowDislikeDropdown] = useState(false);
+  
+  const likeRef = useRef(null);
+  const dislikeRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (likeRef.current && !likeRef.current.contains(e.target)) {
+        setShowLikeDropdown(false);
+      }
+      if (dislikeRef.current && !dislikeRef.current.contains(e.target)) {
+        setShowDislikeDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   const [expandedCategories, setExpandedCategories] = useState({
     academic: true,
     project: true,
@@ -276,14 +309,15 @@ function GradesContent() {
             skillVector: skillVector,
             matchRankings: rankings
           },
+          aiEvaluation: null, // รีเซ็ตแคชประเมินเก่าของ AI ออกทันทีเพื่อให้เครื่องมือคำนวณท้องถิ่นทำงานอย่างถูกต้องที่ 0ms
           resultsUpdated: true,
           updatedAt: new Date().toISOString()
         };
 
-        // อัปเดตข้อมูลลง Firestore ทันทีเพื่อเปลี่ยนหน้าอย่างรวดเร็ว
+        // อัปเดตข้อมูลลง Firestore ทันทีเพื่อเปลี่ยนหน้าเสี้ยววินาที (<50ms)
         await updateUserProfile(user.uid, updatePayload);
 
-        // ดึง AI Evaluation เบื้องหลังโดยไม่บล็อกการเปลี่ยนหน้า (Background Async)
+        // รัน AI Evaluation (Gemini LLM Classification) เบื้องหลังโดยไม่บล็อกการเปลี่ยนหน้า (Instant Optimistic Navigation)
         fetch('/api/ai-evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -601,27 +635,234 @@ function GradesContent() {
               </div>
             </div>
 
-            {/* Submit button when in Discovery Mode */}
+            {/* Likes / Dislikes Section (แสดงเฉพาะโหมด Discovery ค้นหาตัวตนอิสระ) */}
             {!isTargetLock && (
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '0.85rem',
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  borderRadius: '14px',
-                  opacity: isFormValid ? 1 : 0.6,
-                  cursor: isFormValid ? 'pointer' : 'not-allowed',
-                  boxShadow: '0 4px 12px rgba(124, 92, 252, 0.2)',
-                  marginTop: '0.5rem',
-                  transition: 'all 0.2s ease'
-                }}
-                disabled={loading || !isFormValid}
-              >
-                {loading ? 'กำลังบันทึกข้อมูล...' : isEditMode ? 'บันทึก' : 'ถัดไป →'}
-              </button>
+              <>
+                <div className="card" style={{ padding: '1.5rem', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                    ระบุสิ่งที่ชอบ / ไม่ชอบ (เพื่อเพิ่มความแม่นยำให้โหมดค้นหาตัวตน)
+                  </h3>
+
+                  {/* Likes Section */}
+                  <div style={{ position: 'relative' }} ref={likeRef}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16A34A' }}>
+                        สิ่งชอบ / ความสนใจ (ระบุได้หลายอย่าง)
+                      </label>
+                      {likes.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setLikes([])}
+                          style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                        >
+                          ล้างสิ่งที่ชอบทั้งหมด
+                        </button>
+                      )}
+                    </div>
+                    {likes.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                        {likes.map(item => (
+                          <span
+                            key={item}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.2rem 0.65rem',
+                              borderRadius: '16px',
+                              fontSize: '0.8rem',
+                              fontWeight: '600',
+                              background: 'rgba(22, 163, 74, 0.12)',
+                              color: '#16A34A',
+                              border: '1px solid rgba(22, 163, 74, 0.3)'
+                            }}
+                          >
+                            ✓ {item}
+                            <button
+                              type="button"
+                              onClick={() => setLikes(prev => prev.filter(i => i !== item))}
+                              style={{ background: 'none', border: 'none', color: '#16A34A', cursor: 'pointer', padding: 0, fontWeight: 'bold' }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="พิมพ์หรือคลิกเลือกสิ่งชอบ..."
+                      value={likeInput}
+                      onFocus={() => setShowLikeDropdown(true)}
+                      onChange={(e) => { setLikeInput(e.target.value); setShowLikeDropdown(true); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && likeInput.trim()) {
+                          e.preventDefault();
+                          if (!likes.includes(likeInput.trim())) setLikes(prev => [...prev, likeInput.trim()]);
+                          setLikeInput('');
+                          setShowLikeDropdown(false);
+                        }
+                      }}
+                      style={{ fontSize: '0.85rem', width: '100%' }}
+                    />
+                    {showLikeDropdown && (
+                      <div style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
+                        background: 'var(--surface, #FFF)', border: '1px solid var(--border)',
+                        borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100,
+                        maxHeight: '180px', overflowY: 'auto', padding: '0.4rem'
+                      }}>
+                        {PRESET_LIKES.filter(p => !likes.includes(p) && p.toLowerCase().includes(likeInput.toLowerCase())).map(preset => (
+                          <div
+                            key={preset}
+                            onClick={() => {
+                              if (!likes.includes(preset)) setLikes(prev => [...prev, preset]);
+                              setLikeInput('');
+                              setShowLikeDropdown(false);
+                            }}
+                            style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: '500' }}
+                          >
+                            + {preset}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dislikes Section */}
+                  <div style={{ position: 'relative' }} ref={dislikeRef}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#DC2626' }}>
+                        สิ่งที่ไม่ชอบ (ระบุได้หลายอย่าง)
+                      </label>
+                      {dislikes.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setDislikes([])}
+                          style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                        >
+                          ล้างสิ่งที่ไม่ชอบทั้งหมด
+                        </button>
+                      )}
+                    </div>
+                    {dislikes.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                        {dislikes.map(item => (
+                          <span
+                            key={item}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              padding: '0.2rem 0.65rem',
+                              borderRadius: '16px',
+                              fontSize: '0.8rem',
+                              fontWeight: '600',
+                              background: 'rgba(220, 38, 38, 0.1)',
+                              color: '#DC2626',
+                              border: '1px solid rgba(220, 38, 38, 0.3)'
+                            }}
+                          >
+                            ✕ {item}
+                            <button
+                              type="button"
+                              onClick={() => setDislikes(prev => prev.filter(i => i !== item))}
+                              style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', padding: 0, fontWeight: 'bold' }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="พิมพ์หรือคลิกเลือกสิ่งที่ไม่ชอบ..."
+                      value={dislikeInput}
+                      onFocus={() => setShowDislikeDropdown(true)}
+                      onChange={(e) => { setDislikeInput(e.target.value); setShowDislikeDropdown(true); }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && dislikeInput.trim()) {
+                          e.preventDefault();
+                          if (!dislikes.includes(dislikeInput.trim())) setDislikes(prev => [...prev, dislikeInput.trim()]);
+                          setDislikeInput('');
+                          setShowDislikeDropdown(false);
+                        }
+                      }}
+                      style={{ fontSize: '0.85rem', width: '100%' }}
+                    />
+                    {showDislikeDropdown && (
+                      <div style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px',
+                        background: 'var(--surface, #FFF)', border: '1px solid var(--border)',
+                        borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', zIndex: 100,
+                        maxHeight: '180px', overflowY: 'auto', padding: '0.4rem'
+                      }}>
+                        {PRESET_DISLIKES.filter(p => !dislikes.includes(p) && p.toLowerCase().includes(dislikeInput.toLowerCase())).map(preset => (
+                          <div
+                            key={preset}
+                            onClick={() => {
+                              if (!dislikes.includes(preset)) setDislikes(prev => [...prev, preset]);
+                              setDislikeInput('');
+                              setShowDislikeDropdown(false);
+                            }}
+                            style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-primary)', fontWeight: '500' }}
+                          >
+                            + {preset}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', width: '100%' }}>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/setup/profile')}
+                    style={{
+                      flex: '0 0 auto',
+                      padding: '0.85rem 1.5rem',
+                      fontSize: '0.95rem',
+                      fontWeight: '700',
+                      borderRadius: '14px',
+                      border: '1.5px solid var(--border)',
+                      background: '#FFFFFF',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                    }}
+                  >
+                    <ArrowLeft size={18} />
+                    <span>ย้อนกลับ</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{
+                      flex: 1,
+                      padding: '0.85rem',
+                      fontSize: '1rem',
+                      fontWeight: '700',
+                      borderRadius: '14px',
+                      opacity: isFormValid ? 1 : 0.6,
+                      cursor: isFormValid ? 'pointer' : 'not-allowed',
+                      boxShadow: '0 4px 12px rgba(124, 92, 252, 0.2)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    disabled={loading || !isFormValid}
+                  >
+                    {loading ? 'กำลังบันทึกข้อมูล...' : isEditMode ? 'บันทึก' : 'ถัดไป →'}
+                  </button>
+                </div>
+              </>
             )}
           </div>
 
