@@ -384,7 +384,7 @@ export default function DashboardPage() {
             boxShadow: '0 2px 8px rgba(124,92,252,0.1)'
           }}
         >
-          ปรับแต่งอวตาร
+          ปรับแต่งตัวละคร
         </button>
       </div>
 
