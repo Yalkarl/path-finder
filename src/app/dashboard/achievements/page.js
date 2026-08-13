@@ -252,10 +252,29 @@ export default function AchievementsPage() {
                 )}
               </div>
               
-              <h2 style={{ color: 'var(--text-primary)', margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '800' }}>{selectedBadge.name}</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem', lineHeight: '1.5' }}>{selectedBadge.criteria}</p>
+              <h2 style={{ color: 'var(--text-primary)', margin: '0 0 0.4rem 0', fontSize: '1.4rem', fontWeight: '800' }}>{selectedBadge.name}</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                <span style={{ fontWeight: '700', color: '#475569' }}>เงื่อนไข:</span> {selectedBadge.criteria}
+              </p>
               
-              <div style={{ padding: '1rem', background: isUnlocked ? `${themeColor}10` : '#F8FAFC', color: isUnlocked ? themeColor : '#64748B', borderRadius: '16px', fontWeight: 'bold', fontSize: '0.95rem' }}>
+              {/* Reward Box */}
+              <div style={{ 
+                padding: '0.85rem 1rem', 
+                background: isUnlocked ? '#F0FDF4' : '#FFFBEB', 
+                border: isUnlocked ? '1px solid #BBF7D0' : '1px solid #FDE68A',
+                borderRadius: '16px',
+                marginBottom: '1.25rem',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '0.75rem', color: isUnlocked ? '#16A34A' : '#D97706', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.3rem' }}>
+                  {isUnlocked ? 'สิ่งที่คุณได้รับแล้ว (Unlocked Reward):' : 'สิ่งที่จะได้รับเมื่อปลดล็อค (Reward Upon Unlock):'}
+                </div>
+                <div style={{ fontSize: '0.95rem', color: '#1E293B', fontWeight: '800' }}>
+                  {selectedBadge.unlocks || 'ตราเกียรติยศและคะแนนสะสมพิเศษ'}
+                </div>
+              </div>
+
+              <div style={{ padding: '0.85rem 1rem', background: isUnlocked ? `${themeColor}15` : '#F8FAFC', color: isUnlocked ? themeColor : '#64748B', borderRadius: '16px', fontWeight: 'bold', fontSize: '0.9rem' }}>
                 สถานะ: <span>
                   {isUnlocked ? 'ปลดล็อคแล้ว' : 'ยังไม่ปลดล็อค'}
                 </span>
