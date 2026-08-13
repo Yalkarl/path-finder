@@ -325,7 +325,7 @@ export default function ProfileStep() {
             <div style={{ marginBottom: '1.75rem', position: 'relative' }} ref={dislikeRef}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                 <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#DC2626' }}>
-                  สิ่งที่ไม่อิน / ไม่ชอบ (ระบุได้หลายอย่าง)
+                  สิ่งที่ไม่ชอบ (ระบุได้หลายอย่าง)
                 </label>
                 {selectedDislikes.length > 0 && (
                   <button

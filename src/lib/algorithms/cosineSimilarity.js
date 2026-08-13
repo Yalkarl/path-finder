@@ -269,9 +269,9 @@ export function generateMatchReason(candidate, userVector, likes = [], dislikes 
   if (matchedLikes.length > 0 && matchedDislikes.length === 0) {
     reasonStr = `ตรงกับความสนใจด้าน ${matchedLikes.join(', ')} โดยตรง ร่วมกับจุดแข็งทักษะ${top1.name} (ระดับ ${(top1.val * 100).toFixed(0)}%) และ${top2.name} ของคุณ`;
   } else if (matchedLikes.length > 0 && matchedDislikes.length > 0) {
-    reasonStr = `ตรงกับสิ่งที่ชอบด้าน ${matchedLikes.join(', ')} แต่ถูกปรับลดคะแนนเนื่องจากมีกิจกรรมที่คุณระบุว่าไม่อิน (${matchedDislikes.join(', ')})`;
+    reasonStr = `ตรงกับสิ่งที่ชอบด้าน ${matchedLikes.join(', ')} แต่ถูกปรับลดคะแนนเนื่องจากมีกิจกรรมที่คุณระบุว่าไม่ชอบ (${matchedDislikes.join(', ')})`;
   } else if (matchedDislikes.length > 0) {
-    reasonStr = `มีฐานทักษะ${top1.name}และ${top2.name}ที่ใช้เรียนได้ แต่ได้รับผลกระทบหักคะแนนเนื่องจากตรงกับกิจกรรมที่คุณไม่อิน (${matchedDislikes.join(', ')})`;
+    reasonStr = `มีฐานทักษะ${top1.name}และ${top2.name}ที่ใช้เรียนได้ แต่ได้รับผลกระทบหักคะแนนเนื่องจากตรงกับกิจกรรมที่คุณไม่ชอบ (${matchedDislikes.join(', ')})`;
   } else {
     reasonStr = `วิเคราะห์จากเกรดและแบบทดสอบ: คณะนี้เน้นสมรรถนะ${bmMaxName} ซึ่งสอดคล้องกับจุดแข็งด้าน${top1.name} (ระดับ ${(top1.val * 100).toFixed(0)}%) และ${top2.name} (ระดับ ${(top2.val * 100).toFixed(0)}%) ของคุณ`;
   }

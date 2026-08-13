@@ -70,7 +70,7 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
 
   if (dislikes.length > 0) {
     const dislikesText = dislikes.join(', ');
-    const dislikeInsight = `ขอบเขตความสนใจชัดเจนโดยระบุไม่อินกับกิจกรรมด้าน ${dislikesText} ช่วยกรองสาขาที่ไม่ตอบโจทย์ออกได้อย่างตรงจุด`;
+    const dislikeInsight = `ขอบเขตความสนใจชัดเจนโดยระบุไม่ชอบกิจกรรมด้าน ${dislikesText} ช่วยกรองสาขาที่ไม่ตอบโจทย์ออกได้อย่างตรงจุด`;
     if (!insights.some(i => i.includes(dislikesText))) {
       if (insights.length > 1) {
         insights.splice(1, 0, dislikeInsight);

@@ -489,7 +489,7 @@ export default function ProfilePage() {
             <div style={{ marginBottom: '1.75rem', position: 'relative' }} ref={dislikeRef}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                 <label style={{ fontSize: '0.85rem', color: '#DC2626', fontWeight: '700' }}>
-                  สิ่งที่ไม่อิน / ไม่ชอบ
+                  สิ่งที่ไม่ชอบ
                 </label>
                 {dislikes.length > 0 && (
                   <button

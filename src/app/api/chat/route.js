@@ -126,7 +126,7 @@ export async function POST(req) {
 
       const dislikesText = (userContext.dislikes && userContext.dislikes.length > 0)
         ? userContext.dislikes.join(', ')
-        : 'ไม่ได้ระบุสิ่งที่ไม่อิน/ไม่ชอบ';
+        : 'ไม่ได้ระบุสิ่งที่ไม่ชอบ';
 
       if (userContext.educationLevel === 'junior') {
         const programTypeLabels = {
@@ -156,7 +156,7 @@ export async function POST(req) {
         - สายการเรียนเป้าหมาย: ${targetName}
         - ประเภทห้องเรียนเป้าหมาย: ${programLabel}
         - สิ่งชอบ/ความสนใจเด่นของนักเรียน: ${likesText}
-        - สิ่งที่ไม่อิน/ไม่ชอบของนักเรียน: ${dislikesText}
+        - สิ่งที่ไม่ชอบของนักเรียน: ${dislikesText}
         - โอกาสความพร้อมสอบเข้าปัจจุบัน (Readiness Score): ${readinessText}
         - ทักษะเด่นของนักเรียน: ${userContext.topSkills.join(', ')}
         - สถานะความพร้อมเนื้อหา (Content Readiness): ${contentText}
@@ -212,7 +212,7 @@ ${actionableAdviceText}
         - ระดับชั้น: มัธยมศึกษาตอนปลาย
         - คณะ/เป้าหมายที่ล็อกไว้: ${targetName}
         - สิ่งชอบ/ความสนใจเด่นของนักเรียน: ${likesText}
-        - สิ่งที่ไม่อิน/ไม่ชอบของนักเรียน: ${dislikesText}
+        - สิ่งที่ไม่ชอบของนักเรียน: ${dislikesText}
         - โอกาสความพร้อมยื่นพอร์ต TCAS รอบ 1 ปัจจุบัน (Readiness Score): ${readinessText}
         - ทักษะเด่นของนักเรียน: ${userContext.topSkills.join(', ')}
         - ประสบการณ์/กิจกรรมในพอร์ตเดิม: ${portfolioText}
