@@ -198,8 +198,8 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
 
   const saAvg = saValues.length > 0
     ? saValues.reduce((sum, val) => sum + val, 0) / saValues.length
-    : 3; // Neutral 3 stars default if unrated
-  const saScore = Math.round(((saAvg - 1) / 4) * 100);
+    : 1; // Unrated = 0% score
+  const saScore = Math.max(0, Math.round(((saAvg - 1) / 4) * 100));
 
   // ==========================================
   // การรวมคะแนนถ่วงน้ำหนักตามระดับชั้น
