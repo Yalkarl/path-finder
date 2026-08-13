@@ -65,9 +65,12 @@ export function normalizePortfolioItem(item) {
   if (typeof item === 'object' && item !== null) {
     const text = item.text || item.title || item.name || '';
     const isPosn = text.includes('สอวน.') || text.includes('โอลิมปิกวิชาการ');
-    const isHighCustom = text.includes('NASA') || text.includes('ระดับประเทศ') || text.includes('ระดับชาติ') || text.includes('เหรียญทอง') || text.includes('ชนะเลิศ') || text.includes('นวัตกรรม') || text.includes('วิจัย');
     
-    let weight = 0.3; // Default participation weight
+    // Check negative / trolling / destructive keywords in custom activity
+    const isNegativeOrTroll = text.includes('สร้างปัญหา') || text.includes('ทำลาย') || text.includes('ป่วน') || text.includes('โกง') || text.includes('คดโกง') || text.includes('ละเมิด');
+    const isHighCustom = !isNegativeOrTroll && (text.includes('ระดับประเทศ') || text.includes('ระดับชาติ') || text.includes('เหรียญทอง') || text.includes('ชนะเลิศ') || text.includes('นวัตกรรม') || text.includes('งานวิจัย') || (text.includes('NASA') && (text.includes('สร้าง') || text.includes('พัฒนา') || text.includes('แข่งขัน'))));
+    
+    let weight = isNegativeOrTroll ? 0.0 : 0.3; // Default participation weight
 
     // Check POSN camp attributes (สอวน. ผู้แทนประเทศ / ค่าย 3 / ค่าย 2 / ค่าย 1) FIRST
     if (item.posnCamp === 'team' || item.level === 'international' || text.includes('ผู้แทนประเทศ')) {
@@ -78,6 +81,8 @@ export function normalizePortfolioItem(item) {
       weight = 1.5; // POSN Camp 2 / Provincial Silver
     } else if (item.posnCamp === 'camp1') {
       weight = 1.0; // POSN Camp 1
+    } else if (isNegativeOrTroll) {
+      weight = 0.0; // Negative/Troll activity gets ZERO weight
     } else if (isHighCustom) {
       weight = 1.8; // High prestige custom activity
     } else if (PRESET_ITEM_WEIGHTS[text]) {
