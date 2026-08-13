@@ -136,6 +136,11 @@ export default function ProfilePage() {
   const handleSaveKahootAvatar = async ({ characterId, accessoryId }) => {
     setCharacterId(characterId);
     setAccessoryId(accessoryId);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('setup_characterId', characterId);
+      localStorage.setItem('setup_accessoryId', accessoryId);
+      window.dispatchEvent(new Event('profile_updated'));
+    }
     if (!user) return;
     try {
       await updateUserProfile(user.uid, { characterId, accessoryId });

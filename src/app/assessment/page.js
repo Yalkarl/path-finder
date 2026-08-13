@@ -6,6 +6,7 @@ import { getUserProfile, updateUserProfile, addUsedQuestions } from '@/lib/fires
 import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
+import { recordAssessmentAttempt } from '@/lib/algorithms/dailyAttempts';
 import { ASSESSMENT_BANK, STAGE_THEMES } from '@/lib/constants/assessmentBank';
 import { TARGET_CLUSTERS, TARGETED_STAGE_THEMES, TARGETED_ASSESSMENT_BANK } from '@/lib/constants/targetedAssessment';
 import { MrPath } from '@/components/ui/mr-path';
@@ -13,7 +14,7 @@ import AssessmentMusicPlayer from '@/components/ui/AssessmentMusicPlayer';
 import { 
   Home, Gamepad2, GraduationCap, Users, Puzzle, Cpu, Palette, MessageSquare, FlaskConical, Crown, Globe, Compass, 
   Microscope, Scale, Dna, Terminal, Clock, Lightbulb, Leaf, LineChart, TrendingUp, Coins, Plane, Film, Sparkles, 
-  FileText, Heart 
+  FileText, Heart, ArrowLeft 
 } from 'lucide-react';
 
 const STAGE_ICON_MAP = {
@@ -108,11 +109,15 @@ export default function AssessmentPage() {
       let skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering);
       let aiEvaluationData = null;
 
-      // Call AI Evaluation Endpoint for Holistic Semantic Analysis
+      // Call AI Evaluation Endpoint with 3.5s AbortController timeout for fast response
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
         const aiRes = await fetch('/api/ai-evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             responses: finalResponses,
             academics: profile.academics,
@@ -123,6 +128,7 @@ export default function AssessmentPage() {
             educationLevel: profile.educationLevel
           })
         });
+        clearTimeout(timeoutId);
 
         if (aiRes.ok) {
           const aiJson = await aiRes.json();
@@ -134,7 +140,7 @@ export default function AssessmentPage() {
           }
         }
       } catch (aiErr) {
-        console.warn('AI evaluation API call failed, falling back to standard calculation:', aiErr);
+        console.warn('AI evaluation API fast fallback triggered:', aiErr);
       }
 
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
@@ -155,6 +161,8 @@ export default function AssessmentPage() {
           matchRankings: rankings
         }
       });
+
+      await recordAssessmentAttempt(profile, updateUserProfile);
 
       router.push('/dashboard');
     } catch (err) {
@@ -258,29 +266,34 @@ export default function AssessmentPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
             <span style={{ color: 'var(--primary)', fontWeight: '600' }}>คำถามที่ {currentIndex + 1}/{scenarios.length}</span>
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (currentIndex > 0) {
+              {currentIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
                     setCurrentIndex(currentIndex - 1);
                     setResponses(prev => prev.slice(0, -1));
-                  } else {
-                    router.push('/setup/grades');
-                  }
-                }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  fontWeight: '600',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                }}
-              >
-                ← ย้อนกลับ
-              </button>
+                  }}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1.5px solid var(--primary)',
+                    color: 'var(--primary)',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    fontWeight: '700',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '10px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    boxShadow: '0 2px 6px rgba(124, 92, 252, 0.12)',
+                    transition: 'all 0.2s ease',
+                    fontFamily: 'inherit'
+                  }}
+                  title="ย้อนกลับไปเปลี่ยนคำตอบข้อก่อนหน้า"
+                >
+                  <ArrowLeft size={14} /> ย้อนกลับแก้ไขข้อก่อนหน้า
+                </button>
+              )}
               <span style={{ 
                 background: currentTheme?.color || 'var(--primary)', 
                 color: 'white', 

@@ -10,6 +10,7 @@ import { TARGET_CLUSTERS, TARGETED_STAGE_THEMES, TARGETED_ASSESSMENT_BANK } from
 import { MrPath } from '@/components/ui/mr-path';
 import { useRouter } from 'next/navigation';
 import AssessmentMusicPlayer from '@/components/ui/AssessmentMusicPlayer';
+import { checkAssessmentQuota, recordAssessmentAttempt } from '@/lib/algorithms/dailyAttempts';
 import { 
   Sparkles, Star, Award, CheckCircle, RotateCcw, Target, Info, ArrowLeft,
   Home, Gamepad2, GraduationCap, Users, Puzzle, Cpu, Palette, MessageSquare, FlaskConical, Crown, Globe, Compass,
@@ -67,6 +68,7 @@ export default function DashboardAssessmentPage() {
   const [resetting, setResetting] = useState(false);
   const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
   const [customText, setCustomText] = useState('');
+  const [quotaAlertModal, setQuotaAlertModal] = useState(false);
 
   const handleResetAssessment = async () => {
     if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตคำตอบแบบทดสอบทั้งหมด? การรีเซ็ตนี้จะลบประวัติคำตอบแบบทดสอบทุกด่านของคุณในระบบ และเริ่มคำนวณใหม่จากศูนย์')) {
@@ -198,6 +200,11 @@ export default function DashboardAssessmentPage() {
   }, [user]);
 
   const startStage = (theme) => {
+    const quota = checkAssessmentQuota(profile);
+    if (!quota.canTake) {
+      setQuotaAlertModal(true);
+      return;
+    }
     const stageQuestions = activeBank.filter(q => q.stageId === theme.id);
     setSelectedTheme(theme);
     setScenarios(stageQuestions);
@@ -240,19 +247,27 @@ export default function DashboardAssessmentPage() {
       
       const allResponses = [...filteredOldResponses, ...newResponses];
 
-      const targetPathForFiltering = profile.analysisMode === 'target-lock' && profile.targetPath ? profile.targetPath : null;
-      const skillVector = calculateSkillVector(profile.academics, allResponses, targetPathForFiltering, profile.likes || [], profile.dislikes || []);
+      const isTargetLock = profile.analysisMode === 'target-lock';
+      const targetPathForFiltering = isTargetLock && profile.targetPath ? profile.targetPath : null;
+      const likesForCalc = isTargetLock ? [] : (profile.likes || []);
+      const dislikesForCalc = isTargetLock ? [] : (profile.dislikes || []);
+
+      const skillVector = calculateSkillVector(profile.academics, allResponses, targetPathForFiltering, likesForCalc, dislikesForCalc);
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-      const rankings = matchPaths(skillVector, pathsObject, profile.likes || [], profile.dislikes || []);
+      const rankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
       
       const updatedUsedIds = [...new Set([...(profile.usedQuestionIds || []), ...stageQuestions])];
 
-      // เรียกใช้ AI Evaluation API เพื่อประมวลผลคำตอบทั้งหมด (รวมข้อ 4, 5, 6 และคำตอบอิสระ)
+      // เรียกใช้ AI Evaluation API พร้อม AbortController Timeout (3.5 วินาที) เพื่อป้องกันหน้ารอประมวลผลค้างนาน
       let aiEvalResult = null;
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
         const aiRes = await fetch('/api/ai-evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             responses: allResponses,
             academics: profile.academics,
@@ -261,16 +276,19 @@ export default function DashboardAssessmentPage() {
             targetPath: profile.targetPath,
             analysisMode: profile.analysisMode,
             educationLevel: profile.educationLevel,
-            likes: profile.likes || [],
-            dislikes: profile.dislikes || []
+            likes: likesForCalc,
+            dislikes: dislikesForCalc
           })
         });
-        const aiData = await aiRes.json();
-        if (aiData.success && aiData.evaluation) {
-          aiEvalResult = aiData.evaluation;
+        clearTimeout(timeoutId);
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          if (aiData.success && aiData.evaluation) {
+            aiEvalResult = aiData.evaluation;
+          }
         }
       } catch (aiErr) {
-        console.warn('AI evaluation API call failed:', aiErr);
+        console.warn('AI evaluation API fast fallback triggered:', aiErr);
       }
 
       const finalSkillVector = (aiEvalResult?.skillVector && aiEvalResult.skillVector.length === 5) ? aiEvalResult.skillVector : skillVector;
@@ -293,11 +311,16 @@ export default function DashboardAssessmentPage() {
         updatePayload.aiEvaluation = aiEvalResult;
       }
 
-      await updateUserProfile(user.uid, updatePayload);
+      // บันทึกข้อมูลลง Firestore และลงโควตาคู่ขนาน (Parallel Write) เพื่อความเร็วสูงสุด
+      const [_, attemptRecord] = await Promise.all([
+        updateUserProfile(user.uid, updatePayload),
+        recordAssessmentAttempt(profile, updateUserProfile)
+      ]);
 
       // อัปเดตสถานะในตัวแปรท้องถิ่น
       setProfile(prev => ({
         ...prev,
+        dailyAssessmentAttempts: attemptRecord || prev.dailyAssessmentAttempts,
         usedQuestionIds: updatedUsedIds,
         assessment: { responses: allResponses, completedAt: new Date().toISOString() },
         results: { skillVector: finalSkillVector, matchRankings: finalRankings },
@@ -305,7 +328,7 @@ export default function DashboardAssessmentPage() {
       }));
       setCompletedStages(prev => new Set(prev).add(selectedTheme.id));
       
-      // เปลี่ยนหน้าไปยังแดชบอร์ดหลักเพื่อดูผลลัพธ์ใหม่
+      // เปลี่ยนหน้าไปยังแดชบอร์ดหลักเพื่อดูผลลัพธ์ใหม่แบบทันที
       router.push('/dashboard');
     } catch (err) {
       console.error('Error saving stage:', err);
@@ -369,8 +392,8 @@ export default function DashboardAssessmentPage() {
           {/* Progress Bar */}
           <div style={{ marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ color: 'var(--primary)', fontWeight: '600' }}>ข้อที่ {currentIndex + 1}/{scenarios.length}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.9rem' }}>ข้อที่ {currentIndex + 1} จาก {scenarios.length}</span>
                 {currentIndex > 0 && (
                   <button
                     type="button"
@@ -381,21 +404,26 @@ export default function DashboardAssessmentPage() {
                       setCustomText('');
                     }}
                     style={{
-                      background: 'rgba(124, 92, 252, 0.1)',
-                      border: 'none',
+                      background: '#FFFFFF',
+                      border: '1.5px solid var(--primary)',
                       color: 'var(--primary)',
                       cursor: 'pointer',
-                      fontSize: '0.75rem',
+                      fontSize: '0.8rem',
                       fontWeight: '700',
-                      padding: '2px 8px',
-                      borderRadius: '8px',
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '10px',
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '0.2rem',
+                      gap: '0.35rem',
+                      boxShadow: '0 2px 6px rgba(124, 92, 252, 0.12)',
+                      transition: 'all 0.2s ease',
                       fontFamily: 'inherit'
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--primary)'; e.currentTarget.style.color = '#FFFFFF'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = 'var(--primary)'; }}
+                    title="คลิกเพื่อย้อนกลับไปเปลี่ยนคำตอบข้อก่อนหน้า"
                   >
-                    ← ย้อนกลับ
+                    <ArrowLeft size={14} /> ย้อนกลับแก้ไขข้อก่อนหน้า
                   </button>
                 )}
               </div>
@@ -660,9 +688,32 @@ export default function DashboardAssessmentPage() {
           </button>
         )}
       </div>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem' }}>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
         ยิ่งทำแบบทดสอบเยอะ ยิ่งได้ผลวิเคราะห์ที่แม่นยำขึ้น เลือกด่านที่คุณสนใจเพื่อทดสอบความถนัด
       </p>
+
+      {/* Daily Quota Indicator Badge (Max 2 Attempts/Day) */}
+      {(() => {
+        const quota = checkAssessmentQuota(profile);
+        return (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.45rem 0.95rem',
+            borderRadius: '16px',
+            background: quota.canTake ? 'rgba(22, 163, 74, 0.08)' : 'rgba(220, 38, 38, 0.08)',
+            border: `1px solid ${quota.canTake ? 'rgba(22, 163, 74, 0.25)' : 'rgba(220, 38, 38, 0.25)'}`,
+            color: quota.canTake ? '#16A34A' : '#DC2626',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            marginBottom: '1.75rem'
+          }}>
+            <Clock size={16} />
+            <span>โควตาทำแบบทดสอบวันนี้: {quota.count} / {quota.max} ครั้ง {quota.canTake ? `(ทำได้อีก ${quota.remaining} ครั้ง)` : '(สิทธิ์ครบตามกำหนด 2 ครั้งวันนี้แล้ว)'}</span>
+          </div>
+        );
+      })()}
 
       {/* Target Lock Mode Header Banner (Solid Brand Purple) */}
       {profile?.analysisMode === 'target-lock' && targetPathObj && (
@@ -693,7 +744,7 @@ export default function DashboardAssessmentPage() {
           </div>
           <div>
             <div style={{ fontWeight: '800', fontSize: '1.15rem', color: '#FFFFFF', letterSpacing: '0.2px', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <span>{level === 'junior' ? 'โหมดประเมินความพร้อมสอบเข้า ม.4:' : 'โหมดประเมินความพร้อมยื่นพอร์ต TCAS รอบ 1:'}</span>
+              <span>{profile?.educationLevel === 'junior' ? 'โหมดประเมินความพร้อมสอบเข้า ม.4:' : 'โหมดประเมินความพร้อมยื่นพอร์ต TCAS รอบ 1:'}</span>
               <span style={{ 
                 background: '#FFFFFF',
                 color: 'var(--primary)',
@@ -1196,6 +1247,62 @@ export default function DashboardAssessmentPage() {
           );
         })}
       </div>
+      )}
+
+      {/* Quota Limit Reached Modal */}
+      {quotaAlertModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }} onClick={() => setQuotaAlertModal(false)}>
+          <div style={{
+            background: '#FFFFFF',
+            borderRadius: '24px',
+            maxWidth: '420px',
+            width: '100%',
+            padding: '2.25rem 2rem',
+            textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            margin: 'auto'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: '#FEE2E2',
+              color: '#DC2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 1.25rem auto'
+            }}>
+              <Clock size={32} />
+            </div>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.2rem', fontWeight: '800', color: '#1E293B' }}>
+              ครบกำหนดโควตาประจำวันแล้ว
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#64748B', lineHeight: '1.6', margin: '0 0 1.5rem 0' }}>
+              คุณทำแบบทดสอบครบโควตาจำกัด <strong>2 ครั้งสำหรับวันนี้</strong> เรียบร้อยแล้วครับ ระบบจะทำการรีเซ็ตโควตารอบใหม่ในวันพรุ่งนี้ครับ
+            </p>
+            <button
+              className="btn-primary"
+              onClick={() => setQuotaAlertModal(false)}
+              style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem' }}
+            >
+              รับทราบ
+            </button>
+          </div>
+        </div>
       )}
       <AssessmentMusicPlayer />
     </div>

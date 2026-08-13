@@ -22,16 +22,30 @@ export default function DashboardLayout({ children }) {
       router.push('/login');
     }
     
+    const refreshProfile = async () => {
+      if (!user) return;
+      const p = await getUserProfile(user.uid);
+      if (!p || !p.completedSetup) {
+        router.push('/setup');
+      } else {
+        const localChar = typeof window !== 'undefined' ? localStorage.getItem('setup_characterId') : null;
+        const localAcc = typeof window !== 'undefined' ? localStorage.getItem('setup_accessoryId') : null;
+        setProfile({
+          ...p,
+          characterId: p.characterId || localChar || 'penguin',
+          accessoryId: p.accessoryId || localAcc || 'none'
+        });
+      }
+    };
+
     if (user) {
-      getUserProfile(user.uid).then(p => {
-        if (!p || !p.completedSetup) {
-          router.push('/setup');
-        } else {
-          setProfile(p);
-        }
-      });
+      refreshProfile();
+      window.addEventListener('profile_updated', refreshProfile);
+      return () => {
+        window.removeEventListener('profile_updated', refreshProfile);
+      };
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
     try {

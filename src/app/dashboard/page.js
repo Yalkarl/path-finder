@@ -271,17 +271,21 @@ export default function DashboardPage() {
   const isTargetLock = profile.analysisMode === 'target-lock';
   const targetPathForFiltering = isTargetLock && profile.targetPath ? profile.targetPath : null;
 
-  const computedSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], targetPathForFiltering, profile.likes || [], profile.dislikes || []);
+  // ในโหมด Target Lock จะประเมินจากเกรด ความถนัด SJT และพอร์ตโฟลิโอโดยตรง โดยไม่นำสิ่งชอบ/ไม่ชอบมาถ่วงน้ำหนัก
+  const likesForCalc = isTargetLock ? [] : (profile.likes || []);
+  const dislikesForCalc = isTargetLock ? [] : (profile.dislikes || []);
+
+  const computedSkillVector = calculateSkillVector(profile.academics || {}, profile.assessment?.responses || [], targetPathForFiltering, likesForCalc, dislikesForCalc);
   const aiVector = profile.aiEvaluation?.skillVector;
   const hasAiVector = Array.isArray(aiVector) && aiVector.length === 5 && aiVector.some(v => v > 0);
-  const hasLikesOrDislikes = (Array.isArray(profile.likes) && profile.likes.length > 0) || (Array.isArray(profile.dislikes) && profile.dislikes.length > 0);
+  const hasLikesOrDislikes = !isTargetLock && ((Array.isArray(profile.likes) && profile.likes.length > 0) || (Array.isArray(profile.dislikes) && profile.dislikes.length > 0));
 
   // ผสมผสานค่าน้ำหนักหลักจากเกรด+แบบทดสอบ (50%) ร่วมกับ AI (50%) เพื่อให้กราฟนิ่ง เป็นธรรมชาติ และสมจริง
   const skillVector = hasAiVector
     ? computedSkillVector.map((compVal, idx) => Math.min(1, Math.max(0, compVal * 0.5 + (aiVector[idx] || 0) * 0.5)))
     : computedSkillVector;
   const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-  const matchRankings = matchPaths(skillVector, pathsObject, profile.likes || [], profile.dislikes || []);
+  const matchRankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
 
   // การคำนวณคะแนนสำหรับโหมด Target Lock
   const targetPathObj = isTargetLock && profile.targetPath ? (matchRankings.find(p => p.id === profile.targetPath) || pathsObject[profile.targetPath]) : null;
@@ -324,6 +328,66 @@ export default function DashboardPage() {
   return (
     <div style={{ animation: 'fadeIn 0.5s ease' }}>
       
+      {/* Kahoot Avatar Welcome Header Card (Always Visible for Both Target Lock & Discovery Modes) */}
+      <div className="card" style={{ 
+        marginBottom: '1.5rem', 
+        padding: '1.25rem 1.5rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        flexWrap: 'wrap', 
+        gap: '1rem', 
+        background: 'linear-gradient(135deg, rgba(124,92,252,0.06), rgba(124,92,252,0.02))', 
+        border: '1px solid rgba(124,92,252,0.15)' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: 'var(--surface)',
+            border: '2.5px solid var(--primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            boxShadow: '0 4px 14px rgba(124,92,252,0.18)',
+            flexShrink: 0
+          }}>
+            <KahootCharacterSvg type={profile?.characterId || 'penguin'} accessory={profile?.accessoryId || 'none'} size={50} />
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)', fontWeight: '800' }}>
+              สวัสดีครับ, {profile?.name || 'ผู้เรียน'}!
+            </h2>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              ระดับชั้น: {profile?.educationLevel === 'junior' ? 'มัธยมศึกษาตอนต้น (ม.1-ม.3)' : 'มัธยมศึกษาตอนปลาย (ม.4-ม.6)'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => router.push('/dashboard/profile')}
+          style={{
+            marginLeft: 'auto',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.55rem 1.1rem',
+            borderRadius: '12px',
+            background: '#FFFFFF',
+            border: '1.5px solid var(--primary)',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            color: 'var(--primary)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 8px rgba(124,92,252,0.1)'
+          }}
+        >
+          ปรับแต่งอวตาร
+        </button>
+      </div>
+
       {/* ────────────────────────────────────────────────────────
           โหมด TARGET LOCK (ประเมินความพร้อมแบบเป้าหมายเดี่ยว)
           ──────────────────────────────────────────────────────── */}
@@ -723,54 +787,6 @@ export default function DashboardPage() {
             โหมด DISCOVERY (ค้นหาตัวเองดั้งเดิม)
             ──────────────────────────────────────────────────────── */
         <>
-          {/* Kahoot Avatar Welcome Header Card */}
-          <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', background: 'linear-gradient(135deg, rgba(124,92,252,0.06), rgba(124,92,252,0.02))', border: '1px solid rgba(124,92,252,0.15)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '54px',
-                height: '54px',
-                borderRadius: '50%',
-                background: 'var(--surface)',
-                border: '2px solid var(--primary-light)',
-                display: 'flex',
-                alignItems: 'center',
-                justify: 'center',
-                overflow: 'hidden',
-                boxShadow: '0 4px 12px rgba(124,92,252,0.15)',
-                flexShrink: 0
-              }}>
-                <KahootCharacterSvg type={profile.characterId || 'penguin'} accessory={profile.accessoryId || 'none'} size={48} />
-              </div>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>
-                  สวัสดีครับ, {profile.name || 'ผู้เรียน'}!
-                </h2>
-                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  ระดับชั้น: {profile.educationLevel === 'junior' ? 'มัธยมศึกษาตอนต้น (ม.1-ม.3)' : 'มัธยมศึกษาตอนปลาย (ม.4-ม.6)'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => router.push('/dashboard/profile')}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.5rem 1rem',
-                borderRadius: '12px',
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                color: 'var(--primary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-            >
-              ปรับแต่งตัวละคร
-            </button>
-          </div>
-
           {/* Skill Matrix */}
           <div className="card" style={{ marginBottom: '2rem' }}>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>

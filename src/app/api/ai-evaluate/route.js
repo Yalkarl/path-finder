@@ -17,11 +17,15 @@ export async function POST(req) {
       dislikes            // Array of student dislikes / non-interests
     } = await req.json();
 
+    const isTargetLock = analysisMode === 'target-lock';
+    const effectiveLikes = isTargetLock ? [] : (likes || []);
+    const effectiveDislikes = isTargetLock ? [] : (dislikes || []);
+
     const model = getGeminiModel('gemini-3.1-flash-lite');
 
     const prompt = `
 คุณคือผู้เชี่ยวชาญด้านจิตวิทยาการประเมินสมรรถนะ (Psychometrics) และนักแนะแนวการศึกษาต่อระดับอุดมศึกษา
-โปรดวิเคราะห์ข้อมูลการทำแบบทดสอบสถานการณ์จำลอง (SJT), เกรดเฉลี่ยสะสมรายวิชา (GPAX 4-5 เทอม), พอร์ตผลงาน, รวมถึงความชอบและไม่ชอบของนักเรียนต่อไปนี้แบบองค์รวม (Holistic Evaluation):
+โปรดวิเคราะห์ข้อมูลการทำแบบทดสอบสถานการณ์จำลอง (SJT), เกรดเฉลี่ยสะสมรายวิชา (GPAX 4-5 เทอม) และพอร์ตผลงานของนักเรียนต่อไปนี้แบบองค์รวม (Holistic Evaluation):
 
 [ข้อมูลเกรดสะสม GPAX (สเกล 0.00 - 4.00)]
 - คณิตศาสตร์: ${academics?.math || 0}
@@ -30,11 +34,10 @@ export async function POST(req) {
 - ภาษาอังกฤษ: ${academics?.english || 0}
 - สังคมศึกษาฯ: ${academics?.social || 0}
 
-[โหมดการวิเคราะห์]: ${analysisMode === 'target-lock' ? `Target Lock Mode (เป้าหมาย: ${targetPath || 'ไม่ระบุ'})` : 'Discovery Mode (ค้นหาตัวตนอิสระ)'}
+[โหมดการวิเคราะห์]: ${isTargetLock ? `Target Lock Mode (เป้าหมาย: ${targetPath || 'ไม่ระบุ'} - ประเมินจากเกรด ความถนัด และผลงานพอร์ตโฟลิโอโดยตรง ไม่นำสิ่งชอบ/ไม่ชอบมาถ่วงน้ำหนัก)` : 'Discovery Mode (ค้นหาตัวตนอิสระ)'}
 [ระดับชั้น]: ${educationLevel === 'junior' ? 'มัธยมศึกษาตอนต้น (ม.1-ม.3)' : 'มัธยมศึกษาตอนปลาย (ม.4-ม.6)'}
 
-[สิ่งชอบ / ความสนใจหลักของนักเรียน]: ${JSON.stringify(likes || [])}
-[สิ่งที่ไม่อิน / ไม่ชอบของนักเรียน]: ${JSON.stringify(dislikes || [])}
+${isTargetLock ? '[สิ่งชอบ/ไม่ชอบ]: ในโหมด Target Lock ไม่นำความชอบส่วนตัวมาคำนวณ ให้ประเมินจากเกรด ทักษะ SJT และผลงานตรงสายเท่านั้น' : `[สิ่งชอบ / ความสนใจหลักของนักเรียน]: ${JSON.stringify(effectiveLikes)}\n[สิ่งที่ไม่อิน / ไม่ชอบของนักเรียน]: ${JSON.stringify(effectiveDislikes)}`}
 
 [รายการผลงาน/กิจกรรมในพอร์ต]: ${JSON.stringify([...(portfolio || []), ...(customActivities || [])])}
 

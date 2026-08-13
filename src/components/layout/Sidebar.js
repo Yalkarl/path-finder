@@ -3,9 +3,38 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { MrPath } from '@/components/ui/mr-path';
 import { Home, Target, ClipboardCheck, MessageSquare, User, LogOut } from 'lucide-react';
+import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
+
+import { useEffect, useState } from 'react';
 
 export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
   const pathname = usePathname();
+
+  const [localAvatar, setLocalAvatar] = useState({
+    characterId: typeof window !== 'undefined' ? localStorage.getItem('setup_characterId') : null,
+    accessoryId: typeof window !== 'undefined' ? localStorage.getItem('setup_accessoryId') : null
+  });
+
+  useEffect(() => {
+    const syncAvatar = () => {
+      if (typeof window !== 'undefined') {
+        setLocalAvatar({
+          characterId: localStorage.getItem('setup_characterId'),
+          accessoryId: localStorage.getItem('setup_accessoryId')
+        });
+      }
+    };
+    syncAvatar();
+    window.addEventListener('profile_updated', syncAvatar);
+    window.addEventListener('storage', syncAvatar);
+    return () => {
+      window.removeEventListener('profile_updated', syncAvatar);
+      window.removeEventListener('storage', syncAvatar);
+    };
+  }, []);
+
+  const activeCharId = localAvatar.characterId || profile?.characterId || 'penguin';
+  const activeAccId = localAvatar.accessoryId || profile?.accessoryId || 'none';
 
   const isTargetLock = profile?.analysisMode === 'target-lock';
 
@@ -70,7 +99,26 @@ export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
         textAlign: 'center',
         boxShadow: '0 4px 12px rgba(124,92,252,0.04)',
       }}>
-        <p style={{ margin: '0 0 0.4rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>ยินดีต้อนรับกลับมา</p>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: '#FFFFFF',
+          border: '2.5px solid var(--primary)',
+          margin: '0 auto 0.75rem auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          boxShadow: '0 4px 14px rgba(124, 92, 252, 0.18)'
+        }}>
+          <KahootCharacterSvg 
+            type={activeCharId} 
+            accessory={activeAccId} 
+            size={48} 
+          />
+        </div>
+        <p style={{ margin: '0 0 0.2rem 0', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>ยินดีต้อนรับกลับมา</p>
         <p style={{ margin: 0, fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: '1.4', wordBreak: 'break-word' }}>{profile?.name || 'ผู้ใช้'}</p>
       </div>
 
