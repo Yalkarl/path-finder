@@ -697,21 +697,18 @@ export default function DashboardPage() {
                       );
                     };
 
-                    const JUNIOR_PREP_ITEMS = [
+                    const JUNIOR_ONLY_PREP_ITEMS = [
                       'เรียนเก็บเนื้อหาบทเรียน ม.ต้น (ม.1-ม.3) ครบถ้วนแล้ว',
                       'เริ่มเรียนเนื้อหาล่วงหน้าของ ม.ปลาย บ้างแล้ว',
                       'อยู่ในชั่วโมงตะลุยโจทย์ข้อสอบเก่า / ข้อสอบเข้า ม.4',
-                      'ผ่านคอร์สติวเข้มข้นเฉพาะสายวิชา (เช่น ติวเข้มคณิต-วิทย์ หรือคอร์สเตรียมโดม)',
-                      'เคยเข้าร่วมการทดสอบ Pre-Test ของโรงเรียนต่าง ๆ (เช่น Pre-Test ม.4 โรงเรียนสตรีพัทลุง หรือโรงเรียนดัง)',
-                      'เคยแข่งขันทักษะวิชาการระดับ ม.ต้น (เช่น งานศิลปหัตถกรรมนักเรียน)',
-                      'เคยสอบแข่งขันวัดระดับระดับ ม.ต้น (เช่น สสวท. ม.ต้น, ASMO, TEDET)'
+                      'เคยเข้าร่วมการทดสอบ Pre-Test ของโรงเรียนต่าง ๆ (เช่น Pre-Test ม.4 โรงเรียนสตรีพัทลุง หรือโรงเรียนดัง)'
                     ];
                     const isJunior = profile.educationLevel === 'junior';
                     const filteredPortfolio = (profile.portfolio || []).filter(rawItem => {
                       if (!rawItem) return false;
                       const text = typeof rawItem === 'string' ? rawItem : rawItem.text;
-                      const isJuniorItem = JUNIOR_PREP_ITEMS.includes(text);
-                      return isJunior ? isJuniorItem : !isJuniorItem;
+                      const isJuniorOnlyPrep = JUNIOR_ONLY_PREP_ITEMS.includes(text);
+                      return isJunior ? true : !isJuniorOnlyPrep;
                     });
 
                     const hasPortfolio = (filteredPortfolio.length > 0);

@@ -54,21 +54,23 @@ const PRESET_ITEM_WEIGHTS = {
 export function normalizePortfolioItem(item) {
   if (typeof item === 'string') {
     const isPosn = item.includes('สอวน.') || item.includes('โอลิมปิกวิชาการ');
+    const isHighPrestige = isPosn || item.includes('ระดับประเทศ') || item.includes('ระดับชาติ') || item.includes('ชนะเลิศ');
     return {
       text: item,
       categoryId: 'preset',
-      weight: PRESET_ITEM_WEIGHTS[item] || (isPosn ? 1.0 : 0.3)
+      weight: PRESET_ITEM_WEIGHTS[item] || (isHighPrestige ? 1.5 : 0.3)
     };
   }
 
   if (typeof item === 'object' && item !== null) {
     const text = item.text || item.title || item.name || '';
     const isPosn = text.includes('สอวน.') || text.includes('โอลิมปิกวิชาการ');
+    const isHighCustom = text.includes('NASA') || text.includes('ระดับประเทศ') || text.includes('ระดับชาติ') || text.includes('เหรียญทอง') || text.includes('ชนะเลิศ') || text.includes('นวัตกรรม') || text.includes('วิจัย');
     
     let weight = 0.3; // Default participation weight
 
     // Check POSN camp attributes (สอวน. ผู้แทนประเทศ / ค่าย 3 / ค่าย 2 / ค่าย 1) FIRST
-    if (item.posnCamp === 'team' || item.level === 'international') {
+    if (item.posnCamp === 'team' || item.level === 'international' || text.includes('ผู้แทนประเทศ')) {
       weight = 2.5; // Highest prestige: National Representative / International
     } else if (item.posnCamp === 'camp3' || item.posnCamp === 'national' || item.level === 'national' || item.award === 'gold' || item.award === 'first') {
       weight = 2.0; // POSN Camp 3 / Gold Medal National
@@ -76,6 +78,8 @@ export function normalizePortfolioItem(item) {
       weight = 1.5; // POSN Camp 2 / Provincial Silver
     } else if (item.posnCamp === 'camp1') {
       weight = 1.0; // POSN Camp 1
+    } else if (isHighCustom) {
+      weight = 1.8; // High prestige custom activity
     } else if (PRESET_ITEM_WEIGHTS[text]) {
       weight = PRESET_ITEM_WEIGHTS[text];
     } else if (isPosn) {
@@ -140,21 +144,18 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
 
   // Filter portfolio items based on education level to prevent cross-contamination
   const isJunior = educationLevel === 'junior';
-  const JUNIOR_PREP_ITEMS = [
+  const JUNIOR_ONLY_PREP_ITEMS = [
     'เรียนเก็บเนื้อหาบทเรียน ม.ต้น (ม.1-ม.3) ครบถ้วนแล้ว',
     'เริ่มเรียนเนื้อหาล่วงหน้าของ ม.ปลาย บ้างแล้ว',
     'อยู่ในชั่วโมงตะลุยโจทย์ข้อสอบเก่า / ข้อสอบเข้า ม.4',
-    'ผ่านคอร์สติวเข้มข้นเฉพาะสายวิชา (เช่น ติวเข้มคณิต-วิทย์ หรือคอร์สเตรียมโดม)',
-    'เคยเข้าร่วมการทดสอบ Pre-Test ของโรงเรียนต่าง ๆ (เช่น Pre-Test ม.4 โรงเรียนสตรีพัทลุง หรือโรงเรียนดัง)',
-    'เคยแข่งขันทักษะวิชาการระดับ ม.ต้น (เช่น งานศิลปหัตถกรรมนักเรียน)',
-    'เคยสอบแข่งขันวัดระดับระดับ ม.ต้น (เช่น สสวท. ม.ต้น, ASMO, TEDET)'
+    'เคยเข้าร่วมการทดสอบ Pre-Test ของโรงเรียนต่าง ๆ (เช่น Pre-Test ม.4 โรงเรียนสตรีพัทลุง หรือโรงเรียนดัง)'
   ];
 
   const filteredPortfolio = (portfolio || []).filter(rawItem => {
     if (!rawItem) return false;
     const text = typeof rawItem === 'string' ? rawItem : rawItem.text;
-    const isJuniorItem = JUNIOR_PREP_ITEMS.includes(text);
-    return isJunior ? isJuniorItem : !isJuniorItem;
+    const isJuniorOnlyPrep = JUNIOR_ONLY_PREP_ITEMS.includes(text);
+    return isJunior ? true : !isJuniorOnlyPrep;
   });
 
   // รวมรายการผลงานและกิจกรรมเสริม
@@ -182,19 +183,22 @@ export function calculateReadiness(skillVector, benchmark, portfolio, selfAssess
   if (targetPath && SELF_ASSESSMENT_SUBJECTS[targetPath]) {
     const targetSubjects = SELF_ASSESSMENT_SUBJECTS[targetPath].map(sub => sub.id);
     targetSubjects.forEach(subId => {
-      if (selfAssessment && selfAssessment[subId] !== undefined) {
+      if (selfAssessment && selfAssessment[subId] !== undefined && selfAssessment[subId] > 0) {
         saValues.push(selfAssessment[subId]);
       }
     });
   }
 
   if (saValues.length === 0) {
-    saValues = Object.values(selfAssessment || {});
+    const validRatings = Object.values(selfAssessment || {}).filter(v => typeof v === 'number' && v > 0);
+    if (validRatings.length > 0) {
+      saValues = validRatings;
+    }
   }
 
   const saAvg = saValues.length > 0
     ? saValues.reduce((sum, val) => sum + val, 0) / saValues.length
-    : 3;
+    : 3; // Neutral 3 stars default if unrated
   const saScore = Math.round(((saAvg - 1) / 4) * 100);
 
   // ==========================================
