@@ -1291,17 +1291,7 @@ export default function DashboardPage() {
               )}
             </TargetLockGaugeContainer>
 
-            <div style={{
-              display: 'flex',
-              gap: '0.75rem',
-              marginTop: '1.5rem',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              filter: targetLockPhase !== 'complete' ? 'blur(8px)' : 'blur(0px)',
-              opacity: targetLockPhase !== 'complete' ? 0.3 : 1,
-              pointerEvents: targetLockPhase !== 'complete' ? 'none' : 'auto',
-              transition: 'all 1.0s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}>
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button 
                 className="btn-primary" 
                 onClick={() => handleConsultPath(targetPathObj?.name || profile.targetPath)}
