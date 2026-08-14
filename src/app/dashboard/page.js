@@ -230,6 +230,165 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
   );
 }
 
+function TargetLockGaugeContainer({ isEvaluating, children }) {
+  const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
+  const prevEvalRef = useRef(isEvaluating);
+
+  useEffect(() => {
+    if (prevEvalRef.current && !isEvaluating) {
+      setPhase('shattering');
+      const timer = setTimeout(() => {
+        setPhase('complete');
+      }, 1300);
+      return () => clearTimeout(timer);
+    } else if (isEvaluating) {
+      setPhase('evaluating');
+    }
+    prevEvalRef.current = isEvaluating;
+  }, [isEvaluating]);
+
+  const isLocked = phase === 'evaluating';
+  const isShattering = phase === 'shattering';
+  const showOverlay = isLocked || isShattering;
+
+  return (
+    <div style={{ position: 'relative', width: '100%', borderRadius: '20px', overflow: 'hidden' }}>
+      {/* Target Gauge Content with Blur Transition */}
+      <div style={{
+        filter: isLocked ? 'blur(14px)' : isShattering ? 'blur(8px)' : 'blur(0px)',
+        opacity: isLocked ? 0.25 : isShattering ? 0.7 : 1,
+        transform: isLocked ? 'scale(0.97)' : isShattering ? 'scale(0.99)' : 'scale(1)',
+        transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        pointerEvents: showOverlay ? 'none' : 'auto',
+        userSelect: showOverlay ? 'none' : 'auto'
+      }}>
+        {children}
+      </div>
+
+      {/* Target Reticle Radar Scan Overlay */}
+      {showOverlay && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255, 255, 255, 0.72)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 10,
+          borderRadius: '20px',
+          animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+        }}>
+          {/* Target Scanning SVG Radar Reticle */}
+          <svg style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            overflow: 'visible'
+          }}>
+            <defs>
+              <linearGradient id="reticleGlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#7C5CFC" />
+                <stop offset="50%" stopColor="#F59E0B" />
+                <stop offset="100%" stopColor="#6366F1" />
+              </linearGradient>
+            </defs>
+
+            {/* Outer Rotating Radar Ring */}
+            <circle cx="50%" cy="50%" r="140" fill="none" stroke="url(#reticleGlowGrad)" strokeWidth="3" strokeDasharray="24 16"
+              style={{
+                animation: isShattering ? 'reticleLockOn 1.2s cubic-bezier(0.4,0,0.2,1) forwards' : 'reticleSpin 8s linear infinite',
+                transformOrigin: '50% 50%',
+                filter: 'drop-shadow(0 0 8px rgba(124,92,252,0.4))'
+              }}
+            />
+
+            {/* Inner Pulsing Radar Ring */}
+            <circle cx="50%" cy="50%" r="100" fill="none" stroke={isShattering ? '#10B981' : '#7C5CFC'} strokeWidth="2" strokeDasharray="8 6"
+              style={{
+                animation: isShattering ? 'none' : 'reticleSpin 4s linear infinite reverse',
+                transformOrigin: '50% 50%',
+                opacity: 0.7
+              }}
+            />
+          </svg>
+
+          {/* Central Target Lock Reticle Card */}
+          <div style={{
+            position: 'relative',
+            zIndex: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.85rem',
+            padding: '1.6rem 2.5rem',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 246, 255, 0.96))',
+            borderRadius: '24px',
+            border: '2px solid rgba(124, 92, 252, 0.4)',
+            boxShadow: '0 16px 44px rgba(124, 92, 252, 0.22), 0 0 25px rgba(245, 158, 11, 0.15)',
+            animation: isShattering ? 'padlockShatter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out'
+          }}>
+            {/* Target Reticle Icon */}
+            <div style={{
+              width: '68px',
+              height: '68px',
+              borderRadius: '50%',
+              background: isShattering
+                ? 'linear-gradient(135deg, #10B981, #34D399)'
+                : 'linear-gradient(135deg, #7C5CFC, #F59E0B)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              boxShadow: isShattering
+                ? '0 0 24px rgba(16, 185, 129, 0.6)'
+                : '0 0 24px rgba(124, 92, 252, 0.45)',
+              transition: 'all 0.4s ease'
+            }}>
+              <Target size={34} style={{ animation: isLocked ? 'pulse 1.5s infinite' : 'none' }} />
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: '1.05rem',
+                fontWeight: '800',
+                color: isShattering ? '#059669' : '#4C1D95',
+                marginBottom: '0.2rem'
+              }}>
+                {isShattering ? 'TARGET ACQUIRED! ล็อกเป้าหมายสำเร็จ' : 'สแกนและล็อกเป้าหมายความพร้อม'}
+              </div>
+              <div style={{
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                color: 'var(--text-secondary)',
+                lineHeight: '1.4'
+              }}>
+                {isShattering ? 'กำลังสำแดงผลวิเคราะห์โอกาสสอบเข้า...' : 'ระบบกำลังสแกนคำตอบและประเมินเปอร์เซ็นต์ความพร้อม...'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Target Reticle Keyframes */}
+      <style>{`
+        @keyframes reticleSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes reticleLockOn {
+          0% { transform: scale(1) rotate(0deg); opacity: 1; }
+          50% { transform: scale(1.15) rotate(180deg); stroke: #F59E0B; }
+          100% { transform: scale(0.9) rotate(360deg); stroke: #10B981; opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval }) {
   const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
   const prevEvalRef = useRef(isEvaluating);
@@ -768,76 +927,78 @@ export default function DashboardPage() {
             </span>
 
             <AIStatusBadge isEvaluating={!aiEval && !evaluatingTimeout} />
-            {profile.educationLevel === 'junior' && readinessPercentages.length > 0 ? (
-              <div style={{ width: '100%', textAlign: 'center' }}>
-                <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
-                  อันดับ 1: <span style={{ color: 'var(--primary)' }}>
-                    {readinessPercentages[0].name}
-                    {profile.targetProgramType && (
-                      ` (${profile.targetProgramType === 'gifted-sci-math' ? 'Gifted / ห้องพิเศษวิทย์-คณิต' : profile.targetProgramType === 'special-language' ? 'EP / IEP / ห้องพิเศษภาษา' : 'ห้องเรียนปกติ'})`
-                    )}
-                  </span>
-                  {isUpdated && <UpdateBadge />}
-                </h2>
-                
-                <div style={{ margin: '1rem 0', display: 'flex', justifyContent: 'center' }}>
-                  <ReadinessGauge percentage={readinessPercentages[0].readiness} size={200} strokeWidth={16} />
-                </div>
-
-                <p style={{ maxWidth: '580px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0.5rem auto 1.5rem auto' }}>
-                  {readinessPercentages[0].description}
-                </p>
-
-                {readinessPercentages.length > 1 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '1.5rem',
-                    borderTop: '1px solid var(--border)',
-                    paddingTop: '1.5rem',
-                    width: '100%',
-                    flexWrap: 'wrap'
-                  }}>
-                    {readinessPercentages.slice(1).map((rank, rIdx) => (
-                      <div key={rank.id} style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        background: '#FAF9FF',
-                        padding: '1rem',
-                        borderRadius: '16px',
-                        border: '1px solid #E4E0FC',
-                        flex: '1 1 150px',
-                        maxWidth: '220px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.01)'
-                      }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                          อันดับ {rIdx + 2}: {rank.name}
-                        </span>
-                        <ReadinessGauge percentage={rank.readiness} size={90} strokeWidth={9} />
-                      </div>
-                    ))}
+            <TargetLockGaugeContainer isEvaluating={!aiEval && !evaluatingTimeout}>
+              {profile.educationLevel === 'junior' && readinessPercentages.length > 0 ? (
+                <div style={{ width: '100%', textAlign: 'center' }}>
+                  <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
+                    อันดับ 1: <span style={{ color: 'var(--primary)' }}>
+                      {readinessPercentages[0].name}
+                      {profile.targetProgramType && (
+                        ` (${profile.targetProgramType === 'gifted-sci-math' ? 'Gifted / ห้องพิเศษวิทย์-คณิต' : profile.targetProgramType === 'special-language' ? 'EP / IEP / ห้องพิเศษภาษา' : 'ห้องเรียนปกติ'})`
+                      )}
+                    </span>
+                    {isUpdated && <UpdateBadge />}
+                  </h2>
+                  
+                  <div style={{ margin: '1rem 0', display: 'flex', justifyContent: 'center' }}>
+                    <ReadinessGauge percentage={readinessPercentages[0].readiness} size={200} strokeWidth={16} />
                   </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
-                  {profile.educationLevel === 'junior' ? 'โอกาสความพร้อมสอบเข้า ม.4:' : 'โอกาสความพร้อมยื่นพอร์ต TCAS รอบ 1:'} <span style={{ color: 'var(--primary)' }}>
-                    {targetPathObj?.name || profile.targetPath}
-                  </span>
-                  {isUpdated && <UpdateBadge />}
-                </h2>
-                
-                <div style={{ margin: '1rem 0' }}>
-                  <ReadinessGauge percentage={readinessPercentage} size={220} strokeWidth={18} />
-                </div>
 
-                <p style={{ maxWidth: '480px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginTop: '1rem' }}>
-                  {targetPathObj?.description}
-                </p>
-              </>
-            )}
+                  <p style={{ maxWidth: '580px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0.5rem auto 1.5rem auto' }}>
+                    {readinessPercentages[0].description}
+                  </p>
+
+                  {readinessPercentages.length > 1 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: '1.5rem',
+                      borderTop: '1px solid var(--border)',
+                      paddingTop: '1.5rem',
+                      width: '100%',
+                      flexWrap: 'wrap'
+                    }}>
+                      {readinessPercentages.slice(1).map((rank, rIdx) => (
+                        <div key={rank.id} style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          background: '#FAF9FF',
+                          padding: '1rem',
+                          borderRadius: '16px',
+                          border: '1px solid #E4E0FC',
+                          flex: '1 1 150px',
+                          maxWidth: '220px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.01)'
+                        }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                            อันดับ {rIdx + 2}: {rank.name}
+                          </span>
+                          <ReadinessGauge percentage={rank.readiness} size={90} strokeWidth={9} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
+                    {profile.educationLevel === 'junior' ? 'โอกาสความพร้อมสอบเข้า ม.4:' : 'โอกาสความพร้อมยื่นพอร์ต TCAS รอบ 1:'} <span style={{ color: 'var(--primary)' }}>
+                      {targetPathObj?.name || profile.targetPath}
+                    </span>
+                    {isUpdated && <UpdateBadge />}
+                  </h2>
+                  
+                  <div style={{ margin: '1rem 0' }}>
+                    <ReadinessGauge percentage={readinessPercentage} size={220} strokeWidth={18} />
+                  </div>
+
+                  <p style={{ maxWidth: '480px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginTop: '1rem' }}>
+                    {targetPathObj?.description}
+                  </p>
+                </>
+              )}
+            </TargetLockGaugeContainer>
 
             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button 
