@@ -94,7 +94,7 @@ const CustomTooltip = ({ active, payload, academics, aiEval }) => {
 
         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.45', borderTop: '1px solid #F1F5F9', paddingTop: '0.5rem' }}>
           <div style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
-            💡 เหตุผลและที่มาของคะแนน:
+            เหตุผลและที่มาของคะแนน:
           </div>
           <div style={{ marginBottom: '0.3rem' }}>
             • คำนวณจากเกรดวิชา <strong>{details.subjects}</strong>{gradeNote} รวมกับคำตอบแบบทดสอบ
