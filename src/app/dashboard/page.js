@@ -504,13 +504,13 @@ export default function DashboardPage() {
     }
   }, [user, router]);
 
-  // ตั้ง Timeout Safety แม็กซิมัม 5 วินาที ป้องกันหน้าจอมันค้างสถานะกำลังวิเคราะห์เกินจำเป็น
+  // ตั้ง Timeout Safety สำรองกรณีระบบเครือข่ายขัดข้องรุนแรงเท่านั้น (45 วินาที)
   useEffect(() => {
     if (profile && !profile.aiEvaluation) {
       setEvaluatingTimeout(false);
       const timer = setTimeout(() => {
         setEvaluatingTimeout(true);
-      }, 5000);
+      }, 45000);
       return () => clearTimeout(timer);
     } else {
       setEvaluatingTimeout(false);

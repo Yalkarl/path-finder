@@ -270,11 +270,11 @@ export default function DashboardAssessmentPage() {
       
       const updatedUsedIds = [...new Set([...(profile.usedQuestionIds || []), ...stageQuestions])];
 
-      // เรียกใช้ AI Evaluation API พร้อม AbortController Timeout (3.5 วินาที) เพื่อป้องกันหน้ารอประมวลผลค้างนาน
+      // เรียกใช้ AI Evaluation API เพื่อประมวลผลสมรรถนะลึกซึ้ง
       let aiEvalResult = null;
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
         const aiRes = await fetch('/api/ai-evaluate', {
           method: 'POST',
@@ -300,7 +300,7 @@ export default function DashboardAssessmentPage() {
           }
         }
       } catch (aiErr) {
-        console.warn('AI evaluation API fast fallback triggered:', aiErr);
+        console.warn('AI evaluation API fallback:', aiErr);
       }
 
       const finalSkillVector = (aiEvalResult?.skillVector && aiEvalResult.skillVector.length === 5) ? aiEvalResult.skillVector : skillVector;
@@ -309,6 +309,7 @@ export default function DashboardAssessmentPage() {
       const updatePayload = {
         usedQuestionIds: updatedUsedIds,
         resultsUpdated: true,
+        aiEvaluation: aiEvalResult || null,
         assessment: {
           responses: allResponses,
           completedAt: new Date().toISOString()
@@ -318,10 +319,6 @@ export default function DashboardAssessmentPage() {
           matchRankings: finalRankings
         }
       };
-
-      if (aiEvalResult) {
-        updatePayload.aiEvaluation = aiEvalResult;
-      }
 
       // บันทึกข้อมูลลง Firestore และลงโควตาคู่ขนาน (Parallel Write) เพื่อความเร็วสูงสุด
       const [_, attemptRecord] = await Promise.all([
