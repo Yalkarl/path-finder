@@ -89,9 +89,25 @@ export default function DashboardAssessmentPage() {
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
       const rankings = matchPaths(skillVector, pathsObject);
 
+      const today = getTodayDateString();
+      const resetAttempts = {
+        date: today,
+        count: 0,
+        attempts: []
+      };
+
+      if (typeof window !== 'undefined' && user?.uid) {
+        try {
+          localStorage.setItem(`pathfinder_daily_attempts_${user.uid}`, JSON.stringify(resetAttempts));
+        } catch (e) {
+          console.warn('Failed to reset attempts in localStorage', e);
+        }
+      }
+
       await updateUserProfile(user.uid, {
         assessment: emptyAssessment,
         usedQuestionIds: [],
+        dailyAssessmentAttempts: resetAttempts,
         results: {
           skillVector,
           matchRankings: rankings
@@ -104,6 +120,7 @@ export default function DashboardAssessmentPage() {
         ...prev,
         assessment: emptyAssessment,
         usedQuestionIds: [],
+        dailyAssessmentAttempts: resetAttempts,
         results: {
           skillVector,
           matchRankings: rankings
@@ -111,7 +128,7 @@ export default function DashboardAssessmentPage() {
       }));
 
       setCompletedStages(new Set());
-      alert('🔄 รีเซ็ตแบบทดสอบทั้งหมดเป็น 0 เรียบร้อยแล้วครับ!');
+      alert('รีเซ็ตแบบทดสอบและโควตาประจำวันเป็น 0 เรียบร้อยแล้วครับ!');
     } catch (error) {
       console.error('Error resetting assessment:', error);
       alert('เกิดข้อผิดพลาดในการรีเซ็ตคำตอบ');
