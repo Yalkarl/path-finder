@@ -142,7 +142,7 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
             gap: '0.45rem'
           }}>
             <Sparkles size={18} style={{ color: 'var(--primary)' }} />
-            📜 คัมภีร์วิเคราะห์สมรรถนะผู้เรียน (Qualitative Insights)
+            บทวิเคราะห์เชิงพฤติกรรมจาก AI (Qualitative Insights)
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.2rem' }}>
