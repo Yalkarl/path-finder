@@ -670,12 +670,12 @@ export default function DashboardPage() {
             borderRadius: '50%',
             flexShrink: 0
           }} />
-          <span>⚡ กำลังถอดรหัสเวกเตอร์สมรรถนะ...</span>
+          <span>กำลังถอดรหัสเวกเตอร์สมรรถนะ...</span>
         </>
       ) : (
         <>
           <Sparkles size={15} style={{ color: '#059669', flexShrink: 0 }} />
-          <span>✨ คำนวณสมรรถนะเสร็จสิ้น</span>
+          <span>คำนวณสมรรถนะเสร็จสิ้น</span>
         </>
       )}
     </div>
