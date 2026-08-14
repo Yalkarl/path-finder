@@ -231,21 +231,21 @@ function calculatePreferenceFactor(pathId, likes = [], dislikes = []) {
   if (Array.isArray(likes) && likes.length > 0) {
     likes.forEach(like => {
       if (isKeywordMatch(like, keywords.likes)) {
-        bonus += 0.18;
+        bonus += 0.04;
       }
     });
   }
-  bonus = Math.min(0.45, bonus);
+  bonus = Math.min(0.08, bonus);
 
   if (Array.isArray(dislikes) && dislikes.length > 0) {
     dislikes.forEach(dislike => {
       if (isKeywordMatch(dislike, keywords.dislikes)) {
-        penalty += 0.25;
+        penalty += 0.15;
       }
     });
   }
 
-  return Math.max(0.2, 1.0 + bonus - penalty);
+  return Math.max(0.4, 1.0 + bonus - penalty);
 }
 
 // ==========================================
@@ -308,17 +308,16 @@ export function generateMatchReason(candidate, userVector, likes = [], dislikes 
 // ==========================================
 export function calculateMatchPercentage(userVector, benchmark, pathId = null, likes = [], dislikes = []) {
   const rawSimilarity = cosineSimilarity(userVector, benchmark);
-  const adjustedScore = sigmoidScale(rawSimilarity);
   const penaltyFactor = calculateGapPenalty(userVector, benchmark);
-
-  // ปรับการคำนวณ Capability Factor แบบนอร์มัลไลซ์ ยุติธรรม ไม่กดคะแนนคณะมาตรฐานสูง
-  const sumUser = userVector.reduce((a, b) => a + b, 0);
-  const capabilityFactor = Math.min(1.0, Math.max(0.70, (sumUser + 0.3) / 1.8));
-
-  // การคำนวณตัวคูณสิ่งชอบและไม่ชอบ (Preference Factor)
   const prefFactor = pathId ? calculatePreferenceFactor(pathId, likes, dislikes) : 1.0;
 
-  const finalMatch = Math.min(100, Math.max(0, Math.round(adjustedScore * penaltyFactor * capabilityFactor * prefFactor * 100)));
+  // ปรับสเกลฐานความสอดคล้องให้อยู่ในระดับสมจริง (50% - 84%) ไม่เฟ้อเกินจริง
+  const baseMatch = 0.45 + (rawSimilarity * 0.39);
+
+  let finalScore = baseMatch * penaltyFactor * prefFactor * 100;
+
+  // กำหนดเพดานสูงสุดไม่เกิน 91% เพื่อความสมจริงและน่าเชื่อถือเชิงการศึกษา
+  const finalMatch = Math.min(91, Math.max(35, Math.round(finalScore)));
 
   return finalMatch;
 }
