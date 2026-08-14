@@ -286,9 +286,10 @@ export default function DashboardAssessmentPage() {
       };
 
       // บันทึกข้อมูลลง Firestore และลงโควตาคู่ขนาน (Optimistic Fast Write)
+      const profileWithUid = { ...profile, uid: user?.uid || profile?.uid };
       const [_, attemptRecord] = await Promise.all([
         updateUserProfile(user.uid, initialPayload),
-        recordAssessmentAttempt(profile, updateUserProfile)
+        recordAssessmentAttempt(profileWithUid, updateUserProfile)
       ]);
 
       // 2. เรียกใช้ AI Evaluation API เบื้องหลังแบบไม่บล็อกหน้าจอ (Background Non-blocking Execution)
@@ -715,7 +716,7 @@ export default function DashboardAssessmentPage() {
             marginBottom: '1.75rem'
           }}>
             <Clock size={16} />
-            <span>โควตาทำแบบทดสอบวันนี้: {quota.count} / {quota.max} ครั้ง {quota.canTake ? `(ทำได้อีก ${quota.remaining} ครั้ง)` : '(สิทธิ์ครบตามกำหนด 2 ครั้งวันนี้แล้ว)'}</span>
+            <span>โควตาทำแบบทดสอบวันนี้: {quota.count} / {quota.max} ครั้ง {quota.canTake ? `(ทำได้อีก ${quota.remaining} ครั้ง)` : '(โควต้าเต็มวันนี้แล้ว)'}</span>
           </div>
         );
       })()}

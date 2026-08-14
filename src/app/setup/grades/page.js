@@ -10,6 +10,7 @@ import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects';
 import { getPortfolioCategories } from '@/lib/constants/portfolioOptions';
+import { getTodayDateString } from '@/lib/algorithms/dailyAttempts';
 
 const GRADE_OPTIONS = ['', '0', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4'];
 
@@ -378,6 +379,13 @@ function GradesContent() {
         localStorage.setItem('setup_likes', JSON.stringify(likesForSave));
         localStorage.setItem('setup_dislikes', JSON.stringify(dislikesForSave));
 
+        const todayDate = getTodayDateString();
+        const initialAttemptsRecord = {
+          date: todayDate,
+          count: 1, // การตั้งค่าโปรไฟล์ประเมินเกรดแรกเริ่ม นับเป็นโควตาครั้งที่ 1 (ใช้แล้ว 1/2 เหลืออีก 1)
+          attempts: [new Date().toISOString()]
+        };
+
         const profileData = {
           name: localStorage.getItem('setup_name') || '',
           educationLevel: level,
@@ -394,7 +402,16 @@ function GradesContent() {
           customActivities: analysisMode === 'target-lock' ? customList : [],
           selfAssessment: analysisMode === 'target-lock' ? selfAssessment : {},
           targetProgramType: level === 'junior' && analysisMode === 'target-lock' ? targetProgramType : null,
+          dailyAssessmentAttempts: initialAttemptsRecord
         };
+
+        if (typeof window !== 'undefined' && user?.uid) {
+          try {
+            localStorage.setItem(`pathfinder_daily_attempts_${user.uid}`, JSON.stringify(initialAttemptsRecord));
+          } catch (e) {
+            console.warn('Failed to save initial attempt to localStorage', e);
+          }
+        }
 
         await createUserProfile(user.uid, profileData);
         router.push('/assessment');
