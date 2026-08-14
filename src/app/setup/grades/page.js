@@ -21,16 +21,17 @@ const subjects = [
   { id: 'social', label: 'สังคมศึกษาฯ', icon: <BookMarked size={18} />, color: '#9C27B0' },
 ];
 
-const PRESET_LIKES = [
+const ALL_PRESETS = [
   'AI & เทคโนโลยี', 'เขียนโปรแกรม/โค้ดดิ้ง', 'วิทยาศาสตร์ & การทดลอง', 
   'การวางแผน & บริหารธุรกิจ', 'ศิลปะ & ออกแบบ', 'ภาษา & การสื่อสาร', 
-  'ดนตรี & การแสดง', 'เกม & E-Sports', 'กีฬา & ฟิตเนส', 'การทำอาหาร'
-];
-
-const PRESET_DISLIKES = [
+  'ดนตรี & การแสดง', 'เกม & E-Sports', 'กีฬา & ฟิตเนส', 'การทำอาหาร',
+  'กฎหมาย & ความยุติธรรม', 'การสอน & ถ่ายทอดความรู้', 'การท่องเที่ยว & การโรงแรม',
   'งานท่องจำตำราหนักๆ', 'งานที่ต้องเจอเลือด/บาดแผล/ศพ', 'การคิดคำนวณคณิตซับซ้อน', 
   'การพูดโต้ตอบคนเยอะๆ/สปีช', 'งานทำความสะอาด/ใช้แรงกายหนัก', 'งานเอกสาร/ระเบียบเป๊ะๆ', 'การทำงานคนเดียวโดดเดี่ยว'
 ];
+
+const PRESET_LIKES = ALL_PRESETS;
+const PRESET_DISLIKES = ALL_PRESETS;
 
 function GradesContent() {
   const router = useRouter();
@@ -665,14 +666,14 @@ function GradesContent() {
               <>
                 <div className="card" style={{ padding: '1.5rem', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-                    ระบุสิ่งที่ชอบ / ไม่ชอบ (เพื่อเพิ่มความแม่นยำให้โหมดค้นหาตัวตน)
+                    ระบุสิ่งที่สนใจ / ไม่สนใจ (เพื่อเพิ่มความแม่นยำให้โหมดค้นหาตัวตน)
                   </h3>
 
                   {/* Likes Section */}
                   <div style={{ position: 'relative' }} ref={likeRef}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#16A34A' }}>
-                        สิ่งชอบ / ความสนใจ (ระบุได้หลายอย่าง)
+                        สิ่งที่สนใจ (ระบุได้หลายอย่าง)
                       </label>
                       {likes.length > 0 && (
                         <button
@@ -680,7 +681,7 @@ function GradesContent() {
                           onClick={() => setLikes([])}
                           style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
                         >
-                          ล้างสิ่งที่ชอบทั้งหมด
+                          ล้างสิ่งที่สนใจทั้งหมด
                         </button>
                       )}
                     </div>
@@ -717,7 +718,7 @@ function GradesContent() {
                     <input
                       type="text"
                       className="input-field"
-                      placeholder="พิมพ์หรือคลิกเลือกสิ่งชอบ..."
+                      placeholder="พิมพ์หรือคลิกเลือกสิ่งที่สนใจ..."
                       value={likeInput}
                       onFocus={() => setShowLikeDropdown(true)}
                       onChange={(e) => { setLikeInput(e.target.value); setShowLikeDropdown(true); }}
@@ -759,7 +760,7 @@ function GradesContent() {
                   <div style={{ position: 'relative' }} ref={dislikeRef}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                       <label style={{ fontSize: '0.85rem', fontWeight: '700', color: '#DC2626' }}>
-                        สิ่งที่ไม่ชอบ (ระบุได้หลายอย่าง)
+                        สิ่งที่ไม่สนใจ (ระบุได้หลายอย่าง)
                       </label>
                       {dislikes.length > 0 && (
                         <button
@@ -767,7 +768,7 @@ function GradesContent() {
                           onClick={() => setDislikes([])}
                           style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
                         >
-                          ล้างสิ่งที่ไม่ชอบทั้งหมด
+                          ล้างสิ่งที่ไม่สนใจทั้งหมด
                         </button>
                       )}
                     </div>
@@ -804,7 +805,7 @@ function GradesContent() {
                     <input
                       type="text"
                       className="input-field"
-                      placeholder="พิมพ์หรือคลิกเลือกสิ่งที่ไม่ชอบ..."
+                      placeholder="พิมพ์หรือคลิกเลือกสิ่งที่ไม่สนใจ..."
                       value={dislikeInput}
                       onFocus={() => setShowDislikeDropdown(true)}
                       onChange={(e) => { setDislikeInput(e.target.value); setShowDislikeDropdown(true); }}

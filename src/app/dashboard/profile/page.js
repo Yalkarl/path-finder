@@ -36,16 +36,17 @@ const AVATARS = [
 import KahootAvatarStudio from '@/components/ui/KahootAvatarStudio';
 import { useRef } from 'react';
 
-const PRESET_LIKES = [
+const ALL_PRESETS = [
   'AI & เทคโนโลยี', 'เขียนโปรแกรม/โค้ดดิ้ง', 'วิทยาศาสตร์ & การทดลอง', 
   'การวางแผน & บริหารธุรกิจ', 'ศิลปะ & ออกแบบ', 'ภาษา & การสื่อสาร', 
-  'ดนตรี & การแสดง', 'เกม & E-Sports', 'กีฬา & ฟิตเนส', 'การทำอาหาร'
-];
-
-const PRESET_DISLIKES = [
+  'ดนตรี & การแสดง', 'เกม & E-Sports', 'กีฬา & ฟิตเนส', 'การทำอาหาร',
+  'กฎหมาย & ความยุติธรรม', 'การสอน & ถ่ายทอดความรู้', 'การท่องเที่ยว & การโรงแรม',
   'งานท่องจำตำราหนักๆ', 'งานที่ต้องเจอเลือด/บาดแผล/ศพ', 'การคิดคำนวณคณิตซับซ้อน', 
   'การพูดโต้ตอบคนเยอะๆ/สปีช', 'งานทำความสะอาด/ใช้แรงกายหนัก', 'งานเอกสาร/ระเบียบเป๊ะๆ', 'การทำงานคนเดียวโดดเดี่ยว'
 ];
+
+const PRESET_LIKES = ALL_PRESETS;
+const PRESET_DISLIKES = ALL_PRESETS;
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -359,7 +360,7 @@ export default function ProfilePage() {
             <div style={{ marginBottom: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', position: 'relative' }} ref={likeRef}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                 <label style={{ fontSize: '0.85rem', color: '#16A34A', fontWeight: '700' }}>
-                  สิ่งชอบ / ความสนใจของคุณ
+                  สิ่งที่สนใจของคุณ
                 </label>
                 {likes.length > 0 && (
                   <button
@@ -377,9 +378,9 @@ export default function ProfilePage() {
                     }}
                     onMouseEnter={(e) => e.target.style.color = '#DC2626'}
                     onMouseLeave={(e) => e.target.style.color = '#6B7280'}
-                    title="ลบสิ่งชอบทั้งหมดที่เลือกไว้"
+                    title="ลบสิ่งที่สนใจทั้งหมดที่เลือกไว้"
                   >
-                    ล้างสิ่งที่ชอบทั้งหมด
+                    ล้างสิ่งที่สนใจทั้งหมด
                   </button>
                 )}
               </div>
@@ -425,7 +426,7 @@ export default function ProfilePage() {
                           appearance: 'none',
                           WebkitAppearance: 'none'
                         }}
-                        title="คลิกเพื่อลบสิ่งชอบนี้ออก"
+                        title="คลิกเพื่อลบสิ่งที่สนใจนี้ออก"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: 'auto' }}>
                           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -439,7 +440,7 @@ export default function ProfilePage() {
               <input
                 type="text"
                 className="input-field"
-                placeholder="พิมพ์หรือคลิกเลือกสิ่งชอบ..."
+                placeholder="พิมพ์หรือคลิกเลือกสิ่งที่สนใจ..."
                 value={likeInput}
                 onFocus={() => setShowLikeDropdown(true)}
                 onChange={(e) => { setLikeInput(e.target.value); setShowLikeDropdown(true); }}
@@ -489,7 +490,7 @@ export default function ProfilePage() {
             <div style={{ marginBottom: '1.75rem', position: 'relative' }} ref={dislikeRef}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
                 <label style={{ fontSize: '0.85rem', color: '#DC2626', fontWeight: '700' }}>
-                  สิ่งที่ไม่ชอบ
+                  สิ่งที่ไม่สนใจ
                 </label>
                 {dislikes.length > 0 && (
                   <button
@@ -507,9 +508,9 @@ export default function ProfilePage() {
                     }}
                     onMouseEnter={(e) => e.target.style.color = '#DC2626'}
                     onMouseLeave={(e) => e.target.style.color = '#6B7280'}
-                    title="ลบสิ่งที่ไม่ชอบทั้งหมดที่เลือกไว้"
+                    title="ลบสิ่งที่ไม่สนใจทั้งหมดที่เลือกไว้"
                   >
-                    ล้างสิ่งที่ไม่ชอบทั้งหมด
+                    ล้างสิ่งที่ไม่สนใจทั้งหมด
                   </button>
                 )}
               </div>
@@ -555,7 +556,7 @@ export default function ProfilePage() {
                           appearance: 'none',
                           WebkitAppearance: 'none'
                         }}
-                        title="คลิกเพื่อลบสิ่งที่ไม่ชอบนี้ออก"
+                        title="คลิกเพื่อลบสิ่งที่ไม่สนใจนี้ออก"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: 'auto' }}>
                           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -569,7 +570,7 @@ export default function ProfilePage() {
               <input
                 type="text"
                 className="input-field"
-                placeholder="พิมพ์หรือคลิกเลือกสิ่งที่ไม่ชอบ..."
+                placeholder="พิมพ์หรือคลิกเลือกสิ่งที่ไม่สนใจ..."
                 value={dislikeInput}
                 onFocus={() => setShowDislikeDropdown(true)}
                 onChange={(e) => { setDislikeInput(e.target.value); setShowDislikeDropdown(true); }}
