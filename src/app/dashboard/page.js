@@ -265,7 +265,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
         <SkillRadarChart vector={vector} academics={academics} aiEval={aiEval} />
       </div>
 
-      {/* RPG Style Locked Padlock & Heavy Chains Overlay */}
+      {/* PathFinder Themed Locked Padlock & Tech Chains Overlay */}
       {showOverlay && (
         <div style={{
           position: 'absolute',
@@ -274,13 +274,13 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(15, 23, 42, 0.45)',
-          backdropFilter: 'blur(10px)',
+          background: 'rgba(255, 255, 255, 0.65)',
+          backdropFilter: 'blur(8px)',
           zIndex: 10,
           borderRadius: '16px',
           animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
         }}>
-          {/* SVG RPG Heavy Steel Chains */}
+          {/* SVG PathFinder Tech Chains */}
           <svg style={{
             position: 'absolute',
             inset: 0,
@@ -290,49 +290,49 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             overflow: 'visible'
           }}>
             <defs>
-              <linearGradient id="rpgChainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#94A3B8" />
-                <stop offset="50%" stopColor="#475569" />
-                <stop offset="100%" stopColor="#1E293B" />
+              <linearGradient id="pathfinderChainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#7C5CFC" />
+                <stop offset="50%" stopColor="#A78BFA" />
+                <stop offset="100%" stopColor="#6366F1" />
               </linearGradient>
             </defs>
 
-            {/* Heavy RPG Chains tethered from 4 corners */}
+            {/* Tech Chains tethered from 4 corners */}
             {/* Top Left Chain */}
-            <line x1="2%" y1="2%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
+            <line x1="2%" y1="2%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
               style={{
-                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
                 animation: isShattering ? 'chainBreakTL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out',
                 strokeLinecap: 'round'
               }}
             />
             {/* Top Right Chain */}
-            <line x1="98%" y1="2%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
+            <line x1="98%" y1="2%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
               style={{
-                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
                 animation: isShattering ? 'chainBreakTR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 0.5s',
                 strokeLinecap: 'round'
               }}
             />
             {/* Bottom Left Chain */}
-            <line x1="2%" y1="98%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
+            <line x1="2%" y1="98%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
               style={{
-                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
                 animation: isShattering ? 'chainBreakBL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 1s',
                 strokeLinecap: 'round'
               }}
             />
             {/* Bottom Right Chain */}
-            <line x1="98%" y1="98%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
+            <line x1="98%" y1="98%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
               style={{
-                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
                 animation: isShattering ? 'chainBreakBR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 1.5s',
                 strokeLinecap: 'round'
               }}
             />
           </svg>
 
-          {/* Central RPG Ancient Rune Lock Chest Card */}
+          {/* Central PathFinder Glassmorphism Padlock Card */}
           <div style={{
             position: 'relative',
             zIndex: 15,
@@ -341,86 +341,84 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             alignItems: 'center',
             gap: '0.85rem',
             padding: '1.6rem 2.5rem',
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 27, 75, 0.95))',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 246, 255, 0.96))',
             borderRadius: '24px',
-            border: '2px solid rgba(245, 158, 11, 0.7)',
-            boxShadow: '0 16px 44px rgba(124, 92, 252, 0.4), 0 0 25px rgba(245, 158, 11, 0.3)',
+            border: '2px solid rgba(124, 92, 252, 0.35)',
+            boxShadow: '0 16px 44px rgba(124, 92, 252, 0.2), 0 0 20px rgba(124, 92, 252, 0.1)',
             animation: isShattering ? 'padlockShatter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out'
           }}>
-            {/* SVG RPG Metallic Mana Chest Lock Model */}
+            {/* SVG PathFinder Metallic Padlock Model */}
             <div style={{
               position: 'relative',
-              width: '76px',
-              height: '76px',
+              width: '72px',
+              height: '72px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              filter: isShattering ? 'drop-shadow(0 0 20px #10B981)' : 'drop-shadow(0 0 16px #F59E0B)'
+              filter: isShattering ? 'drop-shadow(0 0 16px #10B981)' : 'drop-shadow(0 0 14px rgba(124, 92, 252, 0.4))'
             }}>
-              <svg width="76" height="76" viewBox="0 0 100 100" fill="none">
+              <svg width="72" height="72" viewBox="0 0 100 100" fill="none">
                 <defs>
-                  <linearGradient id="goldPadlockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#FBBF24" />
-                    <stop offset="50%" stopColor="#D97706" />
-                    <stop offset="100%" stopColor="#78350F" />
+                  <linearGradient id="pathfinderLockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#7C5CFC" />
+                    <stop offset="60%" stopColor="#5B21B6" />
+                    <stop offset="100%" stopColor="#4C1D95" />
                   </linearGradient>
-                  <linearGradient id="ironShackleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="shackleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#CBD5E1" />
                     <stop offset="50%" stopColor="#64748B" />
-                    <stop offset="100%" stopColor="#0F172A" />
+                    <stop offset="100%" stopColor="#334155" />
                   </linearGradient>
-                  <radialGradient id="manaGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor={isShattering ? '#34D399' : '#FBBF24'} stopOpacity="0.8" />
+                  <radialGradient id="lockGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor={isShattering ? '#34D399' : '#A78BFA'} stopOpacity="0.7" />
                     <stop offset="100%" stopColor={isShattering ? '#059669' : '#7C5CFC'} stopOpacity="0" />
                   </radialGradient>
                 </defs>
 
-                {/* Outer Mana Aura Ring */}
-                <circle cx="50" cy="50" r="46" fill="url(#manaGlow)" />
+                {/* Outer Glow Ring */}
+                <circle cx="50" cy="50" r="46" fill="url(#lockGlow)" />
 
-                {/* Heavy Iron Shackle */}
+                {/* Metallic Shackle */}
                 <path
                   d={isShattering ? "M 32 45 V 26 A 18 18 0 0 1 68 26 V 16" : "M 32 45 V 26 A 18 18 0 0 1 68 26 V 45"}
                   fill="none"
-                  stroke="url(#ironShackleGrad)"
-                  strokeWidth="9"
+                  stroke="url(#shackleGrad)"
+                  strokeWidth="8"
                   strokeLinecap="round"
                   style={{ transition: 'all 0.4s ease' }}
                 />
 
-                {/* Gold RPG Padlock Body */}
-                <rect x="22" y="40" width="56" height="46" rx="10" fill="url(#goldPadlockGrad)" stroke="#451A03" strokeWidth="2.5" />
+                {/* PathFinder Purple Padlock Body */}
+                <rect x="22" y="40" width="56" height="46" rx="12" fill="url(#pathfinderLockGrad)" stroke="#F59E0B" strokeWidth="2" />
                 
-                {/* Metallic Corner Rivets */}
-                <circle cx="28" cy="46" r="2.5" fill="#FEF3C7" stroke="#78350F" />
-                <circle cx="72" cy="46" r="2.5" fill="#FEF3C7" stroke="#78350F" />
-                <circle cx="28" cy="80" r="2.5" fill="#FEF3C7" stroke="#78350F" />
-                <circle cx="72" cy="80" r="2.5" fill="#FEF3C7" stroke="#78350F" />
+                {/* Corner Accents */}
+                <circle cx="29" cy="47" r="2.5" fill="#FBBF24" />
+                <circle cx="71" cy="47" r="2.5" fill="#FBBF24" />
+                <circle cx="29" cy="79" r="2.5" fill="#FBBF24" />
+                <circle cx="71" cy="79" r="2.5" fill="#FBBF24" />
 
-                {/* Central Keyhole Rune Gem */}
-                <circle cx="50" cy="58" r="10" fill="#1E1B4B" stroke="#F59E0B" strokeWidth="1.5" />
-                <path d="M 50 52 L 55 58 L 50 66 L 45 58 Z" fill={isShattering ? '#10B981' : '#C084FC'} />
+                {/* Keyhole Core */}
+                <circle cx="50" cy="58" r="9" fill="#1E1B4B" stroke="#F59E0B" strokeWidth="1.2" />
+                <path d="M 50 53 L 54 58 L 50 65 L 46 58 Z" fill={isShattering ? '#10B981' : '#F59E0B'} />
               </svg>
             </div>
 
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                fontSize: '1.1rem',
+                fontSize: '1.05rem',
                 fontWeight: '800',
-                color: isShattering ? '#34D399' : '#FBBF24',
-                marginBottom: '0.25rem',
-                letterSpacing: '0.02em',
-                textShadow: isShattering ? '0 0 12px rgba(52, 211, 153, 0.4)' : '0 0 12px rgba(251, 191, 36, 0.4)'
+                color: isShattering ? '#059669' : '#4C1D95',
+                marginBottom: '0.2rem'
               }}>
-                {isShattering ? 'ปลดล็อกตราผนึก My Skill Matrix เรียบร้อย!' : '🔮 ผนึกกุญแจสมรรถนะเวทมนตร์'}
+                {isShattering ? 'ปลดล็อกกราฟทักษะเรียบร้อย!' : 'ถอดรหัสและตรึงกุญแจสมรรถนะ'}
               </div>
               <div style={{
-                fontSize: '0.825rem',
+                fontSize: '0.8rem',
                 fontWeight: '600',
-                color: '#CBD5E1',
+                color: 'var(--text-secondary)',
                 lineHeight: '1.4'
               }}>
-                {isShattering ? 'กำลังสำแดงผลกราฟพลังทักษะ...' : 'กำลังถอดรหัสเวกเตอร์ศักยภาพและคำนวณพลังสมรรถนะ...'}
+                {isShattering ? 'กำลังแสดงกราฟ My Skill Matrix...' : 'ระบบกำลังประมวลผลคำตอบเกรดวิชาและแบบทดสอบ...'}
               </div>
             </div>
           </div>
