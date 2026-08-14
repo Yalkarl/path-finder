@@ -1114,8 +1114,15 @@ export default function DashboardPage() {
             <AIQualitativeInsightsSection aiEval={aiEval} profile={profile} />
           </div>
 
-          {/* Match Rankings */}
-          <div>
+          {/* Match Rankings (Blurred while evaluating) */}
+          <div style={{
+            position: 'relative',
+            filter: (!aiEval && !evaluatingTimeout) ? 'blur(16px)' : 'blur(0px)',
+            opacity: (!aiEval && !evaluatingTimeout) ? 0.25 : 1,
+            transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: (!aiEval && !evaluatingTimeout) ? 'none' : 'auto',
+            userSelect: (!aiEval && !evaluatingTimeout) ? 'none' : 'auto'
+          }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>
               <Trophy size={20} style={{ color: 'var(--primary)' }} /> {profile.educationLevel === 'junior' ? 'อันดับสายการเรียนที่ Match' : 'อันดับคณะที่ Match'}
               {isUpdated && <UpdateBadge />}
