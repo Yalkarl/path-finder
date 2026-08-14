@@ -142,7 +142,7 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
             gap: '0.45rem'
           }}>
             <Sparkles size={18} style={{ color: 'var(--primary)' }} />
-            บทวิเคราะห์เชิงพฤติกรรมจาก AI (Qualitative Insights)
+            📜 คัมภีร์วิเคราะห์สมรรถนะผู้เรียน (Qualitative Insights)
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', paddingLeft: '0.2rem' }}>
@@ -156,14 +156,11 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
                 gap: '0.65rem' 
               }}>
                 <span style={{ 
-                  display: 'inline-block', 
-                  width: '6px', 
-                  height: '6px', 
-                  borderRadius: '50%', 
-                  background: 'var(--primary)', 
-                  marginTop: '0.55rem', 
+                  color: '#F59E0B', 
+                  fontSize: '0.75rem', 
+                  marginTop: '0.2rem', 
                   flexShrink: 0 
-                }} />
+                }}>◆</span>
                 <span>{insight}</span>
               </div>
             ))}
@@ -268,7 +265,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
         <SkillRadarChart vector={vector} academics={academics} aiEval={aiEval} />
       </div>
 
-      {/* Locked Padlock & Chains Overlay */}
+      {/* RPG Style Locked Padlock & Heavy Chains Overlay */}
       {showOverlay && (
         <div style={{
           position: 'absolute',
@@ -277,13 +274,13 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(255, 255, 255, 0.45)',
-          backdropFilter: 'blur(8px)',
+          background: 'rgba(15, 23, 42, 0.45)',
+          backdropFilter: 'blur(10px)',
           zIndex: 10,
           borderRadius: '16px',
           animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
         }}>
-          {/* SVG Chains tethered from all 4 corners to center padlock */}
+          {/* SVG RPG Heavy Steel Chains */}
           <svg style={{
             position: 'absolute',
             inset: 0,
@@ -292,37 +289,50 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             pointerEvents: 'none',
             overflow: 'visible'
           }}>
+            <defs>
+              <linearGradient id="rpgChainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#94A3B8" />
+                <stop offset="50%" stopColor="#475569" />
+                <stop offset="100%" stopColor="#1E293B" />
+              </linearGradient>
+            </defs>
+
+            {/* Heavy RPG Chains tethered from 4 corners */}
             {/* Top Left Chain */}
-            <line x1="5%" y1="5%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+            <line x1="2%" y1="2%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
               style={{
-                animation: isShattering ? 'chainBreakTL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out',
+                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                animation: isShattering ? 'chainBreakTL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out',
                 strokeLinecap: 'round'
               }}
             />
             {/* Top Right Chain */}
-            <line x1="95%" y1="5%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+            <line x1="98%" y1="2%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
               style={{
-                animation: isShattering ? 'chainBreakTR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out 0.5s',
+                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                animation: isShattering ? 'chainBreakTR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 0.5s',
                 strokeLinecap: 'round'
               }}
             />
             {/* Bottom Left Chain */}
-            <line x1="5%" y1="95%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+            <line x1="2%" y1="98%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
               style={{
-                animation: isShattering ? 'chainBreakBL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out 1s',
+                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                animation: isShattering ? 'chainBreakBL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 1s',
                 strokeLinecap: 'round'
               }}
             />
             {/* Bottom Right Chain */}
-            <line x1="95%" y1="95%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+            <line x1="98%" y1="98%" x2="50%" y2="50%" stroke="url(#rpgChainGrad)" strokeWidth="12" strokeDasharray="14 10"
               style={{
-                animation: isShattering ? 'chainBreakBR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out 1.5s',
+                filter: 'drop-shadow(0 0 6px rgba(245, 158, 11, 0.5))',
+                animation: isShattering ? 'chainBreakBR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 1.5s',
                 strokeLinecap: 'round'
               }}
             />
           </svg>
 
-          {/* Central Padlock Card */}
+          {/* Central RPG Ancient Rune Lock Chest Card */}
           <div style={{
             position: 'relative',
             zIndex: 15,
@@ -330,47 +340,87 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             flexDirection: 'column',
             alignItems: 'center',
             gap: '0.85rem',
-            padding: '1.5rem 2.25rem',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 246, 255, 0.95))',
+            padding: '1.6rem 2.5rem',
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 27, 75, 0.95))',
             borderRadius: '24px',
-            border: '2px solid rgba(124, 92, 252, 0.35)',
-            boxShadow: '0 12px 36px rgba(124, 92, 252, 0.22)',
+            border: '2px solid rgba(245, 158, 11, 0.7)',
+            boxShadow: '0 16px 44px rgba(124, 92, 252, 0.4), 0 0 25px rgba(245, 158, 11, 0.3)',
             animation: isShattering ? 'padlockShatter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out'
           }}>
+            {/* SVG RPG Metallic Mana Chest Lock Model */}
             <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: isShattering
-                ? 'linear-gradient(135deg, #10B981, #34D399)'
-                : 'linear-gradient(135deg, #7C5CFC, #FF80AB)',
+              position: 'relative',
+              width: '76px',
+              height: '76px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
-              boxShadow: isShattering
-                ? '0 0 24px rgba(16, 185, 129, 0.6)'
-                : '0 0 24px rgba(124, 92, 252, 0.4)',
-              transition: 'all 0.4s ease'
+              filter: isShattering ? 'drop-shadow(0 0 20px #10B981)' : 'drop-shadow(0 0 16px #F59E0B)'
             }}>
-              {isShattering ? <Unlock size={32} /> : <Lock size={32} />}
+              <svg width="76" height="76" viewBox="0 0 100 100" fill="none">
+                <defs>
+                  <linearGradient id="goldPadlockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#FBBF24" />
+                    <stop offset="50%" stopColor="#D97706" />
+                    <stop offset="100%" stopColor="#78350F" />
+                  </linearGradient>
+                  <linearGradient id="ironShackleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#CBD5E1" />
+                    <stop offset="50%" stopColor="#64748B" />
+                    <stop offset="100%" stopColor="#0F172A" />
+                  </linearGradient>
+                  <radialGradient id="manaGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor={isShattering ? '#34D399' : '#FBBF24'} stopOpacity="0.8" />
+                    <stop offset="100%" stopColor={isShattering ? '#059669' : '#7C5CFC'} stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                {/* Outer Mana Aura Ring */}
+                <circle cx="50" cy="50" r="46" fill="url(#manaGlow)" />
+
+                {/* Heavy Iron Shackle */}
+                <path
+                  d={isShattering ? "M 32 45 V 26 A 18 18 0 0 1 68 26 V 16" : "M 32 45 V 26 A 18 18 0 0 1 68 26 V 45"}
+                  fill="none"
+                  stroke="url(#ironShackleGrad)"
+                  strokeWidth="9"
+                  strokeLinecap="round"
+                  style={{ transition: 'all 0.4s ease' }}
+                />
+
+                {/* Gold RPG Padlock Body */}
+                <rect x="22" y="40" width="56" height="46" rx="10" fill="url(#goldPadlockGrad)" stroke="#451A03" strokeWidth="2.5" />
+                
+                {/* Metallic Corner Rivets */}
+                <circle cx="28" cy="46" r="2.5" fill="#FEF3C7" stroke="#78350F" />
+                <circle cx="72" cy="46" r="2.5" fill="#FEF3C7" stroke="#78350F" />
+                <circle cx="28" cy="80" r="2.5" fill="#FEF3C7" stroke="#78350F" />
+                <circle cx="72" cy="80" r="2.5" fill="#FEF3C7" stroke="#78350F" />
+
+                {/* Central Keyhole Rune Gem */}
+                <circle cx="50" cy="58" r="10" fill="#1E1B4B" stroke="#F59E0B" strokeWidth="1.5" />
+                <path d="M 50 52 L 55 58 L 50 66 L 45 58 Z" fill={isShattering ? '#10B981' : '#C084FC'} />
+              </svg>
             </div>
 
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                fontSize: '1.05rem',
+                fontSize: '1.1rem',
                 fontWeight: '800',
-                color: isShattering ? '#059669' : '#4C1D95',
-                marginBottom: '0.2rem'
+                color: isShattering ? '#34D399' : '#FBBF24',
+                marginBottom: '0.25rem',
+                letterSpacing: '0.02em',
+                textShadow: isShattering ? '0 0 12px rgba(52, 211, 153, 0.4)' : '0 0 12px rgba(251, 191, 36, 0.4)'
               }}>
-                {isShattering ? 'ปลดล็อกกราฟทักษะเรียบร้อย!' : 'ถอดรหัสและตรึงกุญแจสมรรถนะ'}
+                {isShattering ? 'ปลดล็อกตราผนึก My Skill Matrix เรียบร้อย!' : '🔮 ผนึกกุญแจสมรรถนะเวทมนตร์'}
               </div>
               <div style={{
-                fontSize: '0.8rem',
+                fontSize: '0.825rem',
                 fontWeight: '600',
-                color: 'var(--text-secondary)'
+                color: '#CBD5E1',
+                lineHeight: '1.4'
               }}>
-                {isShattering ? 'กำลังแสดงกราฟ My Skill Matrix...' : 'กำลังวิเคราะห์ผลด้วย AI และคำนวณค่าน้ำหนัก...'}
+                {isShattering ? 'กำลังสำแดงผลกราฟพลังทักษะ...' : 'กำลังถอดรหัสเวกเตอร์ศักยภาพและคำนวณพลังสมรรถนะ...'}
               </div>
             </div>
           </div>
@@ -380,8 +430,8 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
       {/* Keyframe Styles */}
       <style>{`
         @keyframes padlockFloat {
-          0%, 100% { transform: translateY(0px) scale(1); boxShadow: 0 12px 36px rgba(124, 92, 252, 0.22); }
-          50% { transform: translateY(-8px) scale(1.03); boxShadow: 0 18px 48px rgba(245, 158, 11, 0.35); }
+          0%, 100% { transform: translateY(0px) scale(1); boxShadow: 0 16px 44px rgba(124, 92, 252, 0.4), 0 0 25px rgba(245, 158, 11, 0.3); }
+          50% { transform: translateY(-8px) scale(1.03); boxShadow: 0 22px 54px rgba(245, 158, 11, 0.5), 0 0 35px rgba(192, 132, 252, 0.4); }
         }
         @keyframes padlockShatter {
           0% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
@@ -389,25 +439,25 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           60% { transform: scale(1.35) rotate(15deg); opacity: 0.5; filter: blur(4px); }
           100% { transform: scale(1.8) rotate(-30deg); opacity: 0; filter: blur(16px); }
         }
-        @keyframes chainGlow {
-          0%, 100% { stroke: #7C5CFC; opacity: 0.6; stroke-dashoffset: 0; }
-          50% { stroke: #F59E0B; opacity: 1; stroke-dashoffset: -20; }
+        @keyframes rpgChainGlow {
+          0%, 100% { opacity: 0.75; filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); stroke-dashoffset: 0; }
+          50% { opacity: 1; filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.8)); stroke-dashoffset: -24; }
         }
         @keyframes chainBreakTL {
           0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(-120px, -100px) rotate(-45deg); opacity: 0; }
+          100% { transform: translate(-140px, -120px) rotate(-60deg); opacity: 0; }
         }
         @keyframes chainBreakTR {
           0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(120px, -100px) rotate(45deg); opacity: 0; }
+          100% { transform: translate(140px, -120px) rotate(60deg); opacity: 0; }
         }
         @keyframes chainBreakBL {
           0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(-120px, 100px) rotate(-45deg); opacity: 0; }
+          100% { transform: translate(-140px, 120px) rotate(-60deg); opacity: 0; }
         }
         @keyframes chainBreakBR {
           0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(120px, 100px) rotate(45deg); opacity: 0; }
+          100% { transform: translate(140px, 120px) rotate(60deg); opacity: 0; }
         }
         @keyframes overlayFadeOut {
           0% { opacity: 1; }
@@ -599,14 +649,14 @@ export default function DashboardPage() {
       margin: '0.25rem 0 1rem 0',
       transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
       background: isEvaluating
-        ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.1))'
-        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(52, 211, 153, 0.08))',
+        ? 'linear-gradient(135deg, rgba(124, 92, 252, 0.16), rgba(167, 139, 250, 0.12))'
+        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(52, 211, 153, 0.1))',
       border: isEvaluating
-        ? '1.5px solid rgba(245, 158, 11, 0.45)'
+        ? '1.5px solid rgba(124, 92, 252, 0.45)'
         : '1.5px solid rgba(16, 185, 129, 0.35)',
-      color: isEvaluating ? '#D97706' : '#059669',
+      color: isEvaluating ? '#6D28D9' : '#059669',
       boxShadow: isEvaluating
-        ? '0 2px 10px rgba(245, 158, 11, 0.18)'
+        ? '0 2px 12px rgba(124, 92, 252, 0.2)'
         : '0 2px 10px rgba(16, 185, 129, 0.12)'
     }}>
       {isEvaluating ? (
@@ -615,17 +665,17 @@ export default function DashboardPage() {
             display: 'inline-block',
             width: '14px',
             height: '14px',
-            border: '2.5px solid #D97706',
+            border: '2.5px solid #7C5CFC',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             flexShrink: 0
           }} />
-          <span>กำลังวิเคราะห์ผลด้วย AI...</span>
+          <span>⚡ กำลังถอดรหัสเวกเตอร์สมรรถนะ...</span>
         </>
       ) : (
         <>
           <Sparkles size={15} style={{ color: '#059669', flexShrink: 0 }} />
-          <span>วิเคราะห์เสร็จสิ้น</span>
+          <span>✨ คำนวณสมรรถนะเสร็จสิ้น</span>
         </>
       )}
     </div>
