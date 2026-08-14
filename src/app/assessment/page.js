@@ -171,7 +171,7 @@ export default function AssessmentPage() {
         }
       });
 
-      await recordAssessmentAttempt(profile, updateUserProfile);
+      await recordAssessmentAttempt(profile, updateUserProfile, profile?.analysisMode);
 
       router.push('/dashboard');
     } catch (err) {

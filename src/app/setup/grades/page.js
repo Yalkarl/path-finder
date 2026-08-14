@@ -10,7 +10,7 @@ import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects';
 import { getPortfolioCategories } from '@/lib/constants/portfolioOptions';
-import { getTodayDateString } from '@/lib/algorithms/dailyAttempts';
+import { getTodayDateString, recordAssessmentAttempt } from '@/lib/algorithms/dailyAttempts';
 
 const GRADE_OPTIONS = ['', '0', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4'];
 
@@ -334,8 +334,12 @@ function GradesContent() {
           updatedAt: new Date().toISOString()
         };
 
-        // อัปเดตข้อมูลลง Firestore ทันทีเพื่อเปลี่ยนหน้าเสี้ยววินาที (<50ms)
-        await updateUserProfile(user.uid, updatePayload);
+        // อัปเดตข้อมูลลง Firestore และลงโควตาของโหมดที่เลือกทันที
+        const profileWithUid = { ...updatePayload, uid: user.uid };
+        await Promise.all([
+          updateUserProfile(user.uid, updatePayload),
+          recordAssessmentAttempt(profileWithUid, updateUserProfile, analysisMode)
+        ]);
 
         // รัน AI Evaluation (Gemini LLM Classification) เบื้องหลังโดยไม่บล็อกการเปลี่ยนหน้า (Instant Optimistic Navigation)
         fetch('/api/ai-evaluate', {
