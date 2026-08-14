@@ -190,6 +190,22 @@ export const PATH_PREFERENCE_KEYWORDS = {
   }
 };
 
+function isKeywordMatch(userInput, targetKeywords) {
+  if (!userInput || !Array.isArray(targetKeywords) || targetKeywords.length === 0) return false;
+  const normInput = userInput.toLowerCase();
+  
+  // Direct full-string match
+  if (targetKeywords.some(k => normInput.includes(k) || k.includes(normInput))) {
+    return true;
+  }
+  
+  // Tokenized sub-word match for multi-concept items (e.g., "ภาษา & การสื่อสาร" -> ["ภาษา", "การสื่อสาร"])
+  const tokens = normInput.split(/[\s&/,\-+]+/).filter(t => t.length >= 2);
+  return tokens.some(token => 
+    targetKeywords.some(k => token.includes(k) || k.includes(token))
+  );
+}
+
 // ==========================================
 // การคำนวณตัวคูณโบนัสสิ่งชอบ และการหักคะแนนสิ่งที่ไม่ชอบ (Preference Factor)
 // ==========================================
@@ -202,9 +218,7 @@ function calculatePreferenceFactor(pathId, likes = [], dislikes = []) {
 
   if (Array.isArray(likes) && likes.length > 0) {
     likes.forEach(like => {
-      const normLike = like.toLowerCase();
-      const isMatched = keywords.likes.some(k => normLike.includes(k) || k.includes(normLike));
-      if (isMatched) {
+      if (isKeywordMatch(like, keywords.likes)) {
         bonus += 0.18;
       }
     });
@@ -213,9 +227,7 @@ function calculatePreferenceFactor(pathId, likes = [], dislikes = []) {
 
   if (Array.isArray(dislikes) && dislikes.length > 0) {
     dislikes.forEach(dislike => {
-      const normDislike = dislike.toLowerCase();
-      const isConflicting = keywords.dislikes.some(k => normDislike.includes(k) || k.includes(normDislike));
-      if (isConflicting) {
+      if (isKeywordMatch(dislike, keywords.dislikes)) {
         penalty += 0.25;
       }
     });
@@ -237,14 +249,14 @@ export function generateMatchReason(candidate, userVector, likes = [], dislikes 
   if (keywords) {
     if (Array.isArray(likes)) {
       likes.forEach(l => {
-        if (keywords.likes.some(k => l.toLowerCase().includes(k) || k.includes(l.toLowerCase()))) {
+        if (isKeywordMatch(l, keywords.likes)) {
           matchedLikes.push(l);
         }
       });
     }
     if (Array.isArray(dislikes)) {
       dislikes.forEach(d => {
-        if (keywords.dislikes.some(k => d.toLowerCase().includes(k) || k.includes(d.toLowerCase()))) {
+        if (isKeywordMatch(d, keywords.dislikes)) {
           matchedDislikes.push(d);
         }
       });

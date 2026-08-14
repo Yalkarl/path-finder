@@ -129,6 +129,8 @@ function GradesContent() {
             setCustomList(profile.customActivities || []);
             setSelfAssessment(profile.selfAssessment || {});
             setTargetProgramType(profile.targetProgramType || 'regular-program');
+            setLikes(profile.likes || []);
+            setDislikes(profile.dislikes || []);
           }
         } catch (e) {
           console.error("Error loading profile:", e);
@@ -180,6 +182,18 @@ function GradesContent() {
       if (savedSelf) {
         try {
           setSelfAssessment(JSON.parse(savedSelf));
+        } catch (e) {}
+      }
+      const savedLikes = localStorage.getItem('setup_likes');
+      if (savedLikes) {
+        try {
+          setLikes(JSON.parse(savedLikes));
+        } catch (e) {}
+      }
+      const savedDislikes = localStorage.getItem('setup_dislikes');
+      if (savedDislikes) {
+        try {
+          setDislikes(JSON.parse(savedDislikes));
         } catch (e) {}
       }
     }
@@ -292,13 +306,17 @@ function GradesContent() {
         const profile = await getUserProfile(user.uid);
         const assessmentResponses = profile?.assessment?.responses || [];
         const targetPathForFiltering = analysisMode === 'target-lock' ? selectedTargetPath : null;
-        const skillVector = calculateSkillVector(finalGrades, assessmentResponses, targetPathForFiltering);
+        const likesForCalc = analysisMode === 'discovery' ? likes : [];
+        const dislikesForCalc = analysisMode === 'discovery' ? dislikes : [];
+        const skillVector = calculateSkillVector(finalGrades, assessmentResponses, targetPathForFiltering, likesForCalc, dislikesForCalc);
         const pathsObject = level === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-        const rankings = matchPaths(skillVector, pathsObject);
+        const rankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
 
         const updatePayload = {
           academics: finalGrades,
           analysisMode,
+          likes: likesForCalc,
+          dislikes: dislikesForCalc,
           targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
           targetPaths: level === 'junior' && analysisMode === 'target-lock' ? targetPaths : [targetPath || '', '', ''],
           portfolio: analysisMode === 'target-lock' ? portfolio : [],
@@ -328,7 +346,9 @@ function GradesContent() {
             customActivities: analysisMode === 'target-lock' ? customList : [],
             targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
             analysisMode,
-            educationLevel: level
+            educationLevel: level,
+            likes: likesForCalc,
+            dislikes: dislikesForCalc
           })
         }).then(res => res.json()).then(async (aiJson) => {
           if (aiJson.success && aiJson.evaluation) {
@@ -343,6 +363,9 @@ function GradesContent() {
 
         router.push('/dashboard');
       } else {
+        const likesForSave = analysisMode === 'discovery' ? likes : [];
+        const dislikesForSave = analysisMode === 'discovery' ? dislikes : [];
+
         localStorage.setItem('setup_grades', JSON.stringify(grades));
         localStorage.setItem('setup_analysisMode', analysisMode);
         localStorage.setItem('setup_targetPath', analysisMode === 'target-lock' ? selectedTargetPath : '');
@@ -351,6 +374,8 @@ function GradesContent() {
         localStorage.setItem('setup_customActivities', JSON.stringify(analysisMode === 'target-lock' ? customList : []));
         localStorage.setItem('setup_selfAssessment', JSON.stringify(analysisMode === 'target-lock' ? selfAssessment : {}));
         localStorage.setItem('setup_targetProgramType', level === 'junior' && analysisMode === 'target-lock' ? targetProgramType : '');
+        localStorage.setItem('setup_likes', JSON.stringify(likesForSave));
+        localStorage.setItem('setup_dislikes', JSON.stringify(dislikesForSave));
 
         const profileData = {
           name: localStorage.getItem('setup_name') || '',
@@ -358,8 +383,8 @@ function GradesContent() {
           grade: localStorage.getItem('setup_grade') || '',
           characterId: localStorage.getItem('setup_characterId') || 'penguin',
           accessoryId: localStorage.getItem('setup_accessoryId') || 'none',
-          likes: JSON.parse(localStorage.getItem('setup_likes') || '[]'),
-          dislikes: JSON.parse(localStorage.getItem('setup_dislikes') || '[]'),
+          likes: likesForSave,
+          dislikes: dislikesForSave,
           academics: finalGrades,
           analysisMode,
           targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
