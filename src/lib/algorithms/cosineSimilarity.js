@@ -324,20 +324,55 @@ export function calculateMatchPercentage(userVector, benchmark, pathId = null, l
 
 /**
  * Match user vector against all paths in a paths object.
- * Returns sorted array of path candidates with matchPercentage and matchReason.
+ * Returns sorted array of path candidates with clear rank-differentiated matchPercentage and matchReason.
  */
 export function matchPaths(userVector, pathsObject, likes = [], dislikes = []) {
   const candidates = Object.values(pathsObject);
   
-  return candidates
-    .map(candidate => {
-      const matchPercentage = calculateMatchPercentage(userVector, candidate.benchmark, candidate.id, likes, dislikes);
-      const matchReason = generateMatchReason(candidate, userVector, likes, dislikes);
-      return {
-        ...candidate,
-        matchPercentage,
-        matchReason
-      };
-    })
-    .sort((a, b) => b.matchPercentage - a.matchPercentage);
+  // 1. คำนวณคะแนนความสอดคล้องดิบ (Cosine Similarity + Gap Penalty + Preference Factor)
+  const rated = candidates.map(candidate => {
+    const rawSim = cosineSimilarity(userVector, candidate.benchmark);
+    const penalty = calculateGapPenalty(userVector, candidate.benchmark);
+    const pref = calculatePreferenceFactor(candidate.id, likes, dislikes);
+    
+    const compositeScore = rawSim * penalty * pref;
+    const matchReason = generateMatchReason(candidate, userVector, likes, dislikes);
+
+    return {
+      ...candidate,
+      rawSim,
+      compositeScore,
+      matchReason
+    };
+  });
+
+  // 2. เรียงลำดับตามคะแนนความเหมาะสมสูงสุดลงไป
+  rated.sort((a, b) => b.compositeScore - a.compositeScore);
+
+  if (rated.length === 0) return [];
+
+  // 3. คำนวณกระจายสเกลเปอร์เซ็นต์ (Dynamic Contrast Spreading) ให้แต่ละลำดับมีระยะห่าง 3% - 4% อย่างชัดเจน
+  const topComposite = rated[0].compositeScore;
+  const baseTopMatch = Math.min(90, Math.max(84, Math.round(topComposite * 90)));
+
+  const result = rated.map((item, index) => {
+    // ห่างจากอันดับ 1 ลำดับละประมาณ 3.5% เพื่อไม่ให้กระจุกตัวอยู่ที่ 81%-83% เท่ากันหมด
+    const relativeDrop = (topComposite - item.compositeScore) * 110;
+    const rankDrop = index * 3.5;
+    const totalDrop = Math.max(rankDrop, relativeDrop);
+
+    let matchPercentage = Math.round(baseTopMatch - totalDrop);
+    matchPercentage = Math.min(90, Math.max(45, matchPercentage));
+
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      benchmark: item.benchmark,
+      matchPercentage,
+      matchReason: item.matchReason
+    };
+  });
+
+  return result;
 }
