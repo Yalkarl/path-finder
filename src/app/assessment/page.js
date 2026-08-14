@@ -82,6 +82,15 @@ export default function AssessmentPage() {
 
   const [customText, setCustomText] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const customTextareaRef = useRef(null);
+
+  useEffect(() => {
+    if (showCustomInput) {
+      setTimeout(() => {
+        customTextareaRef.current?.focus();
+      }, 50);
+    }
+  }, [showCustomInput]);
 
   const handleSelectOption = async (weights, customString = null) => {
     const responseObj = {
@@ -432,6 +441,8 @@ export default function AssessmentPage() {
                   <Sparkles size={16} /> พิมพ์ไอเดียแนวทางของคุณ (AI จะตีความสมรรถนะให้อัตโนมัติ):
                 </div>
                 <textarea
+                  ref={customTextareaRef}
+                  autoFocus
                   rows={3}
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
