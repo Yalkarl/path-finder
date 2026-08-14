@@ -129,11 +129,6 @@ export const SELF_ASSESSMENT_SUBJECTS = {
     { id: 'lab-analysis', label: 'ทักษะตรวจวัดมลพิษทางชีวภาพและเคมี', icon: '🧪' },
     { id: 'conservation', label: 'ความตระหนักรู้และการขับเคลื่อนนโยบายอนุรักษ์', icon: '🌍' }
   ],
-  'music-performing-arts': [
-    { id: 'music-theory', label: 'ทฤษฎีดนตรีสากล/ดนตรีไทยและการประพันธ์', icon: '🎼' },
-    { id: 'auditory-skills', label: 'ทักษะการฟังโสตประสาทแยกแยะเสียงดนตรี', icon: '👂' },
-    { id: 'performance', label: 'ทักษะการแสดงสดและการควบคุมเวที', icon: '🎵' }
-  ],
 
   // มัธยมต้น (Junior Paths)
   'medicine-pharmacy': [

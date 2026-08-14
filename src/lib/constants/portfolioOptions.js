@@ -189,8 +189,8 @@ export function getPortfolioCategories(targetPath) {
     ];
   }
 
-  // 5. คณะศิลปกรรมศาสตร์ และ ดุริยางคศิลป์และดนตรี (Fine Arts & Music)
-  const artPaths = ['fine-applied-arts', 'music-performing-arts', 'fine-arts'];
+  // 5. คณะศิลปกรรมศาสตร์ (Fine Arts)
+  const artPaths = ['fine-applied-arts', 'fine-arts'];
   if (artPaths.includes(targetPath)) {
     return [
       fixedAcademicCategory,
@@ -209,7 +209,7 @@ export function getPortfolioCategories(targetPath) {
         label: 'ค่ายศิลปกรรม / ดนตรีและการแสดง',
         items: [
           'ค่ายศิลปกรรมศาสตร์แนะแนวการศึกษา (Fine Arts Camp)',
-          'ค่ายดนตรีเชิงปฏิบัติการ / ค่ายดุริยางคศิลป์และการขับร้อง',
+          'ค่ายดนตรีเชิงปฏิบัติการและการขับร้อง',
           'ค่ายทักษะการเต้นและการแสดงเชิงสร้างสรรค์',
           'ค่ายนิทรรศการศิลปะและการแสดงผลงานการออกแบบ'
         ]
