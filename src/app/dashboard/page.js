@@ -831,7 +831,7 @@ export default function DashboardPage() {
             borderRadius: '50%',
             flexShrink: 0
           }} />
-          <span>กำลังถอดรหัสเวกเตอร์สมรรถนะ...</span>
+          <span>กำลังประมวลผล...</span>
         </>
       ) : (
         <>
