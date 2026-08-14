@@ -10,7 +10,7 @@ import { TARGET_CLUSTERS, TARGETED_STAGE_THEMES, TARGETED_ASSESSMENT_BANK } from
 import { MrPath } from '@/components/ui/mr-path';
 import { useRouter } from 'next/navigation';
 import AssessmentMusicPlayer from '@/components/ui/AssessmentMusicPlayer';
-import { checkAssessmentQuota, recordAssessmentAttempt, getTodayDateString } from '@/lib/algorithms/dailyAttempts';
+import { checkAssessmentQuota, recordAssessmentAttempt, resetAssessmentQuota, getTodayDateString } from '@/lib/algorithms/dailyAttempts';
 import { 
   Sparkles, Star, Award, CheckCircle, RotateCcw, Target, Info, ArrowLeft,
   Home, Gamepad2, GraduationCap, Users, Puzzle, Cpu, Palette, MessageSquare, FlaskConical, Crown, Globe, Compass,
