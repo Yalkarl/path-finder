@@ -6,41 +6,64 @@ import { useEffect, useRef, useState } from 'react';
  * Features an animated vertical volume slider (90-degree bottom-to-top)
  * and a custom purple circular handle.
  */
-export default function AssessmentMusicPlayer({ audioPath = '/audio/quiz_music.mp3' }) {
+export default function AssessmentMusicPlayer({ audioPath = null }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.35); // ระดับเสียงเริ่มต้น 35%
+  const [volume, setVolume] = useState(0.35);
   const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef(null);
 
-  // ซิงค์ระดับเสียงกับตัวเล่นเสียง Audio Element
+  // Initialize from localStorage
+  useEffect(() => {
+    try {
+      const savedMuted = localStorage.getItem('pathfinder_audio_muted') === 'true';
+      if (savedMuted) {
+        setIsPlaying(false);
+      } else if (audioPath) {
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(true); // Sound effects active
+      }
+    } catch (e) {}
+  }, [audioPath]);
+
+  // Sync volume with Audio element
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
     }
   }, [volume]);
 
-  // พยายามเล่นเพลงอัตโนมัติเมื่อโหลดหน้าเว็บ
+  // Attempt auto-play music ONLY if audioPath is specified and not muted
   useEffect(() => {
+    if (!audioPath) return;
+
     const audio = audioRef.current;
     if (!audio) return;
 
     audio.loop = true;
     audio.volume = volume;
 
+    const savedMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
+    if (savedMuted) {
+      setIsPlaying(false);
+      return;
+    }
+
     const startPlay = () => {
       audio.play()
         .then(() => {
           setIsPlaying(true);
         })
-        .catch((err) => {
-          console.log('Autoplay blocked or audio not loaded.', err);
+        .catch(() => {
+          // Autoplay blocked by browser policy
         });
     };
 
     startPlay();
 
     const handleFirstClick = () => {
-      if (audio.paused) {
+      const isMutedNow = localStorage.getItem('pathfinder_audio_muted') === 'true';
+      if (!isMutedNow && audio.paused) {
         startPlay();
       }
       window.removeEventListener('click', handleFirstClick);
@@ -50,26 +73,34 @@ export default function AssessmentMusicPlayer({ audioPath = '/audio/quiz_music.m
     return () => {
       window.removeEventListener('click', handleFirstClick);
     };
-  }, [audioPath]);
+  }, [audioPath, volume]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (!audio) return;
 
     if (isPlaying) {
-      audio.pause();
+      if (audio) audio.pause();
       setIsPlaying(false);
-      try { localStorage.setItem('pathfinder_audio_muted', 'true'); } catch (e) {}
+      try {
+        localStorage.setItem('pathfinder_audio_muted', 'true');
+        window.dispatchEvent(new CustomEvent('pathfinder_sound_change', { detail: { muted: true } }));
+      } catch (e) {}
     } else {
-      audio.play()
-        .then(() => {
-          setIsPlaying(true);
-          try { localStorage.setItem('pathfinder_audio_muted', 'false'); } catch (e) {}
-        })
-        .catch(err => {
-          console.warn('Audio play failed (file missing or blocked):', err);
-          setIsPlaying(false);
-        });
+      if (audio && audioPath) {
+        audio.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(() => {
+            setIsPlaying(true);
+          });
+      } else {
+        setIsPlaying(true);
+      }
+      try {
+        localStorage.setItem('pathfinder_audio_muted', 'false');
+        window.dispatchEvent(new CustomEvent('pathfinder_sound_change', { detail: { muted: false } }));
+      } catch (e) {}
     }
   };
 
@@ -78,7 +109,13 @@ export default function AssessmentMusicPlayer({ audioPath = '/audio/quiz_music.m
     setVolume(newVol);
     if (newVol > 0 && !isPlaying && audioRef.current) {
       audioRef.current.play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true);
+          try {
+            localStorage.setItem('pathfinder_audio_muted', 'false');
+            window.dispatchEvent(new CustomEvent('pathfinder_sound_change', { detail: { muted: false } }));
+          } catch (e) {}
+        })
         .catch(() => {});
     }
   };

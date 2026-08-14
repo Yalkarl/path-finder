@@ -653,7 +653,7 @@ export default function DashboardAssessmentPage() {
           </div>
           </div>
         </div>
-        <AssessmentMusicPlayer />
+        <AssessmentMusicPlayer audioPath="/audio/quiz_music.mp3" />
       </div>
     );
   }
@@ -687,31 +687,30 @@ export default function DashboardAssessmentPage() {
         <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: '800', margin: 0, fontSize: '1.75rem' }}>
           <Award size={28} style={{ color: 'var(--primary)' }} /> แบบทดสอบสายการเรียน
         </h1>
-        {profile?.assessment?.responses?.length > 0 && (
-          <button 
-            onClick={handleResetAssessment}
-            disabled={resetting}
-            style={{
-              background: 'rgba(239, 68, 68, 0.08)',
-              border: '1.5px dashed #EF4444',
-              color: '#EF4444',
-              borderRadius: '12px',
-              padding: '0.5rem 1rem',
-              fontWeight: '700',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              transition: 'all 0.2s ease',
-              fontFamily: 'inherit'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#FFFFFF'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; e.currentTarget.style.color = '#EF4444'; }}
-          >
-            {resetting ? 'กำลังรีเซ็ต...' : <><RotateCcw size={16} /> คืนค่าเริ่มต้นแบบทดสอบ</>}
-          </button>
-        )}
+        <button 
+          onClick={handleResetAssessment}
+          disabled={resetting}
+          style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1.5px dashed #EF4444',
+            color: '#EF4444',
+            borderRadius: '12px',
+            padding: '0.5rem 1rem',
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            transition: 'all 0.2s ease',
+            fontFamily: 'inherit'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#FFFFFF'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)'; e.currentTarget.style.color = '#EF4444'; }}
+          title="ล้างคำตอบแบบทดสอบและรีเซ็ตโควตาประจำวัน"
+        >
+          {resetting ? 'กำลังรีเซ็ต...' : <><RotateCcw size={16} /> คืนค่าเริ่มต้นแบบทดสอบ</>}
+        </button>
       </div>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
         ยิ่งทำแบบทดสอบเยอะ ยิ่งได้ผลวิเคราะห์ที่แม่นยำขึ้น เลือกด่านที่คุณสนใจเพื่อทดสอบความถนัด
@@ -735,7 +734,7 @@ export default function DashboardAssessmentPage() {
             marginBottom: '1.75rem'
           }}>
             <Clock size={16} />
-            <span>โควตาทำแบบทดสอบวันนี้: {quota.count} / {quota.max} ครั้ง {quota.canTake ? `(ทำได้อีก ${quota.remaining} ครั้ง)` : '(โควต้าเต็มวันนี้แล้ว)'}</span>
+            <span>โควตาทำแบบทดสอบวันนี้: {quota.count} / {quota.max} ครั้ง {quota.canTake ? `(ทำได้อีก ${quota.remaining} ครั้ง)` : '(โควตาเต็มวันนี้แล้ว)'}</span>
           </div>
         );
       })()}
@@ -1329,7 +1328,7 @@ export default function DashboardAssessmentPage() {
           </div>
         </div>
       )}
-      <AssessmentMusicPlayer />
+      <AssessmentMusicPlayer audioPath="/audio/quiz_music.mp3" />
     </div>
   );
 }

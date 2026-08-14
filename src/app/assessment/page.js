@@ -505,7 +505,7 @@ export default function AssessmentPage() {
         </div>
 
       </div>
-      <AssessmentMusicPlayer />
+      <AssessmentMusicPlayer audioPath="/audio/quiz_music.mp3" />
     </div>
   );
 }

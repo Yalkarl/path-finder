@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeUserProfile } from '@/lib/firestore';
 import { useRouter } from 'next/navigation';
@@ -230,239 +230,435 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
   );
 }
 
-function TargetLockGaugeContainer({ isEvaluating, children }) {
-  const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
-  const prevEvalRef = useRef(isEvaluating);
+import AssessmentMusicPlayer from '@/components/ui/AssessmentMusicPlayer';
+
+function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
+  // scanning -> locking -> charged -> impact -> shatter -> complete
+  const [phase, setPhase] = useState(isEvaluating ? 'scanning' : 'complete');
+  const prevEvalRef = useRef(null);
+  const audioElemRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const timeoutsRef = useRef([]);
+
+  // Clear timers and animation frames safely
+  const stopTracking = () => {
+    timeoutsRef.current.forEach(t => clearTimeout(t));
+    timeoutsRef.current = [];
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+  };
+
+  const updatePhase = useCallback((newPhase) => {
+    setPhase(newPhase);
+    onPhaseChange?.(newPhase);
+  }, [onPhaseChange]);
+
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+
+  // Listen to global sound change event
+  useEffect(() => {
+    const handleSoundChange = (e) => {
+      const isMuted = e?.detail?.muted ?? (localStorage.getItem('pathfinder_audio_muted') === 'true');
+      if (isMuted && audioElemRef.current) {
+        audioElemRef.current.pause();
+      } else if (!isMuted && audioElemRef.current && phaseRef.current !== 'complete') {
+        audioElemRef.current.play().catch(() => {});
+      }
+    };
+    window.addEventListener('pathfinder_sound_change', handleSoundChange);
+    return () => window.removeEventListener('pathfinder_sound_change', handleSoundChange);
+  }, []);
+
+  // Audio-driven time detector loop: locks at 6.8s, fires at 8.0s, never reveals early
+  const startAudioSyncedSequence = useCallback(() => {
+    stopTracking();
+    updatePhase('scanning');
+
+    const isMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
+    let audio = audioElemRef.current;
+    if (!audio) {
+      audio = new Audio('/audio/sniperv2.mp3');
+      audio.preload = 'auto';
+      audioElemRef.current = audio;
+    }
+    audio.currentTime = 0;
+    // Start softly for gentle fade-in
+    audio.volume = 0.05;
+
+    if (!isMuted) {
+      audio.play().catch(() => {
+        // If autoplay is blocked without user interaction, visual timeline still runs smoothly
+      });
+    }
+
+    // High-precision tracking of audio playback time
+    const startTime = performance.now();
+    const targetVolume = 0.65;
+    const fadeInDuration = 2.5; // Smoothly fade in over 2.5 seconds
+
+    const trackTime = () => {
+      // Use real audio currentTime if playing, or wall-clock time if muted/blocked
+      const currentTime = (audio && !audio.paused && audio.currentTime > 0)
+        ? audio.currentTime
+        : (performance.now() - startTime) / 1000;
+
+      // Smooth volume fade-in (from soft 0.05 to full 0.65)
+      if (audio && !isMuted && !audio.paused) {
+        if (currentTime < fadeInDuration) {
+          const ratio = Math.max(0, currentTime / fadeInDuration);
+          audio.volume = Math.min(targetVolume, Math.max(0.05, 0.05 + (targetVolume - 0.05) * ratio));
+        } else {
+          audio.volume = targetVolume;
+        }
+      }
+
+      if (currentTime < 5.8) {
+        updatePhase('scanning');
+      } else if (currentTime < 6.8) {
+        updatePhase('locking');
+      } else if (currentTime < 8.0) {
+        updatePhase('charged'); // Hold lock firmly during bolt cocking
+      } else if (currentTime < 8.15) {
+        updatePhase('impact'); // Gunshot impact flash + screen shake at 8.0s!
+      } else if (currentTime < 9.8) {
+        updatePhase('shatter'); // Shockwave burst & shatter unblur
+      } else {
+        updatePhase('complete'); // Reveal readiness results only after shot & shockwave!
+        return; // Stop animation loop
+      }
+
+      animFrameRef.current = requestAnimationFrame(trackTime);
+    };
+
+    animFrameRef.current = requestAnimationFrame(trackTime);
+  }, [updatePhase]);
 
   useEffect(() => {
-    if (prevEvalRef.current && !isEvaluating) {
-      setPhase('shattering');
-      const timer = setTimeout(() => {
-        setPhase('complete');
-      }, 1300);
-      return () => clearTimeout(timer);
-    } else if (isEvaluating) {
-      setPhase('evaluating');
+    if (isEvaluating) {
+      // Actively evaluating: run the complete synced audio timeline
+      startAudioSyncedSequence();
+    } else if (!isEvaluating && prevEvalRef.current === null) {
+      // Already evaluated prior to mounting: display results immediately
+      updatePhase('complete');
     }
     prevEvalRef.current = isEvaluating;
-  }, [isEvaluating]);
+  }, [isEvaluating, startAudioSyncedSequence, updatePhase]);
 
-  const isLocked = phase === 'evaluating';
-  const isShattering = phase === 'shattering';
-  const showOverlay = isLocked || isShattering;
+  // Clean up on component unmount only
+  useEffect(() => {
+    return () => {
+      stopTracking();
+      if (audioElemRef.current) {
+        audioElemRef.current.pause();
+        audioElemRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
+  const isScanning = phase === 'scanning';
+  const isLocking = phase === 'locking';
+  const isCharged = phase === 'charged';
+  const isImpact = phase === 'impact';
+  const isShatter = phase === 'shatter';
+  const showScope = isScanning || isLocking || isCharged;
+
+  // Purple progress ring: circumference for r=55 ≈ 345.6
+  const progressCirc = 2 * Math.PI * 55;
 
   return (
-    <div style={{ position: 'relative', width: '100%', borderRadius: '20px', overflow: 'hidden' }}>
-      {/* Target Gauge Content with Blur Transition */}
+    <div style={{
+      position: 'relative', width: '100%', borderRadius: '20px', overflow: 'hidden',
+      animation: isImpact ? 'tlScreenShake 0.15s ease-out' : 'none'
+    }}>
+      {/* Content */}
       <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '100%',
-        filter: isLocked ? 'blur(16px)' : isShattering ? 'blur(8px)' : 'blur(0px)',
-        opacity: isLocked ? 0.2 : isShattering ? 0.65 : 1,
-        transform: isLocked ? 'scale(0.96)' : isShattering ? 'scale(0.99)' : 'scale(1)',
-        transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        pointerEvents: showOverlay ? 'none' : 'auto',
-        userSelect: showOverlay ? 'none' : 'auto'
+        display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%',
+        filter: showScope ? 'blur(14px) saturate(0.7)' : isImpact ? 'blur(2px) brightness(1.5)' : 'blur(0px)',
+        opacity: showScope ? 0.3 : 1,
+        transition: isImpact ? 'all 0.1s ease-out' : isShatter ? 'filter 0.4s ease-out, opacity 0.4s ease-out' : 'all 0.8s cubic-bezier(0.4,0,0.2,1)',
+        pointerEvents: phase !== 'complete' ? 'none' : 'auto',
+        userSelect: phase !== 'complete' ? 'none' : 'auto'
       }}>
         {children}
       </div>
 
-      {/* Tactical Sniper Scope HUD Overlay */}
-      {showOverlay && (
+      {/* === Scope Overlay (Full Tactical Sniper HUD) === */}
+      {showScope && (
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'radial-gradient(circle at center, rgba(124, 92, 252, 0.12) 0%, rgba(15, 23, 42, 0.65) 85%)',
-          backdropFilter: 'blur(10px)',
-          zIndex: 10,
-          borderRadius: '20px',
-          animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(245, 243, 255, 0.8) 60%, rgba(235, 230, 254, 0.94) 100%)',
+          backdropFilter: 'blur(12px)', zIndex: 10, borderRadius: '20px',
+          boxShadow: 'inset 0 0 50px rgba(124, 92, 252, 0.1)',
+          border: '1px solid rgba(124, 92, 252, 0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden', userSelect: 'none'
         }}>
-          {/* Sniper HUD Scope Lens & Crosshair SVG */}
-          <svg style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            overflow: 'visible'
+          {/* Background Tech Grid */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.45,
+            backgroundImage: `
+              linear-gradient(to right, rgba(124, 92, 252, 0.08) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(124, 92, 252, 0.08) 1px, transparent 1px)
+            `,
+            backgroundSize: '32px 32px'
+          }} />
+
+          {/* 4 Corner Tech Brackets */}
+          <div style={{ position: 'absolute', top: '14px', left: '16px', width: '22px', height: '22px', borderTop: '2.5px solid #7C5CFC', borderLeft: '2.5px solid #7C5CFC', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: '14px', right: '16px', width: '22px', height: '22px', borderTop: '2.5px solid #7C5CFC', borderRight: '2.5px solid #7C5CFC', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '14px', left: '16px', width: '22px', height: '22px', borderBottom: '2.5px solid #7C5CFC', borderLeft: '2.5px solid #7C5CFC', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: '14px', right: '16px', width: '22px', height: '22px', borderBottom: '2.5px solid #7C5CFC', borderRight: '2.5px solid #7C5CFC', pointerEvents: 'none' }} />
+
+          {/* HUD Top Bar Telemetry */}
+          <div style={{
+            position: 'absolute', top: '14px', left: '44px', right: '44px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            fontSize: '10.5px', fontFamily: 'monospace', fontWeight: 700, letterSpacing: '0.8px',
+            color: '#6D28D9', pointerEvents: 'none'
           }}>
-            <defs>
-              <linearGradient id="sniperScopeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#7C5CFC" />
-                <stop offset="50%" stopColor="#F59E0B" />
-                <stop offset="100%" stopColor="#10B981" />
-              </linearGradient>
-              <radialGradient id="sonarPulse" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={isShattering ? '#10B981' : '#7C5CFC'} stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
-              </radialGradient>
-            </defs>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{
+                width: '7px', height: '7px', borderRadius: '50%',
+                background: isLocking || isCharged ? '#10B981' : '#F59E0B',
+                boxShadow: isLocking || isCharged ? '0 0 8px #10B981' : '0 0 6px #F59E0B',
+                animation: 'tlPulseDot 1.2s ease-in-out infinite'
+              }} />
+              <span>{isCharged ? 'TARGET LOCKED [ 100% ]' : isLocking ? 'LOCKING TARGET...' : 'ACQUIRING TARGET // AI OPTICS'}</span>
+            </div>
+            <div style={{ color: '#8B5CF6', opacity: 0.85 }}>ZOOM 4.8X // ELEV: +0.24°</div>
+          </div>
 
-            {/* Scope Crosshair Hairlines */}
-            {/* Horizontal Center Line */}
-            <line x1="5%" y1="50%" x2="95%" y2="50%"
-              stroke={isShattering ? '#10B981' : 'rgba(124, 92, 252, 0.6)'}
-              strokeWidth="1.5"
-              strokeDasharray="10 6 2 6"
-              style={{ transition: 'stroke 0.4s ease' }}
-            />
-            {/* Vertical Center Line */}
-            <line x1="50%" y1="5%" x2="50%" y2="95%"
-              stroke={isShattering ? '#10B981' : 'rgba(124, 92, 252, 0.6)'}
-              strokeWidth="1.5"
-              strokeDasharray="10 6 2 6"
-              style={{ transition: 'stroke 0.4s ease' }}
-            />
+          {/* HUD Bottom Bar Telemetry */}
+          <div style={{
+            position: 'absolute', bottom: '14px', left: '44px', right: '44px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            fontSize: '10px', fontFamily: 'monospace', fontWeight: 600, letterSpacing: '0.6px',
+            color: '#7C5CFC', opacity: 0.85, pointerEvents: 'none'
+          }}>
+            <div>SYS.DIAG: ACTIVE // TCAS-01</div>
+            <div>STATUS: {isCharged ? 'ARMED & READY' : isLocking ? 'CALIBRATING...' : 'SCANNING VECTOR'}</div>
+          </div>
 
-            {/* Mil-dot Range Ticks */}
-            <circle cx="35%" cy="50%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
-            <circle cx="65%" cy="50%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
-            <circle cx="50%" cy="30%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
-            <circle cx="50%" cy="70%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
-
-            {/* Sonar Pulse Wave Ring */}
-            <circle cx="50%" cy="50%" r="120" fill="url(#sonarPulse)"
-              style={{
-                animation: isShattering ? 'none' : 'sonarPulseExpand 2s infinite ease-out',
-                transformOrigin: '50% 50%'
-              }}
-            />
-
-            {/* Outer Rotating Tactical Scope Ring */}
-            <circle cx="50%" cy="50%" r="150" fill="none"
-              stroke={isShattering ? '#10B981' : 'url(#sniperScopeGrad)'}
-              strokeWidth="2.5"
-              strokeDasharray="32 12 4 12"
-              style={{
-                animation: isShattering ? 'sniperLockSnap 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'reticleSpin 10s linear infinite',
-                transformOrigin: '50% 50%',
-                filter: isShattering ? 'drop-shadow(0 0 16px #10B981)' : 'drop-shadow(0 0 12px rgba(124, 92, 252, 0.5))'
-              }}
-            />
-
-            {/* Inner Precision Reticle Ring */}
-            <circle cx="50%" cy="50%" r="105" fill="none"
-              stroke={isShattering ? '#34D399' : '#F59E0B'}
-              strokeWidth="2"
-              strokeDasharray="16 10"
-              style={{
-                animation: isShattering ? 'none' : 'reticleSpin 5s linear infinite reverse',
-                transformOrigin: '50% 50%',
-                opacity: 0.85
-              }}
-            />
-
-            {/* Corner Tactical Target Brackets */}
-            <path d="M 24% 22% L 24% 18% L 28% 18%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
-            <path d="M 76% 22% L 76% 18% L 72% 18%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
-            <path d="M 24% 78% L 24% 82% L 28% 82%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
-            <path d="M 76% 78% L 76% 82% L 72% 82%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
-          </svg>
-
-          {/* Central Sniper Scope HUD Card */}
+          {/* Wandering scope group - moves during scanning, snaps center on lock */}
           <div style={{
             position: 'relative',
-            zIndex: 15,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '0.85rem',
-            padding: '1.6rem 2.5rem',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(245, 243, 255, 0.97))',
-            borderRadius: '24px',
-            border: isShattering ? '2.5px solid #10B981' : '2.5px solid rgba(124, 92, 252, 0.5)',
-            boxShadow: isShattering
-              ? '0 16px 44px rgba(16, 185, 129, 0.35), 0 0 30px rgba(16, 185, 129, 0.25)'
-              : '0 16px 44px rgba(124, 92, 252, 0.28), 0 0 25px rgba(245, 158, 11, 0.2)',
-            animation: isShattering ? 'sniperCardLock 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out',
-            transition: 'all 0.3s ease'
+            width: '100%', height: '100%',
+            animation: isScanning ? 'tlScopeWander 5.8s ease-in-out infinite' : 'none',
+            transition: !isScanning ? 'transform 0.4s cubic-bezier(0.22,0.61,0.36,1)' : 'none',
+            transform: !isScanning ? 'translate(0,0)' : undefined
           }}>
-            {/* Rangefinder HUD Telemetry Banner */}
-            <div style={{
-              fontSize: '0.68rem',
-              fontWeight: '800',
-              letterSpacing: '0.12em',
-              color: isShattering ? '#059669' : '#7C5CFC',
-              background: isShattering ? 'rgba(16, 185, 129, 0.12)' : 'rgba(124, 92, 252, 0.1)',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '8px',
-              border: isShattering ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(124, 92, 252, 0.2)'
-            }}>
-              {isShattering ? '[ TARGET LOCKED: 100% ]' : '[ SYS SCANNING TARGET... ]'}
-            </div>
+            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', overflow: 'visible' }}>
+              <defs>
+                <linearGradient id="tlScopeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#7C5CFC" />
+                  <stop offset="100%" stopColor="#F59E0B" />
+                </linearGradient>
+                <radialGradient id="tlLensGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="rgba(124, 92, 252, 0.08)" />
+                  <stop offset="70%" stopColor="rgba(124, 92, 252, 0.02)" />
+                  <stop offset="100%" stopColor="rgba(124, 92, 252, 0.18)" />
+                </radialGradient>
+              </defs>
 
-            {/* Target Reticle Sniper Icon */}
-            <div style={{
-              position: 'relative',
-              width: '72px',
-              height: '72px',
-              borderRadius: '50%',
-              background: isShattering
-                ? 'linear-gradient(135deg, #10B981, #34D399)'
-                : 'linear-gradient(135deg, #7C5CFC, #F59E0B)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              boxShadow: isShattering
-                ? '0 0 28px rgba(16, 185, 129, 0.7)'
-                : '0 0 28px rgba(124, 92, 252, 0.5)',
-              transition: 'all 0.4s ease'
-            }}>
-              <Target size={38} style={{ animation: isLocked ? 'pulse 1.2s infinite' : 'none' }} />
-            </div>
+              {/* Tactical Lens Shading Circle */}
+              <circle cx="50%" cy="50%" r="130" fill="url(#tlLensGlow)" stroke="rgba(124, 92, 252, 0.25)" strokeWidth="1.5" />
 
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontSize: '1.1rem',
-                fontWeight: '800',
-                color: isShattering ? '#059669' : '#4C1D95',
-                marginBottom: '0.2rem',
-                letterSpacing: '0.01em'
-              }}>
-                {isShattering ? 'TARGET ACQUIRED! ล็อกเป้าหมายสำเร็จ' : 'สแกนและล็อกเป้าหมายความพร้อม'}
-              </div>
-              <div style={{
-                fontSize: '0.8rem',
-                fontWeight: '600',
-                color: 'var(--text-secondary)',
-                lineHeight: '1.4'
-              }}>
-                {isShattering ? 'กำลังแสดงผลการวิเคราะห์โอกาสสอบเข้า...' : 'ระบบกำลังสแกนคำตอบและประเมินเปอร์เซ็นต์ความพร้อม...'}
-              </div>
-            </div>
+              {/* Crosshair lines with central opening */}
+              <line x1="0%" y1="50%" x2="42%" y2="50%" stroke="rgba(124,92,252,0.6)" strokeWidth="1.2" />
+              <line x1="58%" y1="50%" x2="100%" y2="50%" stroke="rgba(124,92,252,0.6)" strokeWidth="1.2" />
+              <line x1="50%" y1="0%" x2="50%" y2="42%" stroke="rgba(124,92,252,0.6)" strokeWidth="1.2" />
+              <line x1="50%" y1="58%" x2="50%" y2="100%" stroke="rgba(124,92,252,0.6)" strokeWidth="1.2" />
+
+              {/* Rangefinder Mil-dots on horizontal crosshair */}
+              {[18, 26, 34, 66, 74, 82].map(p => (
+                <circle key={`mh${p}`} cx={`${p}%`} cy="50%" r="2" fill="#D97706" opacity="0.8" />
+              ))}
+
+              {/* Elevation Hash marks on vertical crosshair */}
+              {[20, 28, 36, 64, 72, 80].map(p => (
+                <line key={`mv${p}`} x1="48.5%" y1={`${p}%`} x2="51.5%" y2={`${p}%`} stroke="#7C5CFC" strokeWidth="1.2" opacity="0.75" />
+              ))}
+
+              {/* Reticle Center Box / Target Locked Frame */}
+              <rect x="calc(50% - 12px)" y="calc(50% - 12px)" width="24" height="24" fill={isCharged ? "rgba(16, 185, 129, 0.15)" : "none"} stroke={isCharged ? "#10B981" : "#F59E0B"} strokeWidth={isCharged ? "2" : "1.2"} strokeDasharray={isCharged ? "none" : "3 3"} style={{ filter: isCharged ? 'drop-shadow(0 0 8px #10B981)' : 'none', transition: 'all 0.2s ease' }} />
+              <polygon points="50%,47% 53%,50% 50%,53% 47%,50%" fill={isCharged ? "#10B981" : "none"} stroke={isCharged ? "#10B981" : "#F59E0B"} strokeWidth="1.5" opacity={isCharged ? 1 : 0.85} />
+
+              {/* Outer compass ring */}
+              <circle cx="50%" cy="50%" r="130" fill="none" stroke="url(#tlScopeGrad)" strokeWidth="2" strokeDasharray="18 6 3 6"
+                style={{ animation: 'tlRingSpin 12s linear infinite', transformOrigin: '50% 50%', filter: 'drop-shadow(0 0 6px rgba(124,92,252,0.3))' }} />
+
+              {/* Middle dashed scope ring */}
+              <circle cx="50%" cy="50%" r="85" fill="none" stroke="rgba(217, 119, 6, 0.45)" strokeWidth="1.5" strokeDasharray="10 6"
+                style={{ animation: 'tlRingSpin 7s linear infinite reverse', transformOrigin: '50% 50%' }} />
+
+              {/* 4 Scope cardinal markers (N/E/S/W ticks) */}
+              <line x1="50%" y1="calc(50% - 130px)" x2="50%" y2="calc(50% - 120px)" stroke="#7C5CFC" strokeWidth="2.5" />
+              <line x1="50%" y1="calc(50% + 120px)" x2="50%" y2="calc(50% + 130px)" stroke="#7C5CFC" strokeWidth="2.5" />
+              <line x1="calc(50% - 130px)" y1="50%" x2="calc(50% - 120px)" y2="50%" stroke="#7C5CFC" strokeWidth="2.5" />
+              <line x1="calc(50% + 120px)" y1="50%" x2="calc(50% + 130px)" y2="50%" stroke="#7C5CFC" strokeWidth="2.5" />
+
+              {/* === PURPLE PROGRESS ARC === */}
+              {/* Background track ring */}
+              <circle cx="50%" cy="50%" r="55" fill="none" stroke="rgba(124,92,252,0.18)" strokeWidth="5" />
+              {/* Filling purple arc */}
+              <circle cx="50%" cy="50%" r="55" fill="none"
+                stroke={isCharged ? '#7C5CFC' : '#8B5CF6'}
+                strokeWidth={isCharged ? '6.5' : '4.5'}
+                strokeLinecap="round"
+                strokeDasharray={progressCirc}
+                strokeDashoffset={isScanning ? undefined : 0}
+                style={{
+                  transformOrigin: '50% 50%',
+                  transform: 'rotate(-90deg)',
+                  filter: isCharged
+                    ? 'drop-shadow(0 0 10px rgba(124,92,252,0.9)) drop-shadow(0 0 20px rgba(139,92,246,0.6))'
+                    : isLocking
+                    ? 'drop-shadow(0 0 6px rgba(124,92,252,0.6))'
+                    : 'drop-shadow(0 0 3px rgba(124,92,252,0.35))',
+                  animation: isScanning
+                    ? `tlArcFillSlow 5.8s ease-in-out infinite`
+                    : isLocking
+                    ? `tlArcFillFast 1.0s cubic-bezier(0.22,0.61,0.36,1) forwards`
+                    : 'none',
+                  strokeDashoffset: isCharged ? 0 : undefined,
+                  transition: isCharged ? 'stroke-width 0.3s ease, filter 0.3s ease' : 'none'
+                }}
+              />
+
+              {/* Sonar sweep */}
+              <circle cx="50%" cy="50%" r="42" fill="none" stroke="rgba(124,92,252,0.14)" strokeWidth="24"
+                strokeDasharray="65 200"
+                style={{ animation: 'tlRingSpin 2.5s linear infinite', transformOrigin: '50% 50%' }} />
+            </svg>
           </div>
+
+          {/* Charged glow pulse overlay */}
+          {isCharged && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '20px',
+              background: 'radial-gradient(circle at center, rgba(124,92,252,0.22) 0%, transparent 60%)',
+              animation: 'tlChargedPulse 0.3s ease-in-out'
+            }} />
+          )}
         </div>
       )}
 
-      {/* Tactical Sniper Scope Keyframes */}
+      {/* === Impact Flash === */}
+      {isImpact && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 20, borderRadius: '20px',
+          background: 'radial-gradient(circle at center, rgba(255,255,255,0.95) 0%, rgba(124,92,252,0.5) 40%, transparent 80%)',
+          animation: 'tlImpactFlash 0.15s ease-out forwards'
+        }} />
+      )}
+
+      {/* === Shockwave === */}
+      {isShatter && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 15, borderRadius: '20px', pointerEvents: 'none', overflow: 'hidden'
+        }}>
+          {[0, 1, 2].map(i => (
+            <div key={`ring-${i}`} style={{
+              position: 'absolute', left: '50%', top: '50%',
+              width: '40px', height: '40px',
+              marginLeft: '-20px', marginTop: '-20px',
+              borderRadius: '50%',
+              border: `${2.5 - i * 0.6}px solid rgba(124, 92, 252, ${0.7 - i * 0.2})`,
+              boxShadow: `0 0 ${16 - i * 4}px rgba(124, 92, 252, ${0.3 - i * 0.08})`,
+              animation: `tlShockwave 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) ${i * 0.08}s forwards`,
+              opacity: 0
+            }} />
+          ))}
+          {Array.from({ length: 16 }).map((_, i) => {
+            const angle = (i / 16) * 360;
+            const dist = 70 + (i % 3) * 35;
+            const tx = Math.cos(angle * Math.PI / 180) * dist;
+            const ty = Math.sin(angle * Math.PI / 180) * dist;
+            const size = 3 + (i % 3);
+            return (
+              <div key={`sp-${i}`} style={{
+                position: 'absolute', left: '50%', top: '50%',
+                width: `${size}px`, height: `${size}px`,
+                marginLeft: `${-size / 2}px`, marginTop: `${-size / 2}px`,
+                borderRadius: '50%',
+                background: i % 3 === 0 ? '#A78BFA' : i % 3 === 1 ? '#7C5CFC' : '#fff',
+                boxShadow: `0 0 ${size * 2}px ${i % 3 === 0 ? 'rgba(167,139,250,0.8)' : 'rgba(124,92,252,0.8)'}`,
+                opacity: 0,
+                animation: `tlSparkFly 0.55s cubic-bezier(0.22,0.61,0.36,1) ${i * 0.015}s forwards`,
+                '--spark-tx': `${tx}px`, '--spark-ty': `${ty}px`,
+              }} />
+            );
+          })}
+          <div style={{
+            position: 'absolute', left: '50%', top: '50%',
+            width: '14px', height: '14px', marginLeft: '-7px', marginTop: '-7px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #fff 0%, rgba(124,92,252,0.6) 50%, transparent 100%)',
+            boxShadow: '0 0 30px rgba(255,255,255,0.8), 0 0 50px rgba(124,92,252,0.4)',
+            animation: 'tlCenterGlow 0.6s ease-out forwards'
+          }} />
+        </div>
+      )}
+
       <style>{`
-        @keyframes reticleSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes tlScopeWander {
+          0%   { transform: translate(0px, 0px); }
+          10%  { transform: translate(120px, -50px); }
+          20%  { transform: translate(-100px, 60px); }
+          30%  { transform: translate(140px, 40px); }
+          40%  { transform: translate(-130px, -55px); }
+          50%  { transform: translate(-60px, 65px); }
+          60%  { transform: translate(150px, -30px); }
+          70%  { transform: translate(-140px, 0px); }
+          80%  { transform: translate(80px, 60px); }
+          90%  { transform: translate(-50px, -60px); }
+          100% { transform: translate(0px, 0px); }
         }
-        @keyframes sonarPulseExpand {
-          0% { transform: scale(0.6); opacity: 0.8; }
-          100% { transform: scale(1.4); opacity: 0; }
+        @keyframes tlRingSpin {
+          to { transform: rotate(360deg); }
         }
-        @keyframes sniperLockSnap {
-          0% { transform: scale(1) rotate(0deg); stroke: #7C5CFC; opacity: 1; }
-          40% { transform: scale(1.25) rotate(180deg); stroke: #F59E0B; }
-          70% { transform: scale(0.95) rotate(360deg); stroke: #10B981; }
-          100% { transform: scale(1.1) rotate(360deg); stroke: #10B981; opacity: 0; }
+        @keyframes tlArcFillSlow {
+          0%   { stroke-dashoffset: ${progressCirc}; }
+          50%  { stroke-dashoffset: ${progressCirc * 0.35}; }
+          100% { stroke-dashoffset: ${progressCirc}; }
         }
-        @keyframes sniperCardLock {
-          0% { transform: scale(1); }
-          30% { transform: scale(1.08); }
-          60% { transform: scale(0.97); }
-          100% { transform: scale(1); opacity: 0; }
+        @keyframes tlArcFillFast {
+          0%   { stroke-dashoffset: ${progressCirc * 0.35}; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes tlChargedPulse {
+          0%   { opacity: 0; }
+          50%  { opacity: 1; }
+          100% { opacity: 0.6; }
+        }
+        @keyframes tlScreenShake {
+          0%   { transform: translate(0, 0); }
+          20%  { transform: translate(-4px, 3px); }
+          40%  { transform: translate(5px, -3px); }
+          60%  { transform: translate(-3px, 4px); }
+          80%  { transform: translate(3px, -2px); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes tlImpactFlash {
+          0%   { opacity: 0; }
+          30%  { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes tlShockwave {
+          0%   { transform: scale(1); opacity: 0.9; }
+          100% { transform: scale(18); opacity: 0; }
+        }
+        @keyframes tlSparkFly {
+          0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+          100% { opacity: 0; transform: translate(var(--spark-tx), var(--spark-ty)) scale(0.1); }
+        }
+        @keyframes tlCenterGlow {
+          0%   { transform: scale(0); opacity: 1; }
+          40%  { transform: scale(3); opacity: 0.8; }
+          100% { transform: scale(5); opacity: 0; }
         }
       `}</style>
     </div>
@@ -478,7 +674,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
       setPhase('shattering');
       const timer = setTimeout(() => {
         setPhase('complete');
-      }, 1300);
+      }, 1000);
       return () => clearTimeout(timer);
     } else if (isEvaluating) {
       setPhase('evaluating');
@@ -490,21 +686,40 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
   const isShattering = phase === 'shattering';
   const showOverlay = isLocked || isShattering;
 
+  // 5 Constellation Star Vertices
+  const radius = 115;
+  const stars = [
+    { name: 'ตรรกะ', en: 'LOGIC', angle: -Math.PI / 2, color: '#7C5CFC' },
+    { name: 'วิทยาศาสตร์', en: 'SCIENCE', angle: -Math.PI / 2 + (2 * Math.PI) / 5, color: '#06B6D4' },
+    { name: 'ภาษา', en: 'LANG', angle: -Math.PI / 2 + (4 * Math.PI) / 5, color: '#10B981' },
+    { name: 'ศิลปะ', en: 'ART', angle: -Math.PI / 2 + (6 * Math.PI) / 5, color: '#F59E0B' },
+    { name: 'การบริหาร', en: 'MGMT', angle: -Math.PI / 2 + (8 * Math.PI) / 5, color: '#EC4899' }
+  ].map(s => ({
+    ...s,
+    x: Math.cos(s.angle) * radius,
+    y: Math.sin(s.angle) * radius
+  }));
+
+  // Build outer pentagon & inner star lines
+  const outerPolygonPoints = stars.map(s => `calc(50% + ${s.x}px),calc(50% + ${s.y}px)`).join(' ');
+  const innerStarIndices = [0, 2, 4, 1, 3, 0];
+  const innerStarPoints = innerStarIndices.map(i => `calc(50% + ${stars[i].x}px),calc(50% + ${stars[i].y}px)`).join(' ');
+
   return (
-    <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '16px', overflow: 'hidden' }}>
-      {/* Skill Radar Chart with Blur Transition */}
+    <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
+      {/* Skill Radar Chart with Soft Ethereal Blur */}
       <div style={{
-        filter: isLocked ? 'blur(16px)' : isShattering ? 'blur(12px)' : 'blur(0px)',
-        opacity: isLocked ? 0.2 : isShattering ? 0.6 : 1,
-        transform: isLocked ? 'scale(0.96)' : isShattering ? 'scale(0.98)' : 'scale(1)',
-        transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        filter: isLocked ? 'blur(10px)' : isShattering ? 'blur(3px)' : 'blur(0px)',
+        opacity: isLocked ? 0.35 : isShattering ? 0.85 : 1,
+        transform: isLocked ? 'scale(0.97)' : isShattering ? 'scale(0.99)' : 'scale(1)',
+        transition: 'all 0.9s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: showOverlay ? 'none' : 'auto',
         userSelect: showOverlay ? 'none' : 'auto'
       }}>
         <SkillRadarChart vector={vector} academics={academics} aiEval={aiEval} />
       </div>
 
-      {/* PathFinder Themed Locked Padlock & Tech Chains Overlay */}
+      {/* Constellation Skill Forge Overlay */}
       {showOverlay && (
         <div style={{
           position: 'absolute',
@@ -513,13 +728,13 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(255, 255, 255, 0.65)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(124, 92, 252, 0.08) 0%, rgba(255, 255, 255, 0.72) 100%)',
           backdropFilter: 'blur(8px)',
           zIndex: 10,
-          borderRadius: '16px',
-          animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+          borderRadius: '20px',
+          animation: isShattering ? 'constellationFadeOut 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
         }}>
-          {/* SVG PathFinder Tech Chains */}
+          {/* SVG Constellation Map */}
           <svg style={{
             position: 'absolute',
             inset: 0,
@@ -529,177 +744,167 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             overflow: 'visible'
           }}>
             <defs>
-              <linearGradient id="pathfinderChainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              {/* Star Glow Gradient */}
+              <radialGradient id="starGlowGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#7C5CFC" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
+              </radialGradient>
+              <linearGradient id="beamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#7C5CFC" />
                 <stop offset="50%" stopColor="#A78BFA" />
-                <stop offset="100%" stopColor="#6366F1" />
+                <stop offset="100%" stopColor="#06B6D4" />
               </linearGradient>
             </defs>
 
-            {/* Tech Chains tethered from 4 corners */}
-            {/* Top Left Chain */}
-            <line x1="2%" y1="2%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
+            {/* Delicate Astrological Orbital Rings */}
+            <circle cx="50%" cy="50%" r="65" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="2 4" />
+            <circle cx="50%" cy="50%" r="115" fill="none" stroke="rgba(124, 92, 252, 0.18)" strokeWidth="1" />
+            <circle cx="50%" cy="50%" r="160" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1.2" strokeDasharray="4 16"
+              style={{ animation: 'orbitRingSpin 24s linear infinite', transformOrigin: '50% 50%' }} />
+
+            {/* Inner Star Chords (Faint geometric lines) */}
+            <polyline
+              points={innerStarPoints}
+              fill="rgba(124, 92, 252, 0.03)"
+              stroke="rgba(124, 92, 252, 0.22)"
+              strokeWidth="1.2"
+              strokeDasharray="4 4"
+            />
+
+            {/* Outer Constellation Polygon Beam with Traveling Starlight Flow */}
+            <polygon
+              points={outerPolygonPoints}
+              fill="rgba(124, 92, 252, 0.05)"
+              stroke="url(#beamGrad)"
+              strokeWidth="2"
               style={{
-                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
-                animation: isShattering ? 'chainBreakTL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out',
-                strokeLinecap: 'round'
+                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.35))',
+                strokeDasharray: '12 6',
+                animation: 'constellationBeamFlow 3s linear infinite'
               }}
             />
-            {/* Top Right Chain */}
-            <line x1="98%" y1="2%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
-              style={{
-                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
-                animation: isShattering ? 'chainBreakTR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 0.5s',
-                strokeLinecap: 'round'
-              }}
-            />
-            {/* Bottom Left Chain */}
-            <line x1="2%" y1="98%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
-              style={{
-                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
-                animation: isShattering ? 'chainBreakBL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 1s',
-                strokeLinecap: 'round'
-              }}
-            />
-            {/* Bottom Right Chain */}
-            <line x1="98%" y1="98%" x2="50%" y2="50%" stroke="url(#pathfinderChainGrad)" strokeWidth="8" strokeDasharray="12 8"
-              style={{
-                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.4))',
-                animation: isShattering ? 'chainBreakBR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'rpgChainGlow 2s infinite ease-in-out 1.5s',
-                strokeLinecap: 'round'
-              }}
-            />
+
+            {/* 5 Radiant Constellation Stars */}
+            {stars.map((star, idx) => {
+              const cx = `calc(50% + ${star.x}px)`;
+              const cy = `calc(50% + ${star.y}px)`;
+              return (
+                <g key={idx}>
+                  {/* Outer Pulsing Starlight Aura */}
+                  <circle cx={cx} cy={cy} r="18" fill="none" stroke={isShattering ? '#10B981' : star.color} strokeWidth="1"
+                    style={{
+                      animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`,
+                      transformOrigin: `${cx} ${cy}`
+                    }} />
+
+                  {/* 4-Point Star Diamond Flare */}
+                  <g style={{
+                    animation: `starFlareSpin 8s linear infinite ${idx * 0.3}s`,
+                    transformOrigin: `${cx} ${cy}`
+                  }}>
+                    <path
+                      d={`M ${star.x} ${star.y - 10} Q ${star.x} ${star.y} ${star.x + 10} ${star.y} Q ${star.x} ${star.y} ${star.x} ${star.y + 10} Q ${star.x} ${star.y} ${star.x - 10} ${star.y} Z`}
+                      fill={isShattering ? '#10B981' : star.color}
+                      style={{
+                        transform: `translate(calc(50% - 0px), calc(50% - 0px))`,
+                        filter: `drop-shadow(0 0 6px ${isShattering ? '#10B981' : star.color})`
+                      }}
+                    />
+                  </g>
+
+                  {/* Star Core Dot */}
+                  <circle cx={cx} cy={cy} r="4" fill="#FFFFFF" stroke={isShattering ? '#10B981' : star.color} strokeWidth="2" />
+
+                  {/* Star Name Label */}
+                  <text
+                    x={`calc(50% + ${star.x * 1.28}px)`}
+                    y={`calc(50% + ${star.y * 1.28 + 4}px)`}
+                    textAnchor="middle"
+                    fill="var(--text-primary)"
+                    fontSize="11"
+                    fontWeight="700"
+                    style={{ letterSpacing: '0.02em', filter: 'drop-shadow(0 1px 2px rgba(255,255,255,0.8))' }}
+                  >
+                    {star.name}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Central Celestial Nexus Star */}
+            <circle cx="50%" cy="50%" r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 8px #7C5CFC)' }} />
           </svg>
 
-          {/* Central PathFinder Glassmorphism Padlock Card */}
+          {/* Minimalist Floating Constellation Telemetry Pill */}
           <div style={{
-            position: 'relative',
+            position: 'absolute',
+            bottom: '1.25rem',
             zIndex: 15,
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.85rem',
-            padding: '1.6rem 2.5rem',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 246, 255, 0.96))',
+            gap: '0.65rem',
+            padding: '0.55rem 1.25rem',
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(12px)',
             borderRadius: '24px',
-            border: '2px solid rgba(124, 92, 252, 0.35)',
-            boxShadow: '0 16px 44px rgba(124, 92, 252, 0.2), 0 0 20px rgba(124, 92, 252, 0.1)',
-            animation: isShattering ? 'padlockShatter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out'
+            border: isShattering ? '1.5px solid #10B981' : '1.5px solid rgba(124, 92, 252, 0.3)',
+            boxShadow: '0 8px 24px rgba(124, 92, 252, 0.12)',
+            transition: 'all 0.3s ease'
           }}>
-            {/* SVG PathFinder Metallic Padlock Model */}
-            <div style={{
-              position: 'relative',
-              width: '72px',
-              height: '72px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              filter: isShattering ? 'drop-shadow(0 0 16px #10B981)' : 'drop-shadow(0 0 14px rgba(124, 92, 252, 0.4))'
-            }}>
-              <svg width="72" height="72" viewBox="0 0 100 100" fill="none">
-                <defs>
-                  <linearGradient id="pathfinderLockGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#7C5CFC" />
-                    <stop offset="60%" stopColor="#5B21B6" />
-                    <stop offset="100%" stopColor="#4C1D95" />
-                  </linearGradient>
-                  <linearGradient id="shackleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#CBD5E1" />
-                    <stop offset="50%" stopColor="#64748B" />
-                    <stop offset="100%" stopColor="#334155" />
-                  </linearGradient>
-                  <radialGradient id="lockGlow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor={isShattering ? '#34D399' : '#A78BFA'} stopOpacity="0.7" />
-                    <stop offset="100%" stopColor={isShattering ? '#059669' : '#7C5CFC'} stopOpacity="0" />
-                  </radialGradient>
-                </defs>
-
-                {/* Outer Glow Ring */}
-                <circle cx="50" cy="50" r="46" fill="url(#lockGlow)" />
-
-                {/* Metallic Shackle */}
-                <path
-                  d={isShattering ? "M 32 45 V 26 A 18 18 0 0 1 68 26 V 16" : "M 32 45 V 26 A 18 18 0 0 1 68 26 V 45"}
-                  fill="none"
-                  stroke="url(#shackleGrad)"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  style={{ transition: 'all 0.4s ease' }}
-                />
-
-                {/* PathFinder Purple Padlock Body */}
-                <rect x="22" y="40" width="56" height="46" rx="12" fill="url(#pathfinderLockGrad)" stroke="#F59E0B" strokeWidth="2" />
-                
-                {/* Corner Accents */}
-                <circle cx="29" cy="47" r="2.5" fill="#FBBF24" />
-                <circle cx="71" cy="47" r="2.5" fill="#FBBF24" />
-                <circle cx="29" cy="79" r="2.5" fill="#FBBF24" />
-                <circle cx="71" cy="79" r="2.5" fill="#FBBF24" />
-
-                {/* Keyhole Core */}
-                <circle cx="50" cy="58" r="9" fill="#1E1B4B" stroke="#F59E0B" strokeWidth="1.2" />
-                <path d="M 50 53 L 54 58 L 50 65 L 46 58 Z" fill={isShattering ? '#10B981' : '#F59E0B'} />
-              </svg>
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontSize: '1.05rem',
+            <span style={{
+              fontSize: '0.9rem',
+              color: isShattering ? '#10B981' : '#7C5CFC',
+              display: 'inline-block',
+              animation: 'starTwinkle 1.5s ease-in-out infinite'
+            }}>✦</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{
+                fontSize: '0.72rem',
                 fontWeight: '800',
-                color: isShattering ? '#059669' : '#4C1D95',
-                marginBottom: '0.2rem'
+                letterSpacing: '0.08em',
+                color: isShattering ? '#059669' : '#7C5CFC',
+                textTransform: 'uppercase',
+                fontFamily: 'monospace'
               }}>
-                {isShattering ? 'ปลดล็อกกราฟทักษะเรียบร้อย!' : 'ถอดรหัสและตรึงกุญแจสมรรถนะ'}
-              </div>
-              <div style={{
+                {isShattering ? 'CONSTELLATION ALIGNED' : 'CONSTELLATION SKILL FORGE'}
+              </span>
+              <span style={{
                 fontSize: '0.8rem',
                 fontWeight: '600',
-                color: 'var(--text-secondary)',
-                lineHeight: '1.4'
+                color: 'var(--text-secondary)'
               }}>
-                {isShattering ? 'กำลังแสดงกราฟ My Skill Matrix...' : 'ระบบกำลังประมวลผลคำตอบเกรดวิชาและแบบทดสอบ...'}
-              </div>
+                {isShattering ? 'กลุ่มดาว 5 มิติทักษะเรียงตัวสมบูรณ์' : 'กำลังถักทอเส้นใยกลุ่มดาว 5 มิติทักษะ...'}
+              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Keyframe Styles */}
+      {/* Constellation Keyframe Animations */}
       <style>{`
-        @keyframes padlockFloat {
-          0%, 100% { transform: translateY(0px) scale(1); boxShadow: 0 16px 44px rgba(124, 92, 252, 0.4), 0 0 25px rgba(245, 158, 11, 0.3); }
-          50% { transform: translateY(-8px) scale(1.03); boxShadow: 0 22px 54px rgba(245, 158, 11, 0.5), 0 0 35px rgba(192, 132, 252, 0.4); }
+        @keyframes constellationBeamFlow {
+          from { stroke-dashoffset: 0; }
+          to   { stroke-dashoffset: -36; }
         }
-        @keyframes padlockShatter {
-          0% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
-          25% { transform: scale(1.18) rotate(-8deg); opacity: 0.95; }
-          60% { transform: scale(1.35) rotate(15deg); opacity: 0.5; filter: blur(4px); }
-          100% { transform: scale(1.8) rotate(-30deg); opacity: 0; filter: blur(16px); }
+        @keyframes orbitRingSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
-        @keyframes rpgChainGlow {
-          0%, 100% { opacity: 0.75; filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5)); stroke-dashoffset: 0; }
-          50% { opacity: 1; filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.8)); stroke-dashoffset: -24; }
+        @keyframes starlightPulse {
+          0%, 100% { r: 12; opacity: 0.4; }
+          50%      { r: 20; opacity: 0.9; }
         }
-        @keyframes chainBreakTL {
-          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(-140px, -120px) rotate(-60deg); opacity: 0; }
+        @keyframes starFlareSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
         }
-        @keyframes chainBreakTR {
-          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(140px, -120px) rotate(60deg); opacity: 0; }
+        @keyframes starTwinkle {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50%      { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 6px #7C5CFC); }
         }
-        @keyframes chainBreakBL {
-          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(-140px, 120px) rotate(-60deg); opacity: 0; }
-        }
-        @keyframes chainBreakBR {
-          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-          100% { transform: translate(140px, 120px) rotate(60deg); opacity: 0; }
-        }
-        @keyframes overlayFadeOut {
-          0% { opacity: 1; }
-          80% { opacity: 0.8; }
-          100% { opacity: 0; visibility: hidden; }
+        @keyframes constellationFadeOut {
+          0%   { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1.03); pointer-events: none; }
         }
       `}</style>
     </div>
@@ -715,6 +920,7 @@ export default function DashboardPage() {
   const [isUpdated, setIsUpdated] = useState(false);
 
   const [evaluatingTimeout, setEvaluatingTimeout] = useState(false);
+  const [targetLockPhase, setTargetLockPhase] = useState('complete');
 
   useEffect(() => {
     if (user) {
@@ -874,49 +1080,54 @@ export default function DashboardPage() {
     </span>
   );
 
-  const AIStatusBadge = ({ isEvaluating }) => (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-      fontSize: '0.825rem',
-      fontWeight: '700',
-      padding: '0.45rem 1.1rem',
-      borderRadius: '20px',
-      margin: '0.25rem 0 1rem 0',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-      background: isEvaluating
-        ? 'linear-gradient(135deg, rgba(124, 92, 252, 0.16), rgba(167, 139, 250, 0.12))'
-        : 'linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(52, 211, 153, 0.1))',
-      border: isEvaluating
-        ? '1.5px solid rgba(124, 92, 252, 0.45)'
-        : '1.5px solid rgba(16, 185, 129, 0.35)',
-      color: isEvaluating ? '#6D28D9' : '#059669',
-      boxShadow: isEvaluating
-        ? '0 2px 12px rgba(124, 92, 252, 0.2)'
-        : '0 2px 10px rgba(16, 185, 129, 0.12)'
-    }}>
-      {isEvaluating ? (
-        <>
-          <span className="spin-loader" style={{
-            display: 'inline-block',
-            width: '14px',
-            height: '14px',
-            border: '2.5px solid #7C5CFC',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            flexShrink: 0
-          }} />
-          <span>กำลังประมวลผล...</span>
-        </>
-      ) : (
-        <>
-          <Sparkles size={15} style={{ color: '#059669', flexShrink: 0 }} />
-          <span>คำนวณสมรรถนะเสร็จสิ้น</span>
-        </>
-      )}
-    </div>
-  );
+  const AIStatusBadge = ({ isEvaluating, label }) => {
+    const defaultCompleteText = isTargetLock ? 'คำนวณสมรรถนะเสร็จสิ้น' : 'ประมวลผล 5 มิติทักษะเสร็จสิ้น';
+    const completeText = label || defaultCompleteText;
+
+    return (
+      <div style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.825rem',
+        fontWeight: '700',
+        padding: '0.45rem 1.1rem',
+        borderRadius: '20px',
+        margin: '0.25rem 0 1rem 0',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        background: isEvaluating
+          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(251, 191, 36, 0.12))'
+          : 'linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(52, 211, 153, 0.1))',
+        border: isEvaluating
+          ? '1.5px solid rgba(245, 158, 11, 0.45)'
+          : '1.5px solid rgba(16, 185, 129, 0.35)',
+        color: isEvaluating ? '#D97706' : '#059669',
+        boxShadow: isEvaluating
+          ? '0 2px 12px rgba(245, 158, 11, 0.2)'
+          : '0 2px 10px rgba(16, 185, 129, 0.12)'
+      }}>
+        {isEvaluating ? (
+          <>
+            <span className="spin-loader" style={{
+              display: 'inline-block',
+              width: '14px',
+              height: '14px',
+              border: '2.5px solid #F59E0B',
+              borderTopColor: 'transparent',
+              borderRadius: '50%',
+              flexShrink: 0
+            }} />
+            <span>กำลังประมวลผล...</span>
+          </>
+        ) : (
+          <>
+            <Sparkles size={15} style={{ color: '#059669', flexShrink: 0 }} />
+            <span>{completeText}</span>
+          </>
+        )}
+      </div>
+    );
+  };
 
   const aiEval = profile.aiEvaluation || null;
 
@@ -1006,8 +1217,8 @@ export default function DashboardPage() {
               <Target size={14} /> โหมดประเมินความพร้อม (Target Lock)
             </span>
 
-            <AIStatusBadge isEvaluating={!aiEval && !evaluatingTimeout} />
-            <TargetLockGaugeContainer isEvaluating={!aiEval && !evaluatingTimeout}>
+            <AIStatusBadge isEvaluating={(!aiEval && !evaluatingTimeout) || targetLockPhase === 'scanning'} />
+            <TargetLockGaugeContainer isEvaluating={!aiEval && !evaluatingTimeout} onPhaseChange={setTargetLockPhase}>
               {profile.educationLevel === 'junior' && readinessPercentages.length > 0 ? (
                 <div style={{ width: '100%', textAlign: 'center' }}>
                   <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
@@ -1080,7 +1291,17 @@ export default function DashboardPage() {
               )}
             </TargetLockGaugeContainer>
 
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              marginTop: '1.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              filter: targetLockPhase !== 'complete' ? 'blur(8px)' : 'blur(0px)',
+              opacity: targetLockPhase !== 'complete' ? 0.3 : 1,
+              pointerEvents: targetLockPhase !== 'complete' ? 'none' : 'auto',
+              transition: 'all 1.0s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}>
               <button 
                 className="btn-primary" 
                 onClick={() => handleConsultPath(targetPathObj?.name || profile.targetPath)}
@@ -1111,6 +1332,17 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Target Lock Evaluation Details (Blurred until Readiness Gauge finishes reveal) */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2rem',
+            filter: targetLockPhase !== 'complete' ? 'blur(12px)' : 'blur(0px)',
+            opacity: targetLockPhase !== 'complete' ? 0.3 : 1,
+            pointerEvents: targetLockPhase !== 'complete' ? 'none' : 'auto',
+            userSelect: targetLockPhase !== 'complete' ? 'none' : 'auto',
+            transition: 'all 1.0s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}>
           {/* Targeted Gap Analysis */}
           <div className="card">
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
@@ -1376,6 +1608,7 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+          </div>
 
         </div>
       ) : (
@@ -1598,7 +1831,8 @@ export default function DashboardPage() {
           </div>
         </>
       )}
-
+      {/* Floating Sound Toggle Button for both Target Lock & Discovery modes */}
+      <AssessmentMusicPlayer />
     </div>
   );
 }
