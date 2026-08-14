@@ -270,74 +270,70 @@ export default function DashboardAssessmentPage() {
       
       const updatedUsedIds = [...new Set([...(profile.usedQuestionIds || []), ...stageQuestions])];
 
-      // เรียกใช้ AI Evaluation API เพื่อประมวลผลสมรรถนะลึกซึ้ง
-      let aiEvalResult = null;
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
-
-        const aiRes = await fetch('/api/ai-evaluate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            responses: allResponses,
-            academics: profile.academics,
-            portfolio: profile.portfolio,
-            customActivities: profile.customActivities,
-            targetPath: profile.targetPath,
-            analysisMode: profile.analysisMode,
-            educationLevel: profile.educationLevel,
-            likes: likesForCalc,
-            dislikes: dislikesForCalc
-          })
-        });
-        clearTimeout(timeoutId);
-        if (aiRes.ok) {
-          const aiData = await aiRes.json();
-          if (aiData.success && aiData.evaluation) {
-            aiEvalResult = aiData.evaluation;
-          }
-        }
-      } catch (aiErr) {
-        console.warn('AI evaluation API fallback:', aiErr);
-      }
-
-      const finalSkillVector = (aiEvalResult?.skillVector && aiEvalResult.skillVector.length === 5) ? aiEvalResult.skillVector : skillVector;
-      const finalRankings = matchPaths(finalSkillVector, pathsObject, profile.likes || [], profile.dislikes || []);
-
-      const updatePayload = {
+      // 1. บันทึกผลเบื้องต้นและล็อกสถานะการประมวลผล (aiEvaluation: null) ลง Firestore ทันที
+      const initialPayload = {
         usedQuestionIds: updatedUsedIds,
         resultsUpdated: true,
-        aiEvaluation: aiEvalResult || null,
+        aiEvaluation: null, // ตั้งเป็น null เพื่อให้หน้า Dashboard ล็อกกุญแจและโซ่ไว้ขณะ AI ทำงาน
         assessment: {
           responses: allResponses,
           completedAt: new Date().toISOString()
         },
         results: {
-          skillVector: finalSkillVector,
-          matchRankings: finalRankings
+          skillVector: skillVector,
+          matchRankings: rankings
         }
       };
 
-      // บันทึกข้อมูลลง Firestore และลงโควตาคู่ขนาน (Parallel Write) เพื่อความเร็วสูงสุด
+      // บันทึกข้อมูลลง Firestore และลงโควตาคู่ขนาน (Optimistic Fast Write)
       const [_, attemptRecord] = await Promise.all([
-        updateUserProfile(user.uid, updatePayload),
+        updateUserProfile(user.uid, initialPayload),
         recordAssessmentAttempt(profile, updateUserProfile)
       ]);
 
-      // อัปเดตสถานะในตัวแปรท้องถิ่น
-      setProfile(prev => ({
-        ...prev,
-        dailyAssessmentAttempts: attemptRecord || prev.dailyAssessmentAttempts,
-        usedQuestionIds: updatedUsedIds,
-        assessment: { responses: allResponses, completedAt: new Date().toISOString() },
-        results: { skillVector: finalSkillVector, matchRankings: finalRankings },
-        aiEvaluation: aiEvalResult || prev.aiEvaluation
-      }));
-      setCompletedStages(prev => new Set(prev).add(selectedTheme.id));
-      
-      // เปลี่ยนหน้าไปยังแดชบอร์ดหลักเพื่อดูผลลัพธ์ใหม่แบบทันที
+      // 2. เรียกใช้ AI Evaluation API เบื้องหลังแบบไม่บล็อกหน้าจอ (Background Non-blocking Execution)
+      (async () => {
+        try {
+          const aiRes = await fetch('/api/ai-evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              responses: allResponses,
+              academics: profile.academics,
+              portfolio: profile.portfolio,
+              customActivities: profile.customActivities,
+              targetPath: profile.targetPath,
+              analysisMode: profile.analysisMode,
+              educationLevel: profile.educationLevel,
+              likes: likesForCalc,
+              dislikes: dislikesForCalc
+            })
+          });
+          if (aiRes.ok) {
+            const aiData = await aiRes.json();
+            if (aiData.success && aiData.evaluation) {
+              const aiEvalResult = aiData.evaluation;
+              const finalSkillVector = (aiEvalResult.skillVector && aiEvalResult.skillVector.length === 5)
+                ? aiEvalResult.skillVector
+                : skillVector;
+              const finalRankings = matchPaths(finalSkillVector, pathsObject, likesForCalc, dislikesForCalc);
+
+              // เมื่อ AI ประมวลผลเสร็จแล้ว ให้อัปเดต Firestore -> หน้า Dashboard จะปลดล็อกกุญแจและคลายเบลอกราฟอัตโนมัติ
+              await updateUserProfile(user.uid, {
+                aiEvaluation: aiEvalResult,
+                results: {
+                  skillVector: finalSkillVector,
+                  matchRankings: finalRankings
+                }
+              });
+            }
+          }
+        } catch (aiErr) {
+          console.warn('Background AI evaluation error:', aiErr);
+        }
+      })();
+
+      // 3. เปลี่ยนหน้าไปยังแดชบอร์ดหลักทันทีแบบไม่รอ (<300ms)
       router.push('/dashboard');
     } catch (err) {
       console.error('Error saving stage:', err);
