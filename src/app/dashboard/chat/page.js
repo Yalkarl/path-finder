@@ -78,15 +78,30 @@ function ChatPageInner() {
 
   const quickReplies = getQuickReplies();
 
+  const getLatestEvaluationData = useCallback((p) => {
+    if (!p) return { skillVector: [0, 0, 0, 0, 0], matchRankings: [], pathsObject: {} };
+    const isTargetLock = p.analysisMode === 'target-lock';
+    const targetPathForFiltering = isTargetLock && p.targetPath ? p.targetPath : null;
+    const likesForCalc = isTargetLock ? [] : (p.likes || []);
+    const dislikesForCalc = isTargetLock ? [] : (p.dislikes || []);
+
+    const skillVector = p.aiEvaluation?.skillVector || p.results?.skillVector || calculateSkillVector(p.academics || {}, p.assessment?.responses || [], targetPathForFiltering, likesForCalc, dislikesForCalc);
+    const pathsObject = p.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
+    const matchRankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
+
+    return { skillVector, matchRankings, pathsObject };
+  }, []);
+
   const makeGreeting = useCallback((p) => {
     if (p.analysisMode === 'target-lock' && p.targetPath) {
       const pathObj = JUNIOR_PATHS[p.targetPath] || SENIOR_PATHS[p.targetPath] || { name: p.targetPath };
       const targetName = pathObj.name;
       return `สวัสดีครับน้อง${p.name}! ผม Mr. Path ในฐานะโค้ชวางแผนส่วนตัว (TCAS Coach) เองครับ\n\nยินดีต้อนรับสู่โปรแกรมติวเข้มเพื่อเข้าเรียนสาย **${targetName}** วันนี้มาเริ่มต้นวิเคราะห์และอุดช่องว่างเพื่อเตรียมพอร์ตโฟลิโอหรือวางแผนอ่านหนังสือสอบกันเลยดีกว่าครับ! มีคำถามอะไรเป็นพิเศษไหมครับ?`;
     }
-    const topMatch = p.results?.matchRankings?.[0]?.name || 'หลายด้าน';
+    const { matchRankings } = getLatestEvaluationData(p);
+    const topMatch = matchRankings[0]?.name || 'หลายด้าน';
     return `สวัสดีครับน้อง${p.name}! ผม Mr. Path เองครับ\n\nจากผลการวิเคราะห์ น้องมีความโดดเด่นด้าน **${topMatch}** มากเลยครับ วันนี้มีเรื่องอะไรอยากปรึกษา หรือให้ผมช่วยวางแผนการเรียนให้ไหมครับ?`;
-  }, []);
+  }, [getLatestEvaluationData]);
 
   // โหลดรายการบทสนทนาใหม่
   const refreshConversations = useCallback(async () => {
@@ -262,10 +277,7 @@ function ChatPageInner() {
       const currentProfile = freshProfile || profile;
       const profileName = currentProfile?.name || 'ผู้ใช้';
 
-      const targetPathForFiltering = currentProfile.analysisMode === 'target-lock' && currentProfile.targetPath ? currentProfile.targetPath : null;
-      const skillVector = calculateSkillVector(currentProfile.academics || {}, currentProfile.assessment?.responses || [], targetPathForFiltering);
-      const pathsObject = currentProfile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-      const matchRankings = matchPaths(skillVector, pathsObject);
+      const { skillVector, matchRankings, pathsObject } = getLatestEvaluationData(currentProfile);
 
       const topSkills = ['ตรรกะ', 'วิทยาศาสตร์', 'ภาษา', 'ศิลปะ', 'การบริหาร']
         .filter((_, i) => skillVector[i] > 0.6);
