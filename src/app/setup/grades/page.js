@@ -386,6 +386,13 @@ function GradesContent() {
           attempts: [new Date().toISOString()]
         };
 
+        const targetPathForFiltering = analysisMode === 'target-lock' ? selectedTargetPath : null;
+        const likesForCalc = analysisMode === 'discovery' ? likes : [];
+        const dislikesForCalc = analysisMode === 'discovery' ? dislikes : [];
+        const skillVector = calculateSkillVector(finalGrades, [], targetPathForFiltering, likesForCalc, dislikesForCalc);
+        const pathsObject = level === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
+        const rankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
+
         const profileData = {
           name: localStorage.getItem('setup_name') || '',
           educationLevel: level,
@@ -402,7 +409,15 @@ function GradesContent() {
           customActivities: analysisMode === 'target-lock' ? customList : [],
           selfAssessment: analysisMode === 'target-lock' ? selfAssessment : {},
           targetProgramType: level === 'junior' && analysisMode === 'target-lock' ? targetProgramType : null,
-          dailyAssessmentAttempts: initialAttemptsRecord
+          dailyAssessmentAttempts: initialAttemptsRecord,
+          results: {
+            skillVector: skillVector,
+            matchRankings: rankings
+          },
+          aiEvaluation: null, // รีเซ็ตแคชประเมินเก่าของ AI เพื่อให้แดชบอร์ดแสดงผลเบื้องต้นทันที (<200ms)
+          resultsUpdated: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         };
 
         if (typeof window !== 'undefined' && user?.uid) {
@@ -413,8 +428,36 @@ function GradesContent() {
           }
         }
 
+        // บันทึกโปรไฟล์ลง Firestore ทันทีเพื่อย้ายหน้าเสี้ยววินาที (<200ms)
         await createUserProfile(user.uid, profileData);
-        router.push('/assessment');
+
+        // เรียกใช้ AI Evaluation API เบื้องหลังโดยไม่บล็อกการย้ายหน้า
+        fetch('/api/ai-evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            responses: [],
+            academics: finalGrades,
+            portfolio: analysisMode === 'target-lock' ? portfolio : [],
+            customActivities: analysisMode === 'target-lock' ? customList : [],
+            targetPath: analysisMode === 'target-lock' ? selectedTargetPath : null,
+            analysisMode,
+            educationLevel: level,
+            likes: likesForCalc,
+            dislikes: dislikesForCalc
+          })
+        }).then(res => res.json()).then(async (aiJson) => {
+          if (aiJson.success && aiJson.evaluation) {
+            await updateUserProfile(user.uid, {
+              aiEvaluation: aiJson.evaluation,
+              ...(aiJson.evaluation.skillVector && aiJson.evaluation.skillVector.length === 5 ? {
+                'results.skillVector': aiJson.evaluation.skillVector
+              } : {})
+            });
+          }
+        }).catch(e => console.warn('Background AI evaluation failed:', e));
+
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error("Error saving grades:", error);

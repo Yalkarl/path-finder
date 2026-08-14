@@ -696,76 +696,6 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Daily Quota Reminder Banner */}
-      {(() => {
-        const quota = checkAssessmentQuota(profile);
-        if (!quota.canTake) return null;
-
-        return (
-          <div style={{
-            marginBottom: '1.75rem',
-            padding: '1.25rem 1.5rem',
-            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(124, 92, 252, 0.08) 100%)',
-            borderRadius: '20px',
-            border: '1.5px solid rgba(245, 158, 11, 0.3)',
-            boxShadow: '0 8px 24px rgba(245, 158, 11, 0.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '1.25rem',
-            animation: 'fadeIn 0.4s ease-out'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: 1, minWidth: '280px' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '16px',
-                background: '#FFFFFF',
-                border: '1.5px solid rgba(245, 158, 11, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#D97706',
-                flexShrink: 0,
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
-              }}>
-                <Clock size={24} />
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                    โควตาทำแบบทดสอบวันนี้เหลืออีก {quota.remaining} ครั้ง ({quota.count}/2 ครั้ง)
-                  </h4>
-                </div>
-                <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  {quota.count === 1 
-                    ? 'ทำอีกเพียง 1 ด่านเพื่อยกระดับความแม่นยำของ My Skill Matrix และอัปเดตอันดับคณะที่ Match ให้สมบูรณ์ที่สุด!' 
-                    : 'วันนี้คุณยังไม่ได้ทำแบบทดสอบประเมินทักษะเลย มาเริ่มทดสอบ 1 ด่านเพื่อค้นหาจุดแข็งของคุณกันครับ!'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              className="btn-primary"
-              onClick={() => router.push('/dashboard/assessment')}
-              style={{
-                padding: '0.65rem 1.25rem',
-                fontSize: '0.875rem',
-                borderRadius: '12px',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 4px 14px rgba(124, 92, 252, 0.25)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}
-            >
-              ลุยแบบทดสอบต่อ <ChevronRight size={16} />
-            </button>
-          </div>
-        );
-      })()}
-
       {/* ────────────────────────────────────────────────────────
           โหมด TARGET LOCK (ประเมินความพร้อมแบบเป้าหมายเดี่ยว)
           ──────────────────────────────────────────────────────── */}
@@ -1184,6 +1114,76 @@ export default function DashboardPage() {
             {/* AI Qualitative Insights Section (Discovery Mode) */}
             <AIQualitativeInsightsSection aiEval={aiEval} profile={profile} />
           </div>
+
+          {/* Daily Quota Reminder Banner (Placed below My Skill Matrix) */}
+          {(() => {
+            const quota = checkAssessmentQuota(profile);
+            if (!quota.canTake) return null;
+
+            return (
+              <div style={{
+                marginBottom: '2rem',
+                padding: '1.25rem 1.5rem',
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(124, 92, 252, 0.08) 100%)',
+                borderRadius: '20px',
+                border: '1.5px solid rgba(245, 158, 11, 0.3)',
+                boxShadow: '0 8px 24px rgba(245, 158, 11, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1.25rem',
+                animation: 'fadeIn 0.4s ease-out'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flex: 1, minWidth: '280px' }}>
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '16px',
+                    background: '#FFFFFF',
+                    border: '1.5px solid rgba(245, 158, 11, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#D97706',
+                    flexShrink: 0,
+                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)'
+                  }}>
+                    <Clock size={24} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                      <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        โควตาทำแบบทดสอบวันนี้เหลืออีก {quota.remaining} ครั้ง ({quota.count}/2 ครั้ง)
+                      </h4>
+                    </div>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                      {quota.count === 1 
+                        ? 'ทำอีกเพียง 1 ด่านเพื่อยกระดับความแม่นยำของ My Skill Matrix และอัปเดตอันดับคณะที่ Match ให้สมบูรณ์ที่สุด!' 
+                        : 'วันนี้คุณยังไม่ได้ทำแบบทดสอบประเมินทักษะเลย มาเริ่มทดสอบ 1 ด่านเพื่อค้นหาจุดแข็งของคุณกันครับ!'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  className="btn-primary"
+                  onClick={() => router.push('/dashboard/assessment')}
+                  style={{
+                    padding: '0.65rem 1.25rem',
+                    fontSize: '0.875rem',
+                    borderRadius: '12px',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 14px rgba(124, 92, 252, 0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}
+                >
+                  ลุยแบบทดสอบต่อ <ChevronRight size={16} />
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Match Rankings (Blurred while evaluating) */}
           <div style={{
