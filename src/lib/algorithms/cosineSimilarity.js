@@ -103,7 +103,7 @@ export const PATH_PREFERENCE_KEYWORDS = {
     dislikes: ['เลือด', 'ศพ']
   },
   'law': {
-    likes: ['กฎหมาย', 'นิติ', 'ภาษา', 'การเมือง', 'โต้เถียง', 'ความยุติธรรม'],
+    likes: ['กฎหมาย', 'นิติ', 'การเมือง', 'โต้เถียง', 'ความยุติธรรม', 'พิพากษา', 'ข้อบังคับ'],
     dislikes: ['เลือด', 'ศพ']
   },
   'agriculture': {
@@ -169,7 +169,7 @@ export const PATH_PREFERENCE_KEYWORDS = {
     dislikes: ['คำนวณคณิต', 'เลือด']
   },
   'law-political-science': {
-    likes: ['กฎหมาย', 'นิติ', 'รัฐศาสตร์', 'การเมือง', 'ภาษา'],
+    likes: ['กฎหมาย', 'นิติ', 'รัฐศาสตร์', 'การเมือง', 'นโยบาย', 'ความยุติธรรม'],
     dislikes: ['เลือด']
   },
   'humanities-social-science': {

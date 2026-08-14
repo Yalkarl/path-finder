@@ -149,7 +149,7 @@ export const SENIOR_PATHS = {
     id: 'law',
     name: 'คณะนิติศาสตร์', 
     description: 'การจำกัดความและตีความตามหลักกฎหมาย คิดเชิงเหตุผลสูงร่วมกับการเขียนและการอ่านที่รัดกุม',
-    benchmark: [0.65, 0.10, 0.70, 0.15, 0.38]
+    benchmark: [0.72, 0.10, 0.40, 0.15, 0.55]
   },
   'agriculture': { 
     id: 'agriculture',
