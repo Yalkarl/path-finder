@@ -259,9 +259,9 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
         flexDirection: 'column',
         alignItems: 'center',
         width: '100%',
-        filter: isLocked ? 'blur(14px)' : isShattering ? 'blur(8px)' : 'blur(0px)',
-        opacity: isLocked ? 0.25 : isShattering ? 0.7 : 1,
-        transform: isLocked ? 'scale(0.97)' : isShattering ? 'scale(0.99)' : 'scale(1)',
+        filter: isLocked ? 'blur(16px)' : isShattering ? 'blur(8px)' : 'blur(0px)',
+        opacity: isLocked ? 0.2 : isShattering ? 0.65 : 1,
+        transform: isLocked ? 'scale(0.96)' : isShattering ? 'scale(0.99)' : 'scale(1)',
         transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: showOverlay ? 'none' : 'auto',
         userSelect: showOverlay ? 'none' : 'auto'
@@ -269,7 +269,7 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
         {children}
       </div>
 
-      {/* Target Reticle Radar Scan Overlay */}
+      {/* Tactical Sniper Scope HUD Overlay */}
       {showOverlay && (
         <div style={{
           position: 'absolute',
@@ -278,13 +278,13 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'rgba(255, 255, 255, 0.72)',
-          backdropFilter: 'blur(8px)',
+          background: 'radial-gradient(circle at center, rgba(124, 92, 252, 0.12) 0%, rgba(15, 23, 42, 0.65) 85%)',
+          backdropFilter: 'blur(10px)',
           zIndex: 10,
           borderRadius: '20px',
           animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
         }}>
-          {/* Target Scanning SVG Radar Reticle */}
+          {/* Sniper HUD Scope Lens & Crosshair SVG */}
           <svg style={{
             position: 'absolute',
             inset: 0,
@@ -294,33 +294,79 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
             overflow: 'visible'
           }}>
             <defs>
-              <linearGradient id="reticleGlowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="sniperScopeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#7C5CFC" />
                 <stop offset="50%" stopColor="#F59E0B" />
-                <stop offset="100%" stopColor="#6366F1" />
+                <stop offset="100%" stopColor="#10B981" />
               </linearGradient>
+              <radialGradient id="sonarPulse" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={isShattering ? '#10B981' : '#7C5CFC'} stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
+              </radialGradient>
             </defs>
 
-            {/* Outer Rotating Radar Ring */}
-            <circle cx="50%" cy="50%" r="140" fill="none" stroke="url(#reticleGlowGrad)" strokeWidth="3" strokeDasharray="24 16"
+            {/* Scope Crosshair Hairlines */}
+            {/* Horizontal Center Line */}
+            <line x1="5%" y1="50%" x2="95%" y2="50%"
+              stroke={isShattering ? '#10B981' : 'rgba(124, 92, 252, 0.6)'}
+              strokeWidth="1.5"
+              strokeDasharray="10 6 2 6"
+              style={{ transition: 'stroke 0.4s ease' }}
+            />
+            {/* Vertical Center Line */}
+            <line x1="50%" y1="5%" x2="50%" y2="95%"
+              stroke={isShattering ? '#10B981' : 'rgba(124, 92, 252, 0.6)'}
+              strokeWidth="1.5"
+              strokeDasharray="10 6 2 6"
+              style={{ transition: 'stroke 0.4s ease' }}
+            />
+
+            {/* Mil-dot Range Ticks */}
+            <circle cx="35%" cy="50%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
+            <circle cx="65%" cy="50%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
+            <circle cx="50%" cy="30%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
+            <circle cx="50%" cy="70%" r="2.5" fill={isShattering ? '#10B981' : '#F59E0B'} />
+
+            {/* Sonar Pulse Wave Ring */}
+            <circle cx="50%" cy="50%" r="120" fill="url(#sonarPulse)"
               style={{
-                animation: isShattering ? 'reticleLockOn 1.2s cubic-bezier(0.4,0,0.2,1) forwards' : 'reticleSpin 8s linear infinite',
-                transformOrigin: '50% 50%',
-                filter: 'drop-shadow(0 0 8px rgba(124,92,252,0.4))'
+                animation: isShattering ? 'none' : 'sonarPulseExpand 2s infinite ease-out',
+                transformOrigin: '50% 50%'
               }}
             />
 
-            {/* Inner Pulsing Radar Ring */}
-            <circle cx="50%" cy="50%" r="100" fill="none" stroke={isShattering ? '#10B981' : '#7C5CFC'} strokeWidth="2" strokeDasharray="8 6"
+            {/* Outer Rotating Tactical Scope Ring */}
+            <circle cx="50%" cy="50%" r="150" fill="none"
+              stroke={isShattering ? '#10B981' : 'url(#sniperScopeGrad)'}
+              strokeWidth="2.5"
+              strokeDasharray="32 12 4 12"
               style={{
-                animation: isShattering ? 'none' : 'reticleSpin 4s linear infinite reverse',
+                animation: isShattering ? 'sniperLockSnap 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'reticleSpin 10s linear infinite',
                 transformOrigin: '50% 50%',
-                opacity: 0.7
+                filter: isShattering ? 'drop-shadow(0 0 16px #10B981)' : 'drop-shadow(0 0 12px rgba(124, 92, 252, 0.5))'
               }}
             />
+
+            {/* Inner Precision Reticle Ring */}
+            <circle cx="50%" cy="50%" r="105" fill="none"
+              stroke={isShattering ? '#34D399' : '#F59E0B'}
+              strokeWidth="2"
+              strokeDasharray="16 10"
+              style={{
+                animation: isShattering ? 'none' : 'reticleSpin 5s linear infinite reverse',
+                transformOrigin: '50% 50%',
+                opacity: 0.85
+              }}
+            />
+
+            {/* Corner Tactical Target Brackets */}
+            <path d="M 24% 22% L 24% 18% L 28% 18%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
+            <path d="M 76% 22% L 76% 18% L 72% 18%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
+            <path d="M 24% 78% L 24% 82% L 28% 82%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
+            <path d="M 76% 78% L 76% 82% L 72% 82%" fill="none" stroke={isShattering ? '#10B981' : '#F59E0B'} strokeWidth="3" strokeLinecap="round" />
           </svg>
 
-          {/* Central Target Lock Reticle Card */}
+          {/* Central Sniper Scope HUD Card */}
           <div style={{
             position: 'relative',
             zIndex: 15,
@@ -329,16 +375,34 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
             alignItems: 'center',
             gap: '0.85rem',
             padding: '1.6rem 2.5rem',
-            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 246, 255, 0.96))',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(245, 243, 255, 0.97))',
             borderRadius: '24px',
-            border: '2px solid rgba(124, 92, 252, 0.4)',
-            boxShadow: '0 16px 44px rgba(124, 92, 252, 0.22), 0 0 25px rgba(245, 158, 11, 0.15)',
-            animation: isShattering ? 'padlockShatter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out'
+            border: isShattering ? '2.5px solid #10B981' : '2.5px solid rgba(124, 92, 252, 0.5)',
+            boxShadow: isShattering
+              ? '0 16px 44px rgba(16, 185, 129, 0.35), 0 0 30px rgba(16, 185, 129, 0.25)'
+              : '0 16px 44px rgba(124, 92, 252, 0.28), 0 0 25px rgba(245, 158, 11, 0.2)',
+            animation: isShattering ? 'sniperCardLock 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out',
+            transition: 'all 0.3s ease'
           }}>
-            {/* Target Reticle Icon */}
+            {/* Rangefinder HUD Telemetry Banner */}
             <div style={{
-              width: '68px',
-              height: '68px',
+              fontSize: '0.68rem',
+              fontWeight: '800',
+              letterSpacing: '0.12em',
+              color: isShattering ? '#059669' : '#7C5CFC',
+              background: isShattering ? 'rgba(16, 185, 129, 0.12)' : 'rgba(124, 92, 252, 0.1)',
+              padding: '0.2rem 0.6rem',
+              borderRadius: '8px',
+              border: isShattering ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(124, 92, 252, 0.2)'
+            }}>
+              {isShattering ? '[ TARGET LOCKED: 100% ]' : '[ SYS SCANNING TARGET... ]'}
+            </div>
+
+            {/* Target Reticle Sniper Icon */}
+            <div style={{
+              position: 'relative',
+              width: '72px',
+              height: '72px',
               borderRadius: '50%',
               background: isShattering
                 ? 'linear-gradient(135deg, #10B981, #34D399)'
@@ -348,19 +412,20 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
               justifyContent: 'center',
               color: 'white',
               boxShadow: isShattering
-                ? '0 0 24px rgba(16, 185, 129, 0.6)'
-                : '0 0 24px rgba(124, 92, 252, 0.45)',
+                ? '0 0 28px rgba(16, 185, 129, 0.7)'
+                : '0 0 28px rgba(124, 92, 252, 0.5)',
               transition: 'all 0.4s ease'
             }}>
-              <Target size={34} style={{ animation: isLocked ? 'pulse 1.5s infinite' : 'none' }} />
+              <Target size={38} style={{ animation: isLocked ? 'pulse 1.2s infinite' : 'none' }} />
             </div>
 
             <div style={{ textAlign: 'center' }}>
               <div style={{
-                fontSize: '1.05rem',
+                fontSize: '1.1rem',
                 fontWeight: '800',
                 color: isShattering ? '#059669' : '#4C1D95',
-                marginBottom: '0.2rem'
+                marginBottom: '0.2rem',
+                letterSpacing: '0.01em'
               }}>
                 {isShattering ? 'TARGET ACQUIRED! ล็อกเป้าหมายสำเร็จ' : 'สแกนและล็อกเป้าหมายความพร้อม'}
               </div>
@@ -370,23 +435,34 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
                 color: 'var(--text-secondary)',
                 lineHeight: '1.4'
               }}>
-                {isShattering ? 'กำลังสำแดงผลวิเคราะห์โอกาสสอบเข้า...' : 'ระบบกำลังสแกนคำตอบและประเมินเปอร์เซ็นต์ความพร้อม...'}
+                {isShattering ? 'กำลังแสดงผลการวิเคราะห์โอกาสสอบเข้า...' : 'ระบบกำลังสแกนคำตอบและประเมินเปอร์เซ็นต์ความพร้อม...'}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Target Reticle Keyframes */}
+      {/* Tactical Sniper Scope Keyframes */}
       <style>{`
         @keyframes reticleSpin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        @keyframes reticleLockOn {
-          0% { transform: scale(1) rotate(0deg); opacity: 1; }
-          50% { transform: scale(1.15) rotate(180deg); stroke: #F59E0B; }
-          100% { transform: scale(0.9) rotate(360deg); stroke: #10B981; opacity: 0; }
+        @keyframes sonarPulseExpand {
+          0% { transform: scale(0.6); opacity: 0.8; }
+          100% { transform: scale(1.4); opacity: 0; }
+        }
+        @keyframes sniperLockSnap {
+          0% { transform: scale(1) rotate(0deg); stroke: #7C5CFC; opacity: 1; }
+          40% { transform: scale(1.25) rotate(180deg); stroke: #F59E0B; }
+          70% { transform: scale(0.95) rotate(360deg); stroke: #10B981; }
+          100% { transform: scale(1.1) rotate(360deg); stroke: #10B981; opacity: 0; }
+        }
+        @keyframes sniperCardLock {
+          0% { transform: scale(1); }
+          30% { transform: scale(1.08); }
+          60% { transform: scale(0.97); }
+          100% { transform: scale(1); opacity: 0; }
         }
       `}</style>
     </div>
