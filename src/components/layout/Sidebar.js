@@ -136,19 +136,20 @@ export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
               return (
                 <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
                   <div style={{
-                    padding: '0.75rem 1rem',
+                    padding: '0.75rem 0.85rem',
                     borderRadius: '10px',
                     background: active ? 'var(--primary)' : 'transparent',
                     color: active ? 'white' : 'var(--text-secondary)',
                     fontWeight: '600',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.75rem',
+                    gap: '0.5rem',
                     transition: 'all 0.2s',
-                    fontSize: '0.9rem',
+                    fontSize: '0.875rem',
+                    whiteSpace: 'nowrap'
                   }}>
-                    <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>{item.label}</span>
 
                     {/* Quota Badge on Assessment Menu */}
                     {isAssessment && (
@@ -163,6 +164,9 @@ export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
                         border: active ? '1px solid rgba(255,255,255,0.4)' : quota.canTake ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
                         gap: '0.25rem'
                       }}>
                         {quota.canTake ? `${quota.count}/2` : 'ครบแล้ว'}
