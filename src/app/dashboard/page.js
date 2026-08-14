@@ -255,6 +255,10 @@ function TargetLockGaugeContainer({ isEvaluating, children }) {
     <div style={{ position: 'relative', width: '100%', borderRadius: '20px', overflow: 'hidden' }}>
       {/* Target Gauge Content with Blur Transition */}
       <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
         filter: isLocked ? 'blur(14px)' : isShattering ? 'blur(8px)' : 'blur(0px)',
         opacity: isLocked ? 0.25 : isShattering ? 0.7 : 1,
         transform: isLocked ? 'scale(0.97)' : isShattering ? 'scale(0.99)' : 'scale(1)',
@@ -981,7 +985,7 @@ export default function DashboardPage() {
                   )}
                 </div>
               ) : (
-                <>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
                   <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
                     {profile.educationLevel === 'junior' ? 'โอกาสความพร้อมสอบเข้า ม.4:' : 'โอกาสความพร้อมยื่นพอร์ต TCAS รอบ 1:'} <span style={{ color: 'var(--primary)' }}>
                       {targetPathObj?.name || profile.targetPath}
@@ -989,14 +993,14 @@ export default function DashboardPage() {
                     {isUpdated && <UpdateBadge />}
                   </h2>
                   
-                  <div style={{ margin: '1rem 0' }}>
+                  <div style={{ margin: '1rem 0', display: 'flex', justifyContent: 'center' }}>
                     <ReadinessGauge percentage={readinessPercentage} size={220} strokeWidth={18} />
                   </div>
 
-                  <p style={{ maxWidth: '480px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', marginTop: '1rem' }}>
+                  <p style={{ maxWidth: '580px', fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0.5rem auto 0 auto' }}>
                     {targetPathObj?.description}
                   </p>
-                </>
+                </div>
               )}
             </TargetLockGaugeContainer>
 
