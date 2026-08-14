@@ -5,7 +5,7 @@ import { MrPath } from '@/components/ui/mr-path';
 import { Home, Target, ClipboardCheck, MessageSquare, User, LogOut } from 'lucide-react';
 import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
 
-import { useEffect, useState } from 'react';
+import { checkAssessmentQuota } from '@/lib/algorithms/dailyAttempts';
 
 export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
   const pathname = usePathname();
@@ -123,27 +123,57 @@ export default function Sidebar({ profile, isOpen, onClose, onLogout }) {
       </div>
 
       {/* Navigation */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
-        {navItems.map((item) => (
-          <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-            <div style={{
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: isActive(item.href) ? 'var(--primary)' : 'transparent',
-              color: isActive(item.href) ? 'white' : 'var(--text-secondary)',
-              fontWeight: '600',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              transition: 'all 0.2s',
-              fontSize: '0.9rem',
-            }}>
-              <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-              {item.label}
-            </div>
-          </Link>
-        ))}
-      </nav>
+      {(() => {
+        const quota = checkAssessmentQuota(profile);
+
+        return (
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+            {navItems.map((item) => {
+              const active = isActive(item.href);
+              const isAssessment = item.href === '/dashboard/assessment';
+
+              return (
+                <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '10px',
+                    background: active ? 'var(--primary)' : 'transparent',
+                    color: active ? 'white' : 'var(--text-secondary)',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    transition: 'all 0.2s',
+                    fontSize: '0.9rem',
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                    <span>{item.label}</span>
+
+                    {/* Quota Badge on Assessment Menu */}
+                    {isAssessment && (
+                      <span style={{
+                        marginLeft: 'auto',
+                        fontSize: '0.72rem',
+                        fontWeight: '800',
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: '12px',
+                        background: active ? 'rgba(255,255,255,0.25)' : quota.canTake ? 'rgba(245, 158, 11, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                        color: active ? '#FFFFFF' : quota.canTake ? '#D97706' : '#16A34A',
+                        border: active ? '1px solid rgba(255,255,255,0.4)' : quota.canTake ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(34, 197, 94, 0.3)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        {quota.canTake ? `${quota.count}/2` : 'ครบแล้ว'}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
+        );
+      })()}
 
       {/* Logout Button */}
       {onLogout && (
