@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeUserProfile } from '@/lib/firestore';
 import { useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { calculateReadiness } from '@/lib/algorithms/readinessCalculator';
 import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects';
-import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight, Sparkles, BookOpen } from 'lucide-react';
+import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight, Sparkles, BookOpen, Lock, Unlock } from 'lucide-react';
 import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
 
 const PROFILE_THAI_MAP = {
@@ -228,6 +228,192 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval }) {
+  const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
+  const prevEvalRef = useRef(isEvaluating);
+
+  useEffect(() => {
+    if (prevEvalRef.current && !isEvaluating) {
+      setPhase('shattering');
+      const timer = setTimeout(() => {
+        setPhase('complete');
+      }, 1300);
+      return () => clearTimeout(timer);
+    } else if (isEvaluating) {
+      setPhase('evaluating');
+    }
+    prevEvalRef.current = isEvaluating;
+  }, [isEvaluating]);
+
+  const isLocked = phase === 'evaluating';
+  const isShattering = phase === 'shattering';
+  const showOverlay = isLocked || isShattering;
+
+  return (
+    <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '16px', overflow: 'hidden' }}>
+      {/* Skill Radar Chart with Blur Transition */}
+      <div style={{
+        filter: isLocked ? 'blur(16px)' : isShattering ? 'blur(12px)' : 'blur(0px)',
+        opacity: isLocked ? 0.2 : isShattering ? 0.6 : 1,
+        transform: isLocked ? 'scale(0.96)' : isShattering ? 'scale(0.98)' : 'scale(1)',
+        transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        pointerEvents: showOverlay ? 'none' : 'auto',
+        userSelect: showOverlay ? 'none' : 'auto'
+      }}>
+        <SkillRadarChart vector={vector} academics={academics} aiEval={aiEval} />
+      </div>
+
+      {/* Locked Padlock & Chains Overlay */}
+      {showOverlay && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255, 255, 255, 0.45)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 10,
+          borderRadius: '16px',
+          animation: isShattering ? 'overlayFadeOut 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
+        }}>
+          {/* SVG Chains tethered from all 4 corners to center padlock */}
+          <svg style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            overflow: 'visible'
+          }}>
+            {/* Top Left Chain */}
+            <line x1="5%" y1="5%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+              style={{
+                animation: isShattering ? 'chainBreakTL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out',
+                strokeLinecap: 'round'
+              }}
+            />
+            {/* Top Right Chain */}
+            <line x1="95%" y1="5%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+              style={{
+                animation: isShattering ? 'chainBreakTR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out 0.5s',
+                strokeLinecap: 'round'
+              }}
+            />
+            {/* Bottom Left Chain */}
+            <line x1="5%" y1="95%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+              style={{
+                animation: isShattering ? 'chainBreakBL 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out 1s',
+                strokeLinecap: 'round'
+              }}
+            />
+            {/* Bottom Right Chain */}
+            <line x1="95%" y1="95%" x2="50%" y2="50%" stroke="#7C5CFC" strokeWidth="5" strokeDasharray="10 8"
+              style={{
+                animation: isShattering ? 'chainBreakBR 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'chainGlow 2s infinite ease-in-out 1.5s',
+                strokeLinecap: 'round'
+              }}
+            />
+          </svg>
+
+          {/* Central Padlock Card */}
+          <div style={{
+            position: 'relative',
+            zIndex: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.85rem',
+            padding: '1.5rem 2.25rem',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 246, 255, 0.95))',
+            borderRadius: '24px',
+            border: '2px solid rgba(124, 92, 252, 0.35)',
+            boxShadow: '0 12px 36px rgba(124, 92, 252, 0.22)',
+            animation: isShattering ? 'padlockShatter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'padlockFloat 2.5s infinite ease-in-out'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: isShattering
+                ? 'linear-gradient(135deg, #10B981, #34D399)'
+                : 'linear-gradient(135deg, #7C5CFC, #FF80AB)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              boxShadow: isShattering
+                ? '0 0 24px rgba(16, 185, 129, 0.6)'
+                : '0 0 24px rgba(124, 92, 252, 0.4)',
+              transition: 'all 0.4s ease'
+            }}>
+              {isShattering ? <Unlock size={32} /> : <Lock size={32} />}
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: '1.05rem',
+                fontWeight: '800',
+                color: isShattering ? '#059669' : '#4C1D95',
+                marginBottom: '0.2rem'
+              }}>
+                {isShattering ? 'ปลดล็อกกราฟทักษะเรียบร้อย!' : 'ถอดรหัสและตรึงกุญแจสมรรถนะ'}
+              </div>
+              <div style={{
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                color: 'var(--text-secondary)'
+              }}>
+                {isShattering ? 'กำลังแสดงกราฟ My Skill Matrix...' : 'กำลังวิเคราะห์ผลด้วย AI และคำนวณค่าน้ำหนัก...'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Keyframe Styles */}
+      <style>{`
+        @keyframes padlockFloat {
+          0%, 100% { transform: translateY(0px) scale(1); boxShadow: 0 12px 36px rgba(124, 92, 252, 0.22); }
+          50% { transform: translateY(-8px) scale(1.03); boxShadow: 0 18px 48px rgba(245, 158, 11, 0.35); }
+        }
+        @keyframes padlockShatter {
+          0% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0px); }
+          25% { transform: scale(1.18) rotate(-8deg); opacity: 0.95; }
+          60% { transform: scale(1.35) rotate(15deg); opacity: 0.5; filter: blur(4px); }
+          100% { transform: scale(1.8) rotate(-30deg); opacity: 0; filter: blur(16px); }
+        }
+        @keyframes chainGlow {
+          0%, 100% { stroke: #7C5CFC; opacity: 0.6; stroke-dashoffset: 0; }
+          50% { stroke: #F59E0B; opacity: 1; stroke-dashoffset: -20; }
+        }
+        @keyframes chainBreakTL {
+          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(-120px, -100px) rotate(-45deg); opacity: 0; }
+        }
+        @keyframes chainBreakTR {
+          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(120px, -100px) rotate(45deg); opacity: 0; }
+        }
+        @keyframes chainBreakBL {
+          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(-120px, 100px) rotate(-45deg); opacity: 0; }
+        }
+        @keyframes chainBreakBR {
+          0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(120px, 100px) rotate(45deg); opacity: 0; }
+        }
+        @keyframes overlayFadeOut {
+          0% { opacity: 1; }
+          80% { opacity: 0.8; }
+          100% { opacity: 0; visibility: hidden; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -909,13 +1095,20 @@ export default function DashboardPage() {
         <>
           {/* Skill Matrix */}
           <div className="card" style={{ marginBottom: '2rem' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
-              <BarChart2 size={24} style={{ color: 'var(--primary)' }} /> My Skill Matrix
-              {isUpdated && <UpdateBadge />}
-            </h2>
-            <div style={{ marginTop: '1.5rem' }}>
-              <SkillRadarChart vector={skillVector} academics={profile.academics} aiEval={aiEval} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                <BarChart2 size={24} style={{ color: 'var(--primary)' }} /> My Skill Matrix
+                {isUpdated && <UpdateBadge />}
+              </h2>
+              <AIStatusBadge isEvaluating={!aiEval && !evaluatingTimeout} />
             </div>
+
+            <DiscoverySkillMatrixContainer
+              isEvaluating={!aiEval && !evaluatingTimeout}
+              vector={skillVector}
+              academics={profile.academics}
+              aiEval={aiEval}
+            />
 
             {/* AI Qualitative Insights Section (Discovery Mode) */}
             <AIQualitativeInsightsSection aiEval={aiEval} profile={profile} />
