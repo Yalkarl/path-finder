@@ -674,49 +674,122 @@ function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
 }
 
 function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval }) {
-  const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
-  const prevEvalRef = useRef(isEvaluating);
+  // phases: 'init' -> 'star1' -> 'star2' -> 'star3' -> 'star4' -> 'star5' -> 'impact' -> 'shatter' -> 'complete'
+  const [phase, setPhase] = useState(isEvaluating ? 'init' : 'complete');
+  const [activeStarCount, setActiveStarCount] = useState(isEvaluating ? 0 : 5);
+  const prevEvalRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const timeoutsRef = useRef([]);
 
+  const stopTracking = () => {
+    timeoutsRef.current.forEach(t => clearTimeout(t));
+    timeoutsRef.current = [];
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+  };
+
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+
+  // Listen to global sound change event
   useEffect(() => {
     const handleSoundChange = (e) => {
       const isMuted = e?.detail?.muted ?? (localStorage.getItem('pathfinder_audio_muted') === 'true');
       if (isMuted) {
         constellationAudio.stopAll();
+      } else if (!isMuted && phaseRef.current !== 'complete') {
+        constellationAudio.playCosmicCrystal();
       }
     };
     window.addEventListener('pathfinder_sound_change', handleSoundChange);
     return () => window.removeEventListener('pathfinder_sound_change', handleSoundChange);
   }, []);
 
-  useEffect(() => {
-    const isMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
+  // Audio-driven precise time sequence syncing with playCosmicCrystal
+  const startAudioSyncedSequence = useCallback(() => {
+    stopTracking();
+    setPhase('init');
+    setActiveStarCount(0);
 
-    if (prevEvalRef.current && !isEvaluating) {
-      setPhase('shattering');
-      const timer = setTimeout(() => {
+    const isMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
+    if (!isMuted) {
+      constellationAudio.playCosmicCrystal();
+    }
+
+    const startTime = performance.now();
+
+    const trackTime = () => {
+      const currentTime = (performance.now() - startTime) / 1000;
+
+      if (currentTime < 0.2) {
+        setPhase('init');
+        setActiveStarCount(0);
+      } else if (currentTime < 0.8) {
+        // Star 1 (Logic) chime @ 0.2s
+        setPhase('star1');
+        setActiveStarCount(1);
+      } else if (currentTime < 1.4) {
+        // Star 2 (Science) chime @ 0.8s
+        setPhase('star2');
+        setActiveStarCount(2);
+      } else if (currentTime < 2.0) {
+        // Star 3 (Language) chime @ 1.4s
+        setPhase('star3');
+        setActiveStarCount(3);
+      } else if (currentTime < 2.6) {
+        // Star 4 (Art) chime @ 2.0s
+        setPhase('star4');
+        setActiveStarCount(4);
+      } else if (currentTime < 3.2) {
+        // Star 5 (Management) chime @ 2.6s
+        setPhase('star5');
+        setActiveStarCount(5);
+      } else if (currentTime < 3.55) {
+        // Burst Chord & Sparkle at 3.2s! (Supernova Impact & Screen Pulse)
+        setPhase('impact');
+        setActiveStarCount(5);
+      } else if (currentTime < 4.5) {
+        // Dissolution & Unblur (3.55s - 4.5s)
+        setPhase('shatter');
+        setActiveStarCount(5);
+      } else {
         setPhase('complete');
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (isEvaluating) {
-      setPhase('evaluating');
-      if (!isMuted) {
-        constellationAudio.playCosmicCrystal();
+        setActiveStarCount(5);
+        return; // Stop animation loop
       }
+
+      animFrameRef.current = requestAnimationFrame(trackTime);
+    };
+
+    animFrameRef.current = requestAnimationFrame(trackTime);
+  }, []);
+
+  useEffect(() => {
+    if (isEvaluating) {
+      startAudioSyncedSequence();
+    } else if (!isEvaluating && prevEvalRef.current === null) {
+      setPhase('complete');
+      setActiveStarCount(5);
     }
     prevEvalRef.current = isEvaluating;
+  }, [isEvaluating, startAudioSyncedSequence]);
 
+  useEffect(() => {
     return () => {
-      if (!isEvaluating) {
-        constellationAudio.stopAll();
-      }
+      stopTracking();
+      constellationAudio.stopAll();
     };
-  }, [isEvaluating]);
+  }, []);
 
-  const isLocked = phase === 'evaluating';
-  const isShattering = phase === 'shattering';
-  const showOverlay = isLocked || isShattering;
+  const isInit = phase === 'init';
+  const isImpact = phase === 'impact';
+  const isShattering = phase === 'shatter';
+  const isComplete = phase === 'complete';
+  const showOverlay = !isComplete;
 
-  // 5 Constellation Star Vertices (Exact Original Model with Strict Math)
+  // 5 Constellation Star Vertices
   const cx = 250;
   const cy = 200;
   const radius = 115;
@@ -732,19 +805,56 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
     y: Number((cy + Math.sin(s.angle) * radius).toFixed(2))
   }));
 
-  // Build outer pentagon & inner star lines
-  const outerPolygonPoints = stars.map(s => `${s.x},${s.y}`).join(' ');
-  const innerStarIndices = [0, 2, 4, 1, 3, 0];
-  const innerStarPoints = innerStarIndices.map(i => `${stars[i].x},${stars[i].y}`).join(' ');
+  // Build outer pentagon beam segments
+  const beamSegments = [
+    { from: stars[0], to: stars[1], activeAt: 2 },
+    { from: stars[1], to: stars[2], activeAt: 3 },
+    { from: stars[2], to: stars[3], activeAt: 4 },
+    { from: stars[3], to: stars[4], activeAt: 5 },
+    { from: stars[4], to: stars[0], activeAt: 5 }
+  ];
+
+  // Inner star chords
+  const innerStarChords = [
+    { from: stars[0], to: stars[2], activeAt: 3 },
+    { from: stars[2], to: stars[4], activeAt: 5 },
+    { from: stars[4], to: stars[1], activeAt: 5 },
+    { from: stars[1], to: stars[3], activeAt: 4 },
+    { from: stars[3], to: stars[0], activeAt: 4 }
+  ];
+
+  // Telemetry copy synced to phase
+  const getTelemetryText = () => {
+    switch (phase) {
+      case 'init': return { en: 'CALIBRATING COSMIC VECTOR', th: 'กำลังสแกนสนามมิติทักษะ 5 ด้าน...' };
+      case 'star1': return { en: 'NODE 1/5 [LOGIC] ALIGNED (523 Hz)', th: 'มิติตรรกะและเหตุผลเชื่อมต่อสำเร็จ' };
+      case 'star2': return { en: 'NODE 2/5 [SCIENCE] ALIGNED (587 Hz)', th: 'มิติคณิต-วิทยาศาสตร์เชื่อมต่อสำเร็จ' };
+      case 'star3': return { en: 'NODE 3/5 [LANGUAGE] ALIGNED (698 Hz)', th: 'มิติภาษาและการสื่อสารเชื่อมต่อสำเร็จ' };
+      case 'star4': return { en: 'NODE 4/5 [ART] ALIGNED (784 Hz)', th: 'มิติศิลปะและความคิดสร้างสรรค์เชื่อมต่อสำเร็จ' };
+      case 'star5': return { en: 'NODE 5/5 [MGMT] ALIGNED // HARMONIZING', th: 'กลุ่มดาว 5 มิติประสานเป็นหนึ่งเดียว' };
+      case 'impact': return { en: 'HARMONIC CONVERGENCE [ 100% ]', th: 'สมรรถนะแห่งดวงดาวเปิดเผยสมบูรณ์!' };
+      case 'shatter': return { en: 'CRYSTALLIZING SKILL RADAR MATRIX...', th: 'ถอดรหัสแผนผังเรดาร์ทักษะส่วนบุคคล' };
+      default: return { en: 'CONSTELLATION SKILL FORGE', th: 'แผนผังสมรรถนะพร้อมใช้งาน' };
+    }
+  };
+
+  const telemetry = getTelemetryText();
 
   return (
-    <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
+    <div style={{
+      position: 'relative',
+      marginTop: '1.5rem',
+      minHeight: '360px',
+      borderRadius: '20px',
+      overflow: 'hidden',
+      animation: isImpact ? 'cosmicScreenShake 0.22s ease-out' : 'none'
+    }}>
       {/* Skill Radar Chart with Soft Ethereal Blur */}
       <div style={{
-        filter: isLocked ? 'blur(10px)' : isShattering ? 'blur(3px)' : 'blur(0px)',
-        opacity: isLocked ? 0.35 : isShattering ? 0.85 : 1,
-        transform: isLocked ? 'scale(0.97)' : isShattering ? 'scale(0.99)' : 'scale(1)',
-        transition: 'all 0.9s cubic-bezier(0.4, 0, 0.2, 1)',
+        filter: showOverlay ? (isImpact ? 'blur(2px) brightness(1.35)' : isShattering ? 'blur(3px)' : 'blur(12px) saturate(0.7)') : 'blur(0px)',
+        opacity: showOverlay ? (isImpact ? 0.95 : isShattering ? 0.85 : 0.35) : 1,
+        transform: showOverlay ? (isImpact ? 'scale(1.02)' : isShattering ? 'scale(0.99)' : 'scale(0.97)') : 'scale(1)',
+        transition: isImpact ? 'all 0.1s ease-out' : isShattering ? 'filter 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out' : 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
         pointerEvents: showOverlay ? 'none' : 'auto',
         userSelect: showOverlay ? 'none' : 'auto'
       }}>
@@ -760,10 +870,13 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'radial-gradient(circle at 50% 50%, rgba(124, 92, 252, 0.08) 0%, rgba(255, 255, 255, 0.72) 100%)',
+          background: isImpact 
+            ? 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(240, 235, 255, 0.85) 100%)'
+            : 'radial-gradient(circle at 50% 50%, rgba(124, 92, 252, 0.08) 0%, rgba(255, 255, 255, 0.76) 100%)',
           backdropFilter: 'blur(8px)',
           zIndex: 10,
           borderRadius: '20px',
+          transition: 'background 0.2s ease',
           animation: isShattering ? 'constellationFadeOut 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
         }}>
           {/* SVG Constellation Map */}
@@ -780,7 +893,6 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             }}
           >
             <defs>
-              {/* Star Glow Gradient */}
               <radialGradient id="starGlowGrad" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#7C5CFC" stopOpacity="0.8" />
                 <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
@@ -790,149 +902,245 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
                 <stop offset="50%" stopColor="#A78BFA" />
                 <stop offset="100%" stopColor="#06B6D4" />
               </linearGradient>
+              <radialGradient id="impactShockGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
+                <stop offset="40%" stopColor="#A78BFA" stopOpacity="0.6" />
+                <stop offset="80%" stopColor="#7C5CFC" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
+              </radialGradient>
             </defs>
 
             {/* Delicate Astrological Orbital Rings */}
-            <circle cx={cx} cy={cy} r="65" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="2 4" />
-            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(124, 92, 252, 0.18)" strokeWidth="1" />
-            <circle cx={cx} cy={cy} r="160" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1.2" strokeDasharray="4 16"
-              style={{ animation: 'orbitRingSpin 24s linear infinite', transformOrigin: `${cx}px ${cy}px` }} />
-
-            {/* Inner Star Chords (Faint geometric lines) */}
-            <polyline
-              points={innerStarPoints}
-              fill="rgba(124, 92, 252, 0.03)"
-              stroke="rgba(124, 92, 252, 0.22)"
-              strokeWidth="1.2"
-              strokeDasharray="4 4"
+            <circle cx={cx} cy={cy} r="65" fill="none" stroke="rgba(124, 92, 252, 0.14)" strokeWidth="1" strokeDasharray="2 4" />
+            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(124, 92, 252, 0.2)" strokeWidth="1" />
+            <circle 
+              cx={cx} 
+              cy={cy} 
+              r="160" 
+              fill="none" 
+              stroke="rgba(124, 92, 252, 0.18)" 
+              strokeWidth="1.2" 
+              strokeDasharray="4 16"
+              style={{ 
+                animation: `orbitRingSpin ${activeStarCount >= 5 ? '4s' : activeStarCount >= 3 ? '10s' : '22s'} linear infinite`, 
+                transformOrigin: `${cx}px ${cy}px`,
+                transition: 'animation-duration 0.5s ease'
+              }} 
             />
 
-            {/* Outer Constellation Polygon Beam with Traveling Starlight Flow */}
-            <polygon
-              points={outerPolygonPoints}
-              fill="rgba(124, 92, 252, 0.05)"
-              stroke="url(#beamGrad)"
-              strokeWidth="2"
-              style={{
-                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.35))',
-                strokeDasharray: '12 6',
-                animation: 'constellationBeamFlow 3s linear infinite'
-              }}
-            />
-
-            {/* 5 Radiant Constellation Stars */}
-            {stars.map((star, idx) => {
-              const nodeColor = isShattering ? '#10B981' : star.color;
+            {/* Inner Star Chords */}
+            {innerStarChords.map((chord, cIdx) => {
+              const isChordActive = activeStarCount >= chord.activeAt;
               return (
-                <g key={idx} transform={`translate(${star.x}, ${star.y})`}>
+                <line
+                  key={`chord-${cIdx}`}
+                  x1={chord.from.x}
+                  y1={chord.from.y}
+                  x2={chord.to.x}
+                  y2={chord.to.y}
+                  stroke={isChordActive ? 'rgba(124, 92, 252, 0.45)' : 'rgba(124, 92, 252, 0.08)'}
+                  strokeWidth={isChordActive ? 1.4 : 0.8}
+                  strokeDasharray={isChordActive ? '4 3' : '2 4'}
+                  style={{
+                    transition: 'all 0.4s ease-out'
+                  }}
+                />
+              );
+            })}
+
+            {/* Outer Constellation Polygon Beam Segments (Ignites sequentially with each chime!) */}
+            {beamSegments.map((seg, sIdx) => {
+              const isBeamActive = activeStarCount >= seg.activeAt;
+              return (
+                <line
+                  key={`beam-${sIdx}`}
+                  x1={seg.from.x}
+                  y1={seg.from.y}
+                  x2={seg.to.x}
+                  y2={seg.to.y}
+                  stroke={isBeamActive ? 'url(#beamGrad)' : 'rgba(124, 92, 252, 0.15)'}
+                  strokeWidth={isBeamActive ? 2.5 : 1}
+                  strokeDasharray={isBeamActive ? '12 6' : '3 3'}
+                  style={{
+                    filter: isBeamActive ? 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.6))' : 'none',
+                    animation: isBeamActive ? 'constellationBeamFlow 2.5s linear infinite' : 'none',
+                    transition: 'all 0.35s ease-out'
+                  }}
+                />
+              );
+            })}
+
+            {/* Supernova Shockwave Burst on Impact (at 3.2s) */}
+            {isImpact && (
+              <circle
+                cx={cx}
+                cy={cy}
+                r="180"
+                fill="url(#impactShockGrad)"
+                style={{
+                  animation: 'supernovaPulse 0.35s ease-out forwards',
+                  transformOrigin: `${cx}px ${cy}px`
+                }}
+              />
+            )}
+
+            {/* 5 Radiant Constellation Stars (Sync with WebAudio notes 1 to 5) */}
+            {stars.map((star, idx) => {
+              const isStarActive = activeStarCount > idx;
+              const nodeColor = isShattering ? '#10B981' : isStarActive ? star.color : '#CBD5E0';
+              const scaleFactor = isStarActive ? 1 : 0.6;
+              const opacityFactor = isStarActive ? 1 : 0.25;
+
+              return (
+                <g 
+                  key={idx} 
+                  transform={`translate(${star.x}, ${star.y}) scale(${scaleFactor})`}
+                  style={{
+                    opacity: opacityFactor,
+                    transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease'
+                  }}
+                >
                   {/* Soft Background Star Glow Aura */}
-                  <circle
-                    cx="0"
-                    cy="0"
-                    r="15"
-                    fill={nodeColor}
-                    fillOpacity="0.15"
-                    style={{
-                      animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`
-                    }}
-                  />
-
-                  {/* Outer Pulsing Starlight Ring */}
-                  <circle
-                    cx="0"
-                    cy="0"
-                    r="18"
-                    fill="none"
-                    stroke={nodeColor}
-                    strokeWidth="1"
-                    strokeOpacity="0.35"
-                    style={{
-                      animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`
-                    }}
-                  />
-
-                  {/* 8-Point Sparkling Starlight Flare (Rotating) */}
-                  <g style={{
-                    animation: `starFlareSpin 10s linear infinite ${idx * 0.3}s`,
-                    transformOrigin: '0px 0px'
-                  }}>
-                    {/* Primary Cross Rays */}
-                    <line x1="-12" y1="0" x2="12" y2="0" stroke={nodeColor} strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
-                    <line x1="0" y1="-12" x2="0" y2="12" stroke={nodeColor} strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
-
-                    {/* Secondary Diagonal Rays */}
-                    <line x1="-6" y1="-6" x2="6" y2="6" stroke={nodeColor} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-                    <line x1="-6" y1="6" x2="6" y2="-6" stroke={nodeColor} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-
-                    {/* Symmetrical 4-Point Star Diamond Flare */}
-                    <path
-                      d="M 0,-10 Q 0,0 10,0 Q 0,0 0,10 Q 0,0 -10,0 Q 0,0 0,-10 Z"
+                  {isStarActive && (
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r="16"
                       fill={nodeColor}
-                      fillOpacity="0.75"
+                      fillOpacity="0.2"
                       style={{
-                        filter: `drop-shadow(0 0 5px ${nodeColor})`
+                        animation: `starlightPulse 1.8s ease-in-out infinite ${idx * 0.3}s`
                       }}
                     />
-                  </g>
+                  )}
+
+                  {/* Outer Pulsing Starlight Ring */}
+                  {isStarActive && (
+                    <circle
+                      cx="0"
+                      cy="0"
+                      r="19"
+                      fill="none"
+                      stroke={nodeColor}
+                      strokeWidth="1.2"
+                      strokeOpacity="0.45"
+                      style={{
+                        animation: `starlightPulse 1.8s ease-in-out infinite ${idx * 0.3}s`
+                      }}
+                    />
+                  )}
+
+                  {/* 8-Point Sparkling Starlight Flare */}
+                  {isStarActive && (
+                    <g style={{
+                      animation: `starFlareSpin 8s linear infinite ${idx * 0.3}s`,
+                      transformOrigin: '0px 0px'
+                    }}>
+                      <line x1="-13" y1="0" x2="13" y2="0" stroke={nodeColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.9" />
+                      <line x1="0" y1="-13" x2="0" y2="13" stroke={nodeColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.9" />
+                      <line x1="-7" y1="-7" x2="7" y2="7" stroke={nodeColor} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+                      <line x1="-7" y1="7" x2="7" y2="-7" stroke={nodeColor} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+                      <path
+                        d="M 0,-11 Q 0,0 11,0 Q 0,0 0,11 Q 0,0 -11,0 Q 0,0 0,-11 Z"
+                        fill={nodeColor}
+                        fillOpacity="0.8"
+                        style={{
+                          filter: `drop-shadow(0 0 6px ${nodeColor})`
+                        }}
+                      />
+                    </g>
+                  )}
 
                   {/* Clean Radiant Star Center Node */}
                   <circle
                     cx="0"
                     cy="0"
-                    r="4.5"
+                    r={isStarActive ? "5" : "3.5"}
                     fill="#FFFFFF"
                     stroke={nodeColor}
-                    strokeWidth="2.2"
-                    style={{ filter: `drop-shadow(0 0 4px ${nodeColor})` }}
+                    strokeWidth={isStarActive ? "2.5" : "1.5"}
+                    style={{ filter: isStarActive ? `drop-shadow(0 0 5px ${nodeColor})` : 'none' }}
                   />
 
                   {/* Pinpoint Core Twinkle */}
                   <circle
                     cx="0"
                     cy="0"
-                    r="1.2"
+                    r="1.4"
                     fill={nodeColor}
                   />
+
+                  {/* Star Label */}
+                  <text
+                    x="0"
+                    y={star.y < cy ? "-22" : "26"}
+                    textAnchor="middle"
+                    fill={isStarActive ? 'var(--text-primary)' : 'var(--text-secondary)'}
+                    fontSize="11"
+                    fontWeight={isStarActive ? "700" : "500"}
+                    style={{
+                      fontFamily: 'inherit',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {star.name}
+                  </text>
                 </g>
               );
             })}
 
             {/* Central Celestial Nexus Star */}
-            <circle cx={cx} cy={cy} r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 8px #7C5CFC)' }} />
+            <circle 
+              cx={cx} 
+              cy={cy} 
+              r={activeStarCount >= 5 ? "7" : "4.5"} 
+              fill={activeStarCount >= 5 ? "#F59E0B" : "#7C5CFC"} 
+              style={{ 
+                filter: activeStarCount >= 5 ? 'drop-shadow(0 0 12px #F59E0B)' : 'drop-shadow(0 0 6px #7C5CFC)',
+                transition: 'all 0.4s ease'
+              }} 
+            />
           </svg>
 
-          {/* Minimalist Floating Constellation Telemetry Pill */}
+          {/* Minimalist Floating Constellation Telemetry Pill (Synced to Chimes!) */}
           <div style={{
             position: 'absolute',
             bottom: '22px',
             display: 'flex',
             alignItems: 'center',
             gap: '0.65rem',
-            padding: '0.55rem 1.15rem',
-            background: 'rgba(255, 255, 255, 0.95)',
-            border: '1px solid rgba(124, 92, 252, 0.25)',
+            padding: '0.6rem 1.25rem',
+            background: 'rgba(255, 255, 255, 0.96)',
+            border: `1.5px solid ${isImpact ? '#10B981' : 'rgba(124, 92, 252, 0.3)'}`,
             borderRadius: '999px',
             boxShadow: '0 8px 24px rgba(124, 92, 252, 0.16)',
             backdropFilter: 'blur(10px)',
-            zIndex: 12
+            zIndex: 12,
+            transition: 'border-color 0.25s ease'
           }}>
-            <Sparkles size={16} color="#7C5CFC" className="animate-spin" style={{ animationDuration: '4s' }} />
+            <Sparkles 
+              size={17} 
+              color={isImpact ? '#10B981' : '#7C5CFC'} 
+              className={!isImpact ? "animate-spin" : ""} 
+              style={{ animationDuration: '4s' }} 
+            />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <span style={{
-                fontSize: '0.68rem',
+                fontSize: '0.7rem',
                 fontWeight: '800',
-                color: '#7C5CFC',
+                color: isImpact ? '#10B981' : '#7C5CFC',
                 letterSpacing: '0.8px',
-                fontFamily: 'var(--font-mono, monospace)'
+                fontFamily: 'monospace',
+                transition: 'color 0.2s ease'
               }}>
-                {isShattering ? 'CONSTELLATION ALIGNED' : 'CONSTELLATION SKILL FORGE'}
+                {telemetry.en}
               </span>
               <span style={{
-                fontSize: '0.8rem',
+                fontSize: '0.82rem',
                 fontWeight: '600',
                 color: 'var(--text-secondary)'
               }}>
-                {isShattering ? 'กลุ่มดาว 5 มิติทักษะเรียงตัวสมบูรณ์' : 'กำลังถักทอเส้นใยกลุ่มดาว 5 มิติทักษะ...'}
+                {telemetry.th}
               </span>
             </div>
           </div>
@@ -950,20 +1158,27 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           to   { transform: rotate(360deg); }
         }
         @keyframes starlightPulse {
-          0%, 100% { r: 12; opacity: 0.4; }
-          50%      { r: 20; opacity: 0.9; }
+          0%, 100% { r: 14; opacity: 0.35; }
+          50%      { r: 21; opacity: 0.95; }
         }
         @keyframes starFlareSpin {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
-        @keyframes starTwinkle {
-          0%, 100% { transform: scale(1); opacity: 0.7; }
-          50%      { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 6px #7C5CFC); }
+        @keyframes cosmicScreenShake {
+          0%   { transform: translate(0, 0); }
+          25%  { transform: translate(-3px, 2px); }
+          50%  { transform: translate(3px, -2px); }
+          75%  { transform: translate(-2px, 1px); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes supernovaPulse {
+          0%   { transform: scale(0.1); opacity: 1; }
+          100% { transform: scale(1.6); opacity: 0; }
         }
         @keyframes constellationFadeOut {
           0%   { opacity: 1; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.03); pointer-events: none; }
+          100% { opacity: 0; transform: scale(1.04); pointer-events: none; }
         }
       `}</style>
     </div>
@@ -1286,7 +1501,7 @@ export default function DashboardPage() {
               {profile.educationLevel === 'junior' && readinessPercentages.length > 0 ? (
                 <div style={{ width: '100%', textAlign: 'center' }}>
                   <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
-                    อันดับ 1: <span style={{ color: 'var(--primary)' }}>
+                    {readinessPercentages.length > 1 ? 'อันดับ 1: ' : 'โอกาสความพร้อมสอบเข้า ม.4: '}<span style={{ color: 'var(--primary)' }}>
                       {readinessPercentages[0].name}
                       {profile.targetProgramType && (
                         ` (${profile.targetProgramType === 'gifted-sci-math' ? 'Gifted / ห้องพิเศษวิทย์-คณิต' : profile.targetProgramType === 'special-language' ? 'EP / IEP / ห้องพิเศษภาษา' : 'ห้องเรียนปกติ'})`

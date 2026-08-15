@@ -11,6 +11,7 @@ import { JUNIOR_PATHS, SENIOR_PATHS } from '@/lib/constants/educationPaths';
 import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects';
 import { getPortfolioCategories } from '@/lib/constants/portfolioOptions';
 import { getTodayDateString, recordAssessmentAttempt } from '@/lib/algorithms/dailyAttempts';
+import { clearSetupStorage } from '@/lib/utils/setupStorage';
 
 const GRADE_OPTIONS = ['', '0', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4'];
 
@@ -302,7 +303,7 @@ function GradesContent() {
         social: parseFloat(grades.social),
       };
 
-      const selectedTargetPath = level === 'junior' ? targetPaths[0] : targetPath;
+      const selectedTargetPath = targetPath;
 
       if (isEditMode) {
         const profile = await getUserProfile(user.uid);
@@ -373,21 +374,10 @@ function GradesContent() {
         const likesForSave = analysisMode === 'discovery' ? likes : [];
         const dislikesForSave = analysisMode === 'discovery' ? dislikes : [];
 
-        localStorage.setItem('setup_grades', JSON.stringify(grades));
-        localStorage.setItem('setup_analysisMode', analysisMode);
-        localStorage.setItem('setup_targetPath', analysisMode === 'target-lock' ? selectedTargetPath : '');
-        localStorage.setItem('setup_targetPaths', JSON.stringify(level === 'junior' && analysisMode === 'target-lock' ? targetPaths : [targetPath || '', '', '']));
-        localStorage.setItem('setup_portfolio', JSON.stringify(analysisMode === 'target-lock' ? portfolio : []));
-        localStorage.setItem('setup_customActivities', JSON.stringify(analysisMode === 'target-lock' ? customList : []));
-        localStorage.setItem('setup_selfAssessment', JSON.stringify(analysisMode === 'target-lock' ? selfAssessment : {}));
-        localStorage.setItem('setup_targetProgramType', level === 'junior' && analysisMode === 'target-lock' ? targetProgramType : '');
-        localStorage.setItem('setup_likes', JSON.stringify(likesForSave));
-        localStorage.setItem('setup_dislikes', JSON.stringify(dislikesForSave));
-
         const todayDate = getTodayDateString();
         const initialAttemptsRecord = {
           date: todayDate,
-          count: 1, // การตั้งค่าโปรไฟล์ประเมินเกรดแรกเริ่ม นับเป็นโควตาครั้งที่ 1 (ใช้แล้ว 1/2 เหลืออีก 1)
+          count: 1,
           attempts: [new Date().toISOString()]
         };
 
@@ -419,7 +409,7 @@ function GradesContent() {
             skillVector: skillVector,
             matchRankings: rankings
           },
-          aiEvaluation: null, // รีเซ็ตแคชประเมินเก่าของ AI เพื่อให้แดชบอร์ดแสดงผลเบื้องต้นทันที (<200ms)
+          aiEvaluation: null,
           resultsUpdated: true,
           completedSetup: true,
           createdAt: new Date().toISOString(),
@@ -434,8 +424,8 @@ function GradesContent() {
           }
         }
 
-        // บันทึกโปรไฟล์ลง Firestore ทันทีเพื่อย้ายหน้าเสี้ยววินาที (<200ms)
         await createUserProfile(user.uid, profileData);
+        clearSetupStorage();
 
         // เรียกใช้ AI Evaluation API เบื้องหลังโดยไม่บล็อกการย้ายหน้า
         fetch('/api/ai-evaluate', {
@@ -463,7 +453,7 @@ function GradesContent() {
           }
         }).catch(e => console.warn('Background AI evaluation failed:', e));
 
-        router.push('/dashboard');
+        router.push('/assessment');
       }
     } catch (error) {
       console.error("Error saving grades:", error);
@@ -475,7 +465,7 @@ function GradesContent() {
   const allFilled = grades.math !== '' && grades.science !== '' && grades.thai !== '' && grades.english !== '' && grades.social !== '';
   const isTargetLock = analysisMode === 'target-lock';
   const isFormValid = allFilled && (!isTargetLock || (
-    level === 'junior' ? targetPaths[0] !== '' && targetProgramType !== '' : targetPath !== ''
+    level === 'junior' ? targetPath !== '' && targetProgramType !== '' : targetPath !== ''
   ));
   const paths = level === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
 
@@ -992,79 +982,36 @@ function GradesContent() {
               <div className="card" style={{ padding: '1.5rem', borderRadius: '20px' }}>
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
                   <Target size={20} style={{ color: 'var(--primary)' }} />
-                  {level === 'junior' ? 'เลือกสายการเรียนเป้าหมาย (ลำดับ 1 - 3)' : 'เลือกคณะเป้าหมาย'}
+                  {level === 'junior' ? 'เลือกสายการเรียนเป้าหมาย' : 'เลือกคณะเป้าหมาย'}
                 </h3>
                 
-                {level === 'junior' ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {[0, 1, 2].map((idx) => (
-                      <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>อันดับที่ {idx + 1}:</span>
-                        <select
-                          value={targetPaths[idx] || ''}
-                          onChange={(e) => {
-                            const newPaths = [...targetPaths];
-                            newPaths[idx] = e.target.value;
-                            setTargetPaths(newPaths);
-                            if (idx === 0) {
-                              setTargetPath(e.target.value);
-                            }
-                          }}
-                          style={{
-                            width: '100%',
-                            padding: '0.6rem 0.75rem',
-                            borderRadius: '10px',
-                            border: '1px solid var(--border)',
-                            background: '#FFFFFF',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            color: targetPaths[idx] ? 'var(--text-primary)' : 'var(--text-secondary)',
-                            outline: 'none',
-                            cursor: 'pointer'
-                          }}
-                          required={idx === 0}
-                        >
-                          <option value="">
-                            -- เลือกอันดับที่ {idx + 1} --
-                          </option>
-                          {Object.values(paths).map((path) => (
-                            <option key={path.id} value={path.id} disabled={targetPaths.includes(path.id) && targetPaths[idx] !== path.id}>
-                              {path.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <select
-                    value={targetPath}
-                    onChange={(e) => {
-                      setTargetPath(e.target.value);
-                      setTargetPaths([e.target.value, '', '']);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      borderRadius: '12px',
-                      border: '1px solid var(--border)',
-                      background: '#FFFFFF',
-                      fontSize: '0.9rem',
-                      fontWeight: '600',
-                      color: targetPath ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                    required
-                  >
-                    <option value="">
-                      -- เลือกคณะเป้าหมาย --
-                    </option>
-                    {Object.values(paths).map((path) => (
-                      <option key={path.id} value={path.id}>{path.name}</option>
-                    ))}
-                  </select>
-                )}
+                <select
+                  value={targetPath}
+                  onChange={(e) => {
+                    setTargetPath(e.target.value);
+                    setTargetPaths([e.target.value, '', '']);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '12px',
+                    border: '1.5px solid var(--border)',
+                    background: '#FFFFFF',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    color: targetPath ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                  required
+                >
+                  <option value="">
+                    {level === 'junior' ? '-- เลือกสายการเรียนเป้าหมาย --' : '-- เลือกคณะเป้าหมาย --'}
+                  </option>
+                  {Object.values(paths).map((path) => (
+                    <option key={path.id} value={path.id}>{path.name}</option>
+                  ))}
+                </select>
               </div>
 
               

@@ -28,10 +28,10 @@ function renderStageIcon(iconName, props = {}) {
 }
 
 const OPTION_COLORS = [
-  { bg: 'rgba(76,175,80,0.08)', border: 'rgba(76,175,80,0.3)', icon: '🟢', hoverBg: 'rgba(76,175,80,0.15)' },
-  { bg: 'rgba(124,92,252,0.08)', border: 'rgba(124,92,252,0.3)', icon: '🟣', hoverBg: 'rgba(124,92,252,0.15)' },
-  { bg: 'rgba(255,152,0,0.08)', border: 'rgba(255,152,0,0.3)', icon: '🟠', hoverBg: 'rgba(255,152,0,0.15)' },
-  { bg: 'rgba(33,150,243,0.08)', border: 'rgba(33,150,243,0.3)', icon: '🔵', hoverBg: 'rgba(33,150,243,0.15)' },
+  { bg: 'rgba(76,175,80,0.08)', border: 'rgba(76,175,80,0.3)', hoverBg: 'rgba(76,175,80,0.15)' },
+  { bg: 'rgba(124,92,252,0.08)', border: 'rgba(124,92,252,0.3)', hoverBg: 'rgba(124,92,252,0.15)' },
+  { bg: 'rgba(255,152,0,0.08)', border: 'rgba(255,152,0,0.3)', hoverBg: 'rgba(255,152,0,0.15)' },
+  { bg: 'rgba(33,150,243,0.08)', border: 'rgba(33,150,243,0.3)', hoverBg: 'rgba(33,150,243,0.15)' },
 ];
 
 export default function AssessmentPage() {
@@ -115,7 +115,9 @@ export default function AssessmentPage() {
     setSaving(true);
     try {
       const targetPathForFiltering = profile.analysisMode === 'target-lock' && profile.targetPath ? profile.targetPath : null;
-      let skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering);
+      const likesForCalc = profile.analysisMode === 'discovery' ? (profile.likes || []) : [];
+      const dislikesForCalc = profile.analysisMode === 'discovery' ? (profile.dislikes || []) : [];
+      let skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering, likesForCalc, dislikesForCalc);
       let aiEvaluationData = null;
 
       // Call AI Evaluation Endpoint with 3.5s AbortController timeout for fast response
@@ -134,7 +136,9 @@ export default function AssessmentPage() {
             customActivities: profile.customActivities,
             targetPath: profile.targetPath,
             analysisMode: profile.analysisMode,
-            educationLevel: profile.educationLevel
+            educationLevel: profile.educationLevel,
+            likes: likesForCalc,
+            dislikes: dislikesForCalc
           })
         });
         clearTimeout(timeoutId);
@@ -153,7 +157,7 @@ export default function AssessmentPage() {
       }
 
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
-      const rankings = matchPaths(skillVector, pathsObject);
+      const rankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
       
       const questionIds = scenarios.map(s => s.id);
 

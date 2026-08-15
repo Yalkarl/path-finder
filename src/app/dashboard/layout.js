@@ -8,6 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { MrPath } from '@/components/ui/mr-path';
 import { signOut } from '@/lib/firebaseAuth';
 import { Home, ClipboardCheck, MessageSquare, User, LogOut, Sliders, BarChart2, Flame, Trophy } from 'lucide-react';
+import { clearSetupStorage } from '@/lib/utils/setupStorage';
 
 export default function DashboardLayout({ children }) {
   const { user, loading } = useAuth();
@@ -50,6 +51,7 @@ export default function DashboardLayout({ children }) {
 
   const handleLogout = async () => {
     try {
+      clearSetupStorage();
       await signOut();
       window.location.href = '/';
     } catch (err) {

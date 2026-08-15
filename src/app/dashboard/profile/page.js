@@ -8,6 +8,7 @@ import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
 import { User, Settings, Edit2, Compass, BookOpen, Globe, BookMarked, FlaskConical, Target, Bot, Laptop, Palette, Stethoscope, GraduationCap, Rocket, Sparkles, LogOut } from 'lucide-react';
 import { signOut } from '@/lib/firebaseAuth';
+import { clearSetupStorage } from '@/lib/utils/setupStorage';
 
 const SUBJECTS = [
   { key: 'math', name: 'คณิตศาสตร์', icon: <Compass size={18} />, color: '#E91E63' },
@@ -70,6 +71,7 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     try {
+      clearSetupStorage();
       await signOut();
       window.location.href = '/';
     } catch (err) {
@@ -723,7 +725,7 @@ export default function ProfilePage() {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'center',
+                  justifyContent: 'center',
                   gap: '0.5rem',
                   transition: 'all 0.2s ease',
                   fontFamily: 'inherit'
@@ -756,7 +758,7 @@ export default function ProfilePage() {
           <div style={{ flex: '1 1 250px' }}>
             <h2 style={{ color: 'var(--text-primary)', fontWeight: '700', marginBottom: '0.5rem', fontSize: '1.25rem' }}>โหมดการวิเคราะห์</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6' }}>
-              ตั้งค่าหรือปรับเปลี่ยนระหว่างโหมดค้นหาตัวตนอิสระ กับโหมดประเมินความพร้อมแบบระบุคณะเป้าหมาย
+              ตั้งค่าหรือปรับเปลี่ยนระหว่างโหมดค้นหาตัวตนอิสระ กับโหมดประเมินความพร้อมแบบระบุเป้าหมาย
             </p>
           </div>
           <div style={{ flex: '1 1 350px' }}>
