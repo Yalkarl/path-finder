@@ -117,58 +117,22 @@ export default function AssessmentPage() {
       const targetPathForFiltering = profile.analysisMode === 'target-lock' && profile.targetPath ? profile.targetPath : null;
       const likesForCalc = profile.analysisMode === 'discovery' ? (profile.likes || []) : [];
       const dislikesForCalc = profile.analysisMode === 'discovery' ? (profile.dislikes || []) : [];
-      let skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering, likesForCalc, dislikesForCalc);
-      let aiEvaluationData = null;
-
-      // Call AI Evaluation Endpoint with 3.5s AbortController timeout for fast response
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-        const aiRes = await fetch('/api/ai-evaluate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            responses: finalResponses,
-            academics: profile.academics,
-            portfolio: profile.portfolio,
-            customActivities: profile.customActivities,
-            targetPath: profile.targetPath,
-            analysisMode: profile.analysisMode,
-            educationLevel: profile.educationLevel,
-            likes: likesForCalc,
-            dislikes: dislikesForCalc
-          })
-        });
-        clearTimeout(timeoutId);
-
-        if (aiRes.ok) {
-          const aiJson = await aiRes.json();
-          if (aiJson.success && aiJson.evaluation) {
-            aiEvaluationData = aiJson.evaluation;
-            if (Array.isArray(aiEvaluationData.skillVector) && aiEvaluationData.skillVector.length === 5) {
-              skillVector = aiEvaluationData.skillVector;
-            }
-          }
-        }
-      } catch (aiErr) {
-        console.warn('AI evaluation API fast fallback triggered:', aiErr);
-      }
-
+      const skillVector = calculateSkillVector(profile.academics, finalResponses, targetPathForFiltering, likesForCalc, dislikesForCalc);
       const pathsObject = profile.educationLevel === 'junior' ? JUNIOR_PATHS : SENIOR_PATHS;
       const rankings = matchPaths(skillVector, pathsObject, likesForCalc, dislikesForCalc);
       
       const questionIds = scenarios.map(s => s.id);
 
+      // 1. บันทึกผลลัพธ์เบื้องต้นและตั้ง aiEvaluation: null ทันทีเพื่อให้ Dashboard เริ่มรันแอนิเมชันเต็มรูปแบบ
       await updateUserProfile(user.uid, {
         completedSetup: true,
+        resultsUpdated: true,
         usedQuestionIds: questionIds,
         assessment: {
           responses: finalResponses,
           completedAt: new Date().toISOString()
         },
-        aiEvaluation: aiEvaluationData,
+        aiEvaluation: null, // ตั้งเป็น null เพื่อให้หน้า Dashboard เล่นแอนิเมชันถักทอ 5 มิติ / Scope Lock ทันที
         results: {
           skillVector,
           matchRankings: rankings
@@ -177,6 +141,40 @@ export default function AssessmentPage() {
 
       await recordAssessmentAttempt(profile, updateUserProfile, profile?.analysisMode);
 
+      // 2. เรียก AI Evaluation API ในเบื้องหลังแบบ non-blocking
+      fetch('/api/ai-evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          responses: finalResponses,
+          academics: profile.academics,
+          portfolio: profile.portfolio,
+          customActivities: profile.customActivities,
+          targetPath: profile.targetPath,
+          analysisMode: profile.analysisMode,
+          educationLevel: profile.educationLevel,
+          likes: likesForCalc,
+          dislikes: dislikesForCalc
+        })
+      }).then(res => res.json()).then(async (aiJson) => {
+        if (aiJson.success && aiJson.evaluation) {
+          const aiEvalData = aiJson.evaluation;
+          const finalVector = (Array.isArray(aiEvalData.skillVector) && aiEvalData.skillVector.length === 5)
+            ? aiEvalData.skillVector
+            : skillVector;
+          const finalRankings = matchPaths(finalVector, pathsObject, likesForCalc, dislikesForCalc);
+
+          await updateUserProfile(user.uid, {
+            aiEvaluation: aiEvalData,
+            results: {
+              skillVector: finalVector,
+              matchRankings: finalRankings
+            }
+          });
+        }
+      }).catch(aiErr => console.warn('Background AI evaluation error:', aiErr));
+
+      // 3. นำทางเข้าสู่แดชบอร์ดทันที (<200ms)
       router.push('/dashboard');
     } catch (err) {
       console.error('Error finishing assessment:', err);
