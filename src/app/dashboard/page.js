@@ -40,7 +40,7 @@ function formatHybridProfileTitle(rawTitle) {
   return `${rawTitle} (${rawTitle})`;
 }
 
-function AIQualitativeInsightsSection({ aiEval, profile }) {
+function AIQualitativeInsightsSection({ aiEval, profile, isEvaluating = false }) {
   const likes = Array.isArray(profile?.likes) ? profile.likes : [];
   const dislikes = Array.isArray(profile?.dislikes) ? profile.dislikes : [];
 
@@ -128,6 +128,13 @@ function AIQualitativeInsightsSection({ aiEval, profile }) {
       marginTop: '1.75rem',
       paddingTop: '1.5rem',
       borderTop: '1px solid var(--border)',
+      position: 'relative',
+      filter: isEvaluating ? 'blur(8px)' : 'blur(0px)',
+      opacity: isEvaluating ? 0.35 : 1,
+      pointerEvents: isEvaluating ? 'none' : 'auto',
+      userSelect: isEvaluating ? 'none' : 'auto',
+      transform: isEvaluating ? 'scale(0.99)' : 'scale(1)',
+      transition: 'all 0.9s cubic-bezier(0.4, 0, 0.2, 1)'
     }}>
       {/* Qualitative Insights Section */}
       {hasInsights && (
@@ -1677,7 +1684,11 @@ export default function DashboardPage() {
             />
 
             {/* AI Qualitative Insights Section (Discovery Mode) */}
-            <AIQualitativeInsightsSection aiEval={aiEval} profile={profile} />
+            <AIQualitativeInsightsSection 
+              aiEval={aiEval} 
+              profile={profile} 
+              isEvaluating={!aiEval && !evaluatingTimeout} 
+            />
           </div>
 
           {/* Daily Quota Reminder Banner (Placed below My Skill Matrix) */}
