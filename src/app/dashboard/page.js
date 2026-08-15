@@ -709,10 +709,10 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
   const isShattering = phase === 'shattering';
   const showOverlay = isLocked || isShattering;
 
-  // 5 Constellation Star Vertices (Strict SVG Coordinate Math)
+  // 5 Constellation Star Vertices (Exact Original Model with Strict Math)
   const cx = 250;
   const cy = 200;
-  const radius = 125;
+  const radius = 115;
   const stars = [
     { name: 'ตรรกะ', en: 'LOGIC', angle: -Math.PI / 2, color: '#7C5CFC' },
     { name: 'วิทยาศาสตร์', en: 'SCIENCE', angle: -Math.PI / 2 + (2 * Math.PI) / 5, color: '#06B6D4' },
@@ -773,93 +773,76 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             }}
           >
             <defs>
-              <radialGradient id="nexusAura" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#7C5CFC" stopOpacity="0.25" />
-                <stop offset="60%" stopColor="#A78BFA" stopOpacity="0.08" />
+              {/* Star Glow Gradient */}
+              <radialGradient id="starGlowGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#7C5CFC" stopOpacity="0.8" />
                 <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="beamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#7C5CFC" />
-                <stop offset="25%" stopColor="#06B6D4" />
-                <stop offset="50%" stopColor="#10B981" />
-                <stop offset="75%" stopColor="#F59E0B" />
-                <stop offset="100%" stopColor="#EC4899" />
+                <stop offset="50%" stopColor="#A78BFA" />
+                <stop offset="100%" stopColor="#06B6D4" />
               </linearGradient>
             </defs>
 
-            {/* Central Nexus Ethereal Aura */}
-            <circle cx={cx} cy={cy} r="65" fill="url(#nexusAura)" />
-
             {/* Delicate Astrological Orbital Rings */}
-            <circle cx={cx} cy={cy} r="60" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="3 4" />
-            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(124, 92, 252, 0.18)" strokeWidth="1.2" strokeDasharray="4 6" style={{ transformOrigin: `${cx}px ${cy}px`, animation: 'orbitRingSpin 50s linear infinite' }} />
-            <circle cx={cx} cy={cy} r="165" fill="none" stroke="rgba(6, 182, 212, 0.1)" strokeWidth="1" strokeDasharray="2 6" />
+            <circle cx={cx} cy={cy} r="65" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="2 4" />
+            <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(124, 92, 252, 0.18)" strokeWidth="1" />
+            <circle cx={cx} cy={cy} r="160" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1.2" strokeDasharray="4 16"
+              style={{ animation: 'orbitRingSpin 24s linear infinite', transformOrigin: `${cx}px ${cy}px` }} />
 
-            {/* Subtle Inner Star Web */}
-            <polygon
+            {/* Inner Star Chords (Faint geometric lines) */}
+            <polyline
               points={innerStarPoints}
-              fill="none"
-              stroke="rgba(124, 92, 252, 0.1)"
-              strokeWidth="1"
-              strokeDasharray="2 4"
+              fill="rgba(124, 92, 252, 0.03)"
+              stroke="rgba(124, 92, 252, 0.22)"
+              strokeWidth="1.2"
+              strokeDasharray="4 4"
             />
 
             {/* Outer Constellation Polygon Beam with Traveling Starlight Flow */}
             <polygon
               points={outerPolygonPoints}
-              fill="rgba(124, 92, 252, 0.03)"
+              fill="rgba(124, 92, 252, 0.05)"
               stroke="url(#beamGrad)"
               strokeWidth="2"
-              strokeDasharray="8 6"
               style={{
                 filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.35))',
+                strokeDasharray: '12 6',
                 animation: 'constellationBeamFlow 3s linear infinite'
               }}
             />
 
-            {/* 5 Ethereal Glowing Constellation Star Nodes */}
+            {/* 5 Radiant Constellation Stars */}
             {stars.map((star, idx) => (
               <g key={idx} transform={`translate(${star.x}, ${star.y})`}>
-                {/* Outer Astral Pulse Ring */}
-                <circle
-                  cx="0"
-                  cy="0"
-                  r="16"
-                  fill="none"
-                  stroke={star.color}
-                  strokeWidth="1"
-                  strokeOpacity="0.4"
-                  style={{ animation: `starlightPulse ${2 + (idx % 3) * 0.4}s ease-in-out infinite` }}
-                />
+                {/* Outer Pulsing Starlight Aura */}
+                <circle cx="0" cy="0" r="18" fill="none" stroke={isShattering ? '#10B981' : star.color} strokeWidth="1"
+                  style={{
+                    animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`,
+                    transformOrigin: '0px 0px'
+                  }} />
 
-                {/* Soft Halo Glow */}
-                <circle
-                  cx="0"
-                  cy="0"
-                  r="12"
-                  fill={star.color}
-                  fillOpacity="0.12"
-                />
-
-                {/* Rotating Delicate Flare Rays */}
-                <g style={{ animation: 'starFlareSpin 10s linear infinite' }}>
-                  <line x1="-11" y1="0" x2="11" y2="0" stroke={star.color} strokeWidth="1.2" opacity="0.6" strokeLinecap="round" />
-                  <line x1="0" y1="-11" x2="0" y2="11" stroke={star.color} strokeWidth="1.2" opacity="0.6" strokeLinecap="round" />
+                {/* 4-Point Star Diamond Flare */}
+                <g style={{
+                  animation: `starFlareSpin 8s linear infinite ${idx * 0.3}s`,
+                  transformOrigin: '0px 0px'
+                }}>
+                  <path
+                    d="M 0 -10 Q 0 0 10 0 Q 0 0 0 10 Q 0 0 -10 0 Z"
+                    fill={isShattering ? '#10B981' : star.color}
+                    style={{
+                      filter: `drop-shadow(0 0 6px ${isShattering ? '#10B981' : star.color})`
+                    }}
+                  />
                 </g>
 
-                {/* Clean White Star Node with Color Outline */}
-                <circle cx="0" cy="0" r="7" fill="#FFFFFF" stroke={star.color} strokeWidth="2.2" style={{ filter: `drop-shadow(0 0 4px ${star.color}66)` }} />
-
-                {/* Micro Twinkle Point Core */}
-                <polygon
-                  points="0,-3.5 1,-1 3.5,0 1,1 0,3.5 -1,1 -3.5,0 -1,-1"
-                  fill={star.color}
-                  style={{ animation: 'starTwinkle 1.8s ease-in-out infinite' }}
-                />
+                {/* Star Core Dot */}
+                <circle cx="0" cy="0" r="4" fill="#FFFFFF" stroke={isShattering ? '#10B981' : star.color} strokeWidth="2" />
               </g>
             ))}
 
-            {/* Central Astral Seed (Nexus Core) */}
+            {/* Central Celestial Nexus Star */}
             <circle cx={cx} cy={cy} r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 8px #7C5CFC)' }} />
           </svg>
 
