@@ -1328,7 +1328,6 @@ export default function DashboardAssessmentPage() {
           </div>
         </div>
       )}
-      <AssessmentMusicPlayer audioPath="/audio/quiz_music.mp3" />
     </div>
   );
 }
