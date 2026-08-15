@@ -156,7 +156,7 @@ export default function LoginForm() {
         {successMessage && <p style={{ color: 'var(--success)', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: '1.5', whiteSpace: 'pre-line' }}>{successMessage}</p>}
 
         <button type="submit" className="btn-primary" style={{ width: '100%', marginBottom: '1rem' }} disabled={loading}>
-          {loading ? 'กำลังดำเนินการ...' : isForgotPassword ? 'ส่งลิงก์รีเซ็ตผ่านอีเมล ✉️' : isSignUp ? 'สมัครสมาชิก 🚀' : 'เข้าสู่ระบบ 🚀'}
+          {loading ? 'กำลังดำเนินการ...' : isForgotPassword ? 'ส่งลิงก์รีเซ็ตผ่านอีเมล' : isSignUp ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
         </button>
       </form>
 
