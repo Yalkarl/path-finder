@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { MrPath } from '@/components/ui/mr-path';
-import { Compass, BarChart2, MessageSquare, Award, ArrowRight, Target, Sparkles, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Compass, BarChart2, MessageSquare, Award, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -14,33 +14,26 @@ export default function Home() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
         }
-        @keyframes pulseGlow {
-          0%, 100% { transform: scale(1); opacity: 0.7; }
-          50% { transform: scale(1.08); opacity: 0.95; }
+        @keyframes pulseAurora {
+          0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+          50% { transform: scale(1.12) translate(15px, -15px); opacity: 0.85; }
         }
-        @keyframes floatCard1 {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-12px) rotate(1deg); }
-        }
-        @keyframes floatCard2 {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-14px) rotate(-1deg); }
-        }
-        @keyframes floatCard3 {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(-1.5deg); }
-        }
-        @keyframes floatCard4 {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-12px) rotate(1.5deg); }
+        @keyframes pulseAurora2 {
+          0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.5; }
+          50% { transform: scale(1.18) translate(-20px, 15px); opacity: 0.8; }
         }
         @keyframes rotateOrbit {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        @keyframes sparkleTwinkle {
-          0%, 100% { opacity: 0.3; transform: scale(0.85); }
-          50% { opacity: 0.9; transform: scale(1.15); }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.25; transform: scale(0.8); }
+          50% { opacity: 0.95; transform: scale(1.25); }
+        }
+        @keyframes driftParticle {
+          0% { transform: translateY(0) translateX(0); opacity: 0.2; }
+          50% { opacity: 0.7; }
+          100% { transform: translateY(-80px) translateX(25px); opacity: 0; }
         }
         .cta-btn:hover {
           transform: translateY(-2px);
@@ -48,27 +41,6 @@ export default function Home() {
         }
         .cta-btn:active {
           transform: translateY(0);
-        }
-        .floating-badge {
-          display: flex;
-          align-items: center;
-          gap: 0.85rem;
-          padding: 0.85rem 1.15rem;
-          background: rgba(255, 255, 255, 0.75);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(255, 255, 255, 0.9);
-          border-radius: 18px;
-          box-shadow: 0 8px 28px rgba(124, 92, 252, 0.08), 0 2px 8px rgba(0, 0, 0, 0.02);
-          position: absolute;
-          z-index: 5;
-          pointer-events: none;
-          transition: all 0.3s ease;
-        }
-        @media (max-width: 1080px) {
-          .floating-badge {
-            display: none !important;
-          }
         }
       `}</style>
 
@@ -80,204 +52,157 @@ export default function Home() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '2.5rem 1.25rem',
-        background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 45%, #FAF5FF 70%, #FEF3C7 100%)',
+        background: 'linear-gradient(135deg, #F5F3FF 0%, #ECE7FF 40%, #FAF5FF 70%, #FEF3C7 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}>
         {/* Ambient Aurora Orbs */}
         <div style={{
           position: 'absolute',
-          top: '5%',
-          left: '12%',
-          width: '380px',
-          height: '380px',
-          background: 'radial-gradient(circle, rgba(124, 92, 252, 0.18) 0%, rgba(124, 92, 252, 0) 70%)',
+          top: '3%',
+          left: '8%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(124, 92, 252, 0.22) 0%, rgba(124, 92, 252, 0.05) 50%, rgba(124, 92, 252, 0) 70%)',
           borderRadius: '50%',
-          filter: 'blur(30px)',
-          animation: 'pulseGlow 8s ease-in-out infinite',
+          filter: 'blur(40px)',
+          animation: 'pulseAurora 12s ease-in-out infinite',
           pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute',
-          bottom: '8%',
-          right: '10%',
-          width: '420px',
-          height: '420px',
-          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0) 70%)',
+          bottom: '5%',
+          right: '6%',
+          width: '520px',
+          height: '520px',
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.04) 50%, rgba(245, 158, 11, 0) 70%)',
+          borderRadius: '50%',
+          filter: 'blur(45px)',
+          animation: 'pulseAurora2 14s ease-in-out infinite 1s',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: '35%',
+          right: '12%',
+          width: '400px',
+          height: '400px',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0) 70%)',
           borderRadius: '50%',
           filter: 'blur(35px)',
-          animation: 'pulseGlow 10s ease-in-out infinite 1s',
+          animation: 'pulseAurora 15s ease-in-out infinite 2s',
           pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute',
-          top: '40%',
-          right: '5%',
-          width: '300px',
-          height: '300px',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%)',
+          bottom: '25%',
+          left: '10%',
+          width: '380px',
+          height: '380px',
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(236, 72, 153, 0) 70%)',
           borderRadius: '50%',
-          filter: 'blur(25px)',
-          animation: 'pulseGlow 9s ease-in-out infinite 2s',
+          filter: 'blur(35px)',
+          animation: 'pulseAurora2 13s ease-in-out infinite 2.5s',
           pointerEvents: 'none',
         }} />
 
         {/* Decorative Constellation Orbit Rings */}
         <div style={{
           position: 'absolute',
-          top: '-80px',
-          right: '-80px',
-          width: '340px',
-          height: '340px',
-          border: '1.5px dashed rgba(124, 92, 252, 0.2)',
+          top: '-120px',
+          right: '-120px',
+          width: '480px',
+          height: '480px',
+          border: '1.5px dashed rgba(124, 92, 252, 0.22)',
           borderRadius: '50%',
-          animation: 'rotateOrbit 45s linear infinite',
+          animation: 'rotateOrbit 60s linear infinite',
           pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute',
-          bottom: '-100px',
-          left: '-100px',
-          width: '400px',
-          height: '400px',
-          border: '1.5px dashed rgba(245, 158, 11, 0.2)',
+          top: '-60px',
+          right: '-60px',
+          width: '360px',
+          height: '360px',
+          border: '1px solid rgba(124, 92, 252, 0.12)',
           borderRadius: '50%',
-          animation: 'rotateOrbit 60s linear infinite reverse',
           pointerEvents: 'none',
         }} />
 
+        <div style={{
+          position: 'absolute',
+          bottom: '-140px',
+          left: '-140px',
+          width: '520px',
+          height: '520px',
+          border: '1.5px dashed rgba(245, 158, 11, 0.2)',
+          borderRadius: '50%',
+          animation: 'rotateOrbit 75s linear infinite reverse',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-70px',
+          left: '-70px',
+          width: '380px',
+          height: '380px',
+          border: '1px solid rgba(245, 158, 11, 0.12)',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Subtle Constellation Lines Overlay (SVG) */}
+        <svg style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          opacity: 0.45,
+        }}>
+          {/* Top Left Constellation cluster */}
+          <g stroke="rgba(124, 92, 252, 0.25)" strokeWidth="1" fill="none">
+            <line x1="8%" y1="18%" x2="16%" y2="12%" />
+            <line x1="16%" y1="12%" x2="22%" y2="24%" />
+            <line x1="22%" y1="24%" x2="14%" y2="32%" />
+            <line x1="14%" y1="32%" x2="8%" y2="18%" />
+          </g>
+          <circle cx="8%" cy="18%" r="3.5" fill="#7C5CFC" opacity="0.6" />
+          <circle cx="16%" cy="12%" r="2.5" fill="#7C5CFC" opacity="0.5" />
+          <circle cx="22%" cy="24%" r="4" fill="#9F7AEA" opacity="0.7" />
+          <circle cx="14%" cy="32%" r="3" fill="#7C5CFC" opacity="0.55" />
+
+          {/* Bottom Right Constellation cluster */}
+          <g stroke="rgba(245, 158, 11, 0.25)" strokeWidth="1" fill="none">
+            <line x1="82%" y1="72%" x2="90%" y2="65%" />
+            <line x1="90%" y1="65%" x2="94%" y2="78%" />
+            <line x1="94%" y1="78%" x2="86%" y2="88%" />
+            <line x1="86%" y1="88%" x2="82%" y2="72%" />
+          </g>
+          <circle cx="82%" cy="72%" r="3.5" fill="#F59E0B" opacity="0.6" />
+          <circle cx="90%" cy="65%" r="3" fill="#FBBF24" opacity="0.65" />
+          <circle cx="94%" cy="78%" r="4" fill="#F59E0B" opacity="0.7" />
+          <circle cx="86%" cy="88%" r="2.5" fill="#FBBF24" opacity="0.5" />
+        </svg>
+
         {/* Decorative Sparkle Stars */}
-        <div style={{ position: 'absolute', top: '15%', left: '22%', animation: 'sparkleTwinkle 4s ease-in-out infinite', pointerEvents: 'none' }}>
-          <Sparkles size={20} style={{ color: 'rgba(124, 92, 252, 0.45)' }} />
+        <div style={{ position: 'absolute', top: '14%', left: '18%', animation: 'twinkle 4s ease-in-out infinite', pointerEvents: 'none' }}>
+          <Sparkles size={22} style={{ color: 'rgba(124, 92, 252, 0.55)' }} />
         </div>
-        <div style={{ position: 'absolute', bottom: '22%', left: '18%', animation: 'sparkleTwinkle 5s ease-in-out infinite 1s', pointerEvents: 'none' }}>
-          <Sparkles size={16} style={{ color: 'rgba(245, 158, 11, 0.5)' }} />
+        <div style={{ position: 'absolute', bottom: '20%', left: '14%', animation: 'twinkle 5s ease-in-out infinite 1s', pointerEvents: 'none' }}>
+          <Sparkles size={18} style={{ color: 'rgba(236, 72, 153, 0.55)' }} />
         </div>
-        <div style={{ position: 'absolute', top: '22%', right: '20%', animation: 'sparkleTwinkle 4.5s ease-in-out infinite 2s', pointerEvents: 'none' }}>
-          <Sparkles size={18} style={{ color: 'rgba(99, 102, 241, 0.45)' }} />
+        <div style={{ position: 'absolute', top: '20%', right: '16%', animation: 'twinkle 4.5s ease-in-out infinite 2s', pointerEvents: 'none' }}>
+          <Sparkles size={20} style={{ color: 'rgba(99, 102, 241, 0.55)' }} />
         </div>
-        <div style={{ position: 'absolute', bottom: '16%', right: '24%', animation: 'sparkleTwinkle 5.5s ease-in-out infinite 1.5s', pointerEvents: 'none' }}>
-          <Sparkles size={22} style={{ color: 'rgba(124, 92, 252, 0.4)' }} />
+        <div style={{ position: 'absolute', bottom: '15%', right: '20%', animation: 'twinkle 5.5s ease-in-out infinite 1.5s', pointerEvents: 'none' }}>
+          <Sparkles size={24} style={{ color: 'rgba(245, 158, 11, 0.55)' }} />
         </div>
-
-        {/* ────────────────────────────────────────────────────────
-            Floating Feature Badges (Decorating Surrounding Space)
-            ──────────────────────────────────────────────────────── */}
-        
-        {/* Top-Left Badge: 25+ Career Paths */}
-        <div className="floating-badge" style={{
-          top: '18%',
-          left: 'max(4%, calc(50% - 560px))',
-          animation: 'floatCard1 6s ease-in-out infinite',
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #7C5CFC, #9F7AEA)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(124, 92, 252, 0.25)',
-          }}>
-            <Target size={22} />
-          </div>
-          <div>
-            <div style={{ fontWeight: '800', fontSize: '0.9rem', color: '#1E293B' }}>
-              25+ สายการเรียน
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-              ครอบคลุมทุกสาขายอดนิยม
-            </div>
-          </div>
+        <div style={{ position: 'absolute', top: '50%', left: '6%', animation: 'twinkle 6s ease-in-out infinite 0.8s', pointerEvents: 'none' }}>
+          <Sparkles size={16} style={{ color: 'rgba(124, 92, 252, 0.45)' }} />
         </div>
-
-        {/* Top-Right Badge: TCAS Portfolio Readiness */}
-        <div className="floating-badge" style={{
-          top: '20%',
-          right: 'max(4%, calc(50% - 560px))',
-          animation: 'floatCard2 7s ease-in-out infinite 0.5s',
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #10B981, #059669)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
-          }}>
-            <CheckCircle2 size={22} />
-          </div>
-          <div>
-            <div style={{ fontWeight: '800', fontSize: '0.9rem', color: '#1E293B' }}>
-              TCAS รอบ 1 Ready
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-              วิเคราะห์พอร์ตและ Gap ชัดเจน
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom-Left Badge: 5D Skill Radar */}
-        <div className="floating-badge" style={{
-          bottom: '22%',
-          left: 'max(4%, calc(50% - 570px))',
-          animation: 'floatCard3 6.5s ease-in-out infinite 1s',
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
-          }}>
-            <BarChart2 size={22} />
-          </div>
-          <div>
-            <div style={{ fontWeight: '800', fontSize: '0.9rem', color: '#1E293B' }}>
-              My Skill Matrix
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-              วิเคราะห์ลึก 5 มิติสมรรถนะ
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom-Right Badge: AI Mentor 24/7 */}
-        <div className="floating-badge" style={{
-          bottom: '24%',
-          right: 'max(4%, calc(50% - 570px))',
-          animation: 'floatCard4 7.5s ease-in-out infinite 1.5s',
-        }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #F59E0B, #D97706)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)',
-          }}>
-            <MessageSquare size={22} />
-          </div>
-          <div>
-            <div style={{ fontWeight: '800', fontSize: '0.9rem', color: '#1E293B' }}>
-              Mr. Path AI Coach
-            </div>
-            <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-              ปรึกษาแนวทางการเรียน 24 ชม.
-            </div>
-          </div>
+        <div style={{ position: 'absolute', top: '52%', right: '7%', animation: 'twinkle 6.5s ease-in-out infinite 2.2s', pointerEvents: 'none' }}>
+          <Sparkles size={17} style={{ color: 'rgba(245, 158, 11, 0.45)' }} />
         </div>
 
         {/* ────────────────────────────────────────────────────────
@@ -323,10 +248,10 @@ export default function Home() {
           <div style={{ position: 'relative', marginBottom: '1.25rem', animation: 'floatCenter 3.5s ease-in-out infinite' }}>
             <div style={{
               position: 'absolute',
-              inset: '-8px',
+              inset: '-10px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(124, 92, 252, 0.2) 0%, rgba(124, 92, 252, 0) 70%)',
-              filter: 'blur(8px)',
+              background: 'radial-gradient(circle, rgba(124, 92, 252, 0.25) 0%, rgba(124, 92, 252, 0) 70%)',
+              filter: 'blur(10px)',
             }} />
             <MrPath size={120} showBg={true} />
             {/* AI Badge */}
@@ -348,13 +273,13 @@ export default function Home() {
 
           {/* Speech Bubble Card */}
           <div style={{
-            background: 'rgba(255, 255, 255, 0.92)',
+            background: 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
             borderRadius: '24px',
             padding: '1.35rem 1.6rem',
             boxShadow: '0 8px 30px rgba(124, 92, 252, 0.1), 0 2px 6px rgba(0, 0, 0, 0.02)',
-            border: '1px solid rgba(255, 255, 255, 0.8)',
+            border: '1px solid rgba(255, 255, 255, 0.85)',
             width: '100%',
             marginBottom: '1.25rem',
             position: 'relative',
@@ -370,7 +295,7 @@ export default function Home() {
               height: 0,
               borderLeft: '8px solid transparent',
               borderRight: '8px solid transparent',
-              borderBottom: '8px solid rgba(255, 255, 255, 0.92)',
+              borderBottom: '8px solid rgba(255, 255, 255, 0.94)',
             }} />
             <p style={{ margin: '0 0 0.5rem 0', fontWeight: '700', fontSize: '0.98rem', color: 'var(--text-primary)' }}>
               สวัสดีครับ! ผม <strong>Mr. Path</strong> ครับ
