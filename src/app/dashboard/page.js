@@ -709,8 +709,10 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
   const isShattering = phase === 'shattering';
   const showOverlay = isLocked || isShattering;
 
-  // 5 Constellation Star Vertices
-  const radius = 115;
+  // 5 Constellation Star Vertices (Strict SVG Coordinate Math)
+  const cx = 250;
+  const cy = 200;
+  const radius = 125;
   const stars = [
     { name: 'ตรรกะ', en: 'LOGIC', angle: -Math.PI / 2, color: '#7C5CFC' },
     { name: 'วิทยาศาสตร์', en: 'SCIENCE', angle: -Math.PI / 2 + (2 * Math.PI) / 5, color: '#06B6D4' },
@@ -719,14 +721,14 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
     { name: 'การบริหาร', en: 'MGMT', angle: -Math.PI / 2 + (8 * Math.PI) / 5, color: '#EC4899' }
   ].map(s => ({
     ...s,
-    x: Math.cos(s.angle) * radius,
-    y: Math.sin(s.angle) * radius
+    x: Number((cx + Math.cos(s.angle) * radius).toFixed(2)),
+    y: Number((cy + Math.sin(s.angle) * radius).toFixed(2))
   }));
 
   // Build outer pentagon & inner star lines
-  const outerPolygonPoints = stars.map(s => `calc(50% + ${s.x}px),calc(50% + ${s.y}px)`).join(' ');
+  const outerPolygonPoints = stars.map(s => `${s.x},${s.y}`).join(' ');
   const innerStarIndices = [0, 2, 4, 1, 3, 0];
-  const innerStarPoints = innerStarIndices.map(i => `calc(50% + ${stars[i].x}px),calc(50% + ${stars[i].y}px)`).join(' ');
+  const innerStarPoints = innerStarIndices.map(i => `${stars[i].x},${stars[i].y}`).join(' ');
 
   return (
     <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
@@ -758,14 +760,18 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
           animation: isShattering ? 'constellationFadeOut 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards' : 'none'
         }}>
           {/* SVG Constellation Map */}
-          <svg style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            overflow: 'visible'
-          }}>
+          <svg 
+            viewBox="0 0 500 400"
+            preserveAspectRatio="xMidYMid meet"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              overflow: 'visible'
+            }}
+          >
             <defs>
               <radialGradient id="starGlowGrad" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#7C5CFC" stopOpacity="0.8" />
@@ -779,9 +785,9 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             </defs>
 
             {/* Delicate Astrological Orbital Rings */}
-            <circle cx="50%" cy="50%" r="65" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="2 4" />
-            <circle cx="50%" cy="50%" r="140" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1" strokeDasharray="4 6" />
-            <circle cx="50%" cy="50%" r="165" fill="none" stroke="rgba(6, 182, 212, 0.1)" strokeWidth="1" strokeDasharray="1 5" style={{ animation: 'orbitRingSpin 40s linear infinite' }} />
+            <circle cx={cx} cy={cy} r="65" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="2 4" />
+            <circle cx={cx} cy={cy} r="140" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1" strokeDasharray="4 6" />
+            <circle cx={cx} cy={cy} r="165" fill="none" stroke="rgba(6, 182, 212, 0.1)" strokeWidth="1" strokeDasharray="1 5" style={{ transformOrigin: `${cx}px ${cy}px`, animation: 'orbitRingSpin 40s linear infinite' }} />
 
             {/* Inner Sacred Star Geometry (Connecting All 5 Nodes) */}
             <polygon
@@ -807,7 +813,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
 
             {/* 5 Radiant Constellation Stars */}
             {stars.map((star, idx) => (
-              <g key={idx} transform={`translate(calc(50% + ${star.x}px), calc(50% + ${star.y}px))`}>
+              <g key={idx} transform={`translate(${star.x}, ${star.y})`}>
                 {/* Outer Astral Pulse Halo */}
                 <circle
                   cx="0"
@@ -837,7 +843,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             ))}
 
             {/* Central Astral Seed (Nexus Core) */}
-            <circle cx="50%" cy="50%" r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 10px #7C5CFC)' }} />
+            <circle cx={cx} cy={cy} r="6" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 10px #7C5CFC)' }} />
           </svg>
 
           {/* Minimalist Floating Constellation Telemetry Pill */}
