@@ -814,33 +814,81 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             />
 
             {/* 5 Radiant Constellation Stars */}
-            {stars.map((star, idx) => (
-              <g key={idx} transform={`translate(${star.x}, ${star.y})`}>
-                {/* Outer Pulsing Starlight Aura */}
-                <circle cx="0" cy="0" r="18" fill="none" stroke={isShattering ? '#10B981' : star.color} strokeWidth="1"
-                  style={{
-                    animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`,
-                    transformOrigin: '0px 0px'
-                  }} />
-
-                {/* 4-Point Star Diamond Flare */}
-                <g style={{
-                  animation: `starFlareSpin 8s linear infinite ${idx * 0.3}s`,
-                  transformOrigin: '0px 0px'
-                }}>
-                  <path
-                    d="M 0 -10 Q 0 0 10 0 Q 0 0 0 10 Q 0 0 -10 0 Z"
-                    fill={isShattering ? '#10B981' : star.color}
+            {stars.map((star, idx) => {
+              const nodeColor = isShattering ? '#10B981' : star.color;
+              return (
+                <g key={idx} transform={`translate(${star.x}, ${star.y})`}>
+                  {/* Soft Background Star Glow Aura */}
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="15"
+                    fill={nodeColor}
+                    fillOpacity="0.15"
                     style={{
-                      filter: `drop-shadow(0 0 6px ${isShattering ? '#10B981' : star.color})`
+                      animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`
                     }}
                   />
-                </g>
 
-                {/* Star Core Dot */}
-                <circle cx="0" cy="0" r="4" fill="#FFFFFF" stroke={isShattering ? '#10B981' : star.color} strokeWidth="2" />
-              </g>
-            ))}
+                  {/* Outer Pulsing Starlight Ring */}
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="18"
+                    fill="none"
+                    stroke={nodeColor}
+                    strokeWidth="1"
+                    strokeOpacity="0.35"
+                    style={{
+                      animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`
+                    }}
+                  />
+
+                  {/* 8-Point Sparkling Starlight Flare (Rotating) */}
+                  <g style={{
+                    animation: `starFlareSpin 10s linear infinite ${idx * 0.3}s`,
+                    transformOrigin: '0px 0px'
+                  }}>
+                    {/* Primary Cross Rays */}
+                    <line x1="-12" y1="0" x2="12" y2="0" stroke={nodeColor} strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
+                    <line x1="0" y1="-12" x2="0" y2="12" stroke={nodeColor} strokeWidth="1.4" strokeLinecap="round" opacity="0.85" />
+
+                    {/* Secondary Diagonal Rays */}
+                    <line x1="-6" y1="-6" x2="6" y2="6" stroke={nodeColor} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+                    <line x1="-6" y1="6" x2="6" y2="-6" stroke={nodeColor} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+
+                    {/* Symmetrical 4-Point Star Diamond Flare */}
+                    <path
+                      d="M 0,-10 Q 0,0 10,0 Q 0,0 0,10 Q 0,0 -10,0 Q 0,0 0,-10 Z"
+                      fill={nodeColor}
+                      fillOpacity="0.75"
+                      style={{
+                        filter: `drop-shadow(0 0 5px ${nodeColor})`
+                      }}
+                    />
+                  </g>
+
+                  {/* Clean Radiant Star Center Node */}
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="4.5"
+                    fill="#FFFFFF"
+                    stroke={nodeColor}
+                    strokeWidth="2.2"
+                    style={{ filter: `drop-shadow(0 0 4px ${nodeColor})` }}
+                  />
+
+                  {/* Pinpoint Core Twinkle */}
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="1.2"
+                    fill={nodeColor}
+                  />
+                </g>
+              );
+            })}
 
             {/* Central Celestial Nexus Star */}
             <circle cx={cx} cy={cy} r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 8px #7C5CFC)' }} />
