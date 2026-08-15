@@ -526,45 +526,51 @@ function GradesContent() {
           opacity: 1 !important;
         }
         .confidence-slider {
-          -webkit-appearance: none;
-          appearance: none;
+          -webkit-appearance: none !important;
+          appearance: none !important;
           width: 100%;
-          height: 8px;
-          border-radius: 4px;
-          outline: none;
+          height: 6px !important;
+          min-height: 6px !important;
+          max-height: 6px !important;
+          border-radius: 999px !important;
+          outline: none !important;
+          border: none !important;
           transition: background 0.15s ease-in-out;
-          margin-top: 0.5rem;
-          margin-bottom: 0.5rem;
+          margin-top: 0.6rem !important;
+          margin-bottom: 0.6rem !important;
+          padding: 0 !important;
+          cursor: pointer;
+          background: #E2E8F0 !important;
         }
         .confidence-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #7C5CFC;
-          border: 2px solid #FFFFFF;
-          box-shadow: 0 2px 6px rgba(124, 92, 252, 0.3);
+          -webkit-appearance: none !important;
+          appearance: none !important;
+          width: 18px !important;
+          height: 18px !important;
+          border-radius: 50% !important;
+          background: #7C5CFC !important;
+          border: 2.5px solid #FFFFFF !important;
+          box-shadow: 0 2px 6px rgba(124, 92, 252, 0.4) !important;
           cursor: pointer;
           transition: transform 0.1s ease, background-color 0.1s ease;
         }
         .confidence-slider::-webkit-slider-thumb:hover {
-          transform: scale(1.25);
-          background: #6B46F7;
+          transform: scale(1.2);
+          background: #6B46F7 !important;
         }
         .confidence-slider::-moz-range-thumb {
-          width: 18px;
-          height: 18px;
-          border-radius: 50%;
-          background: #7C5CFC;
-          border: 2px solid #FFFFFF;
-          box-shadow: 0 2px 6px rgba(124, 92, 252, 0.3);
+          width: 18px !important;
+          height: 18px !important;
+          border-radius: 50% !important;
+          background: #7C5CFC !important;
+          border: 2.5px solid #FFFFFF !important;
+          box-shadow: 0 2px 6px rgba(124, 92, 252, 0.4) !important;
           cursor: pointer;
           transition: transform 0.1s ease, background-color 0.1s ease;
         }
         .confidence-slider::-moz-range-thumb:hover {
-          transform: scale(1.25);
-          background: #6B46F7;
+          transform: scale(1.2);
+          background: #6B46F7 !important;
         }
       `}</style>
 
@@ -1383,7 +1389,7 @@ function GradesContent() {
                                                     placeholder="ระบุชื่อข้อสอบและคะแนนที่ได้ (เช่น SAT Math ได้ 780, AP Physics ได้ระดับ 5)"
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
+                                                    className="portfolio-input"
                                                   />
                                                 </div>
                                               </div>
@@ -1427,7 +1433,7 @@ function GradesContent() {
                                                     placeholder="ระบุชื่อทุนและรายละเอียดเพิ่มเติม..."
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
+                                                    className="portfolio-input"
                                                   />
                                                 </div>
                                               </div>
@@ -1440,7 +1446,7 @@ function GradesContent() {
                                                     placeholder="รายละเอียดกิจกรรมสั้นๆ..."
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
+                                                    className="portfolio-input"
                                                   />
                                                 </div>
                                               </div>
@@ -1484,7 +1490,7 @@ function GradesContent() {
                                                     placeholder="รายละเอียดกิจกรรมสั้นๆ..."
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
+                                                    className="portfolio-input"
                                                   />
                                                 </div>
                                               </div>

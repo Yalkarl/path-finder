@@ -405,3 +405,56 @@ body {
 .spin-loader {
   animation: spin 0.8s linear infinite;
 }
+
+/* Sleek Gray Portfolio Dropdowns and Inputs */
+.portfolio-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: #F1F3F5 !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.65rem center !important;
+  background-size: 14px 14px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0.25rem 1.8rem 0.25rem 0.65rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #1E293B !important;
+  outline: none !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  flex: 1 !important;
+  transition: all 0.15s ease !important;
+}
+.portfolio-select:hover {
+  background-color: #E9ECEF !important;
+  border-color: #CBD5E1 !important;
+}
+.portfolio-select:focus {
+  background-color: #FFFFFF !important;
+  border-color: #7C5CFC !important;
+  box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.15) !important;
+}
+
+.portfolio-input {
+  width: 100% !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0.25rem 0.65rem !important;
+  border-radius: 8px !important;
+  border: 1px solid #E2E8F0 !important;
+  background-color: #FFFFFF !important;
+  font-size: 0.8rem !important;
+  outline: none !important;
+  color: #1E293B !important;
+  transition: border-color 0.15s ease !important;
+}
+.portfolio-input:focus {
+  border-color: #7C5CFC !important;
+  box-shadow: 0 0 0 2px rgba(124, 92, 252, 0.15) !important;
+}
