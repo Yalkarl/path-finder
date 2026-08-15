@@ -1399,11 +1399,15 @@ export default function DashboardPage() {
               <BarChart2 size={20} style={{ color: 'var(--primary)' }} /> วิเคราะห์วิชาเฉพาะ (Targeted Gap Analysis)
             </h3>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-              เปรียบเทียบสัดส่วนทักษะของคุณกับเกณฑ์มาตรฐานที่แนะนำสำหรับการเข้าศึกษาต่อในคณะเป้าหมาย
+              เปรียบเทียบสัดส่วนทักษะและผลงานของคุณกับเกณฑ์มาตรฐานที่แนะนำสำหรับการเข้าศึกษาต่อในคณะเป้าหมาย
             </p>
             
             {targetPathObj && (
-              <GapAnalysisChart gapData={analyzeGaps(skillVector, targetPathObj.benchmark)} />
+              <GapAnalysisChart gapData={analyzeGaps(skillVector, targetPathObj.benchmark, {
+                portfolio: profile.portfolio || [],
+                customActivities: profile.customActivities || [],
+                aiCustomEvaluations: aiCustomEvals
+              })} />
             )}
 
             {/* AI Qualitative Insights Section (Target Lock Mode) */}
@@ -1851,10 +1855,14 @@ export default function DashboardPage() {
 
                         <h4 style={{ margin: '0 0 1rem 0' }}>วิเคราะห์ช่องว่างทักษะ (Gap Analysis)</h4>
                         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                          เปรียบเทียบคะแนนทักษะของคุณกับเกณฑ์เฉลี่ยที่แนะนำสำหรับ{path.name}
+                          เปรียบเทียบคะแนนทักษะและผลงานของคุณกับเกณฑ์เฉลี่ยที่แนะนำสำหรับ{path.name}
                         </p>
                         
-                        <GapAnalysisChart gapData={analyzeGaps(skillVector, path.benchmark)} />
+                        <GapAnalysisChart gapData={analyzeGaps(skillVector, path.benchmark, {
+                          portfolio: profile.portfolio || [],
+                          customActivities: profile.customActivities || [],
+                          aiCustomEvaluations: aiCustomEvals
+                        })} />
 
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1.5rem' }}>
                           <button 

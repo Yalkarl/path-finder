@@ -14,8 +14,8 @@ export default function GapAnalysisChart({ gapData }) {
   // แปลงรูปแบบข้อมูลเข้าสู่ Recharts
   const data = gapData.map(gap => ({
     subject: gap.label,
-    'คะแนนของคุณ': gap.current,
-    'เป้าหมายขั้นต่ำ': gap.target,
+    'ทักษะ + ผลงานของคุณ': gap.current,
+    'เกณฑ์แนะนำ': gap.target,
     status: gap.status,
     rawGap: gap.gap
   }));
@@ -63,8 +63,8 @@ export default function GapAnalysisChart({ gapData }) {
           <YAxis dataKey="subject" type="category" width={90} tick={{ fontSize: 14, fontWeight: 600 }} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
           <Legend wrapperStyle={{ paddingTop: '20px' }} />
-          <Bar dataKey="คะแนนของคุณ" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
-          <Bar dataKey="เป้าหมายขั้นต่ำ" fill="#E2E8F0" radius={[0, 4, 4, 0]} barSize={20} />
+          <Bar dataKey="ทักษะ + ผลงานของคุณ" fill="var(--primary)" radius={[0, 4, 4, 0]} barSize={20} />
+          <Bar dataKey="เกณฑ์แนะนำ" fill="#E2E8F0" radius={[0, 4, 4, 0]} barSize={20} />
         </BarChart>
       </ResponsiveContainer>
     </div>
