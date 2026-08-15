@@ -542,7 +542,7 @@ function GradesContent() {
           margin-bottom: 0.6rem !important;
           padding: 0 !important;
           cursor: pointer;
-          background: #E2E8F0 !important;
+          /* dynamic background via inline style */
         }
         .confidence-slider::-webkit-slider-thumb {
           -webkit-appearance: none !important;
@@ -1750,7 +1750,7 @@ function GradesContent() {
                             onChange={(e) => setSelfAssessment({ ...selfAssessment, [sub.id]: parseInt(e.target.value) })}
                             className="confidence-slider"
                             style={{
-                              background: `linear-gradient(to right, var(--primary) 0%, var(--primary) ${val * 20}%, #E2E8F0 ${val * 20}%, #E2E8F0 100%)`
+                              background: `linear-gradient(to right, #7C5CFC 0%, #7C5CFC ${val * 20}%, #E2E8F0 ${val * 20}%, #E2E8F0 100%)`
                             }}
                           />
                         </div>
