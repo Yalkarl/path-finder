@@ -395,173 +395,43 @@ export default function ProfilePage() {
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            justify: 'center',
-                            gap: '0.35rem',
-                            padding: '0.2rem 0.45rem 0.2rem 0.65rem',
-                            borderRadius: '16px',
+                            gap: '0.4rem',
+                            padding: '0.3rem 0.65rem',
+                            borderRadius: '20px',
                             fontSize: '0.8rem',
                             fontWeight: '600',
-                            lineHeight: 1,
-                            background: 'rgba(22, 163, 74, 0.12)',
-                            color: '#16A34A',
-                            border: '1px solid rgba(22, 163, 74, 0.3)'
-                          }}
-                        >
-                          ✓ {item}
-                          <button
-                            type="button"
-                            onClick={() => removeLike(item)}
-                            style={{
-                              background: 'rgba(22, 163, 74, 0.25)',
-                              border: 'none',
-                              color: '#16A34A',
-                              cursor: 'pointer',
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justify: 'center',
-                              padding: 0,
-                              margin: 0,
-                              lineHeight: 0,
-                              flexShrink: 0,
-                              appearance: 'none',
-                              WebkitAppearance: 'none'
-                            }}
-                            title="คลิกเพื่อลบสิ่งที่สนใจนี้ออก"
-                          >
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: 'auto' }}>
-                              <line x1="18" y1="6" x2="6" y2="18"></line>
-                              <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <input
-                    type="text"
-                    className="input-field"
-                    placeholder="พิมพ์หรือคลิกเลือกสิ่งที่สนใจ..."
-                    value={likeInput}
-                    onFocus={() => setShowLikeDropdown(true)}
-                    onChange={(e) => { setLikeInput(e.target.value); setShowLikeDropdown(true); }}
-                    onKeyDown={handleLikeKeyDown}
-                    style={{ fontSize: '0.85rem', width: '100%' }}
-                  />
-                  {showLikeDropdown && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      marginTop: '4px',
-                      background: 'var(--surface, #FFF)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '12px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                      zIndex: 100,
-                      maxHeight: '180px',
-                      overflowY: 'auto',
-                      padding: '0.4rem'
-                    }}>
-                      {PRESET_LIKES.filter(p => !likes.includes(p) && p.toLowerCase().includes(likeInput.toLowerCase())).map(preset => (
-                        <div
-                          key={preset}
-                          onClick={() => addLike(preset)}
-                          style={{
-                            padding: '0.5rem 0.75rem',
-                            fontSize: '0.85rem',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            color: 'var(--text-primary)',
-                            fontWeight: '500',
-                            transition: 'background 0.15s'
-                          }}
-                          onMouseEnter={(e) => e.target.style.background = 'var(--primary-bg)'}
-                          onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                        >
-                          + {preset}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Dislikes / Non-interests Section - Sleek Dropdown */}
-                <div style={{ marginBottom: '1.75rem', position: 'relative' }} ref={dislikeRef}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                    <label style={{ fontSize: '0.85rem', color: '#DC2626', fontWeight: '700' }}>
-                      สิ่งที่ไม่สนใจ
-                    </label>
-                    {dislikes.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setDislikes([])}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#6B7280',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                          padding: 0
-                        }}
-                        onMouseEnter={(e) => e.target.style.color = '#DC2626'}
-                        onMouseLeave={(e) => e.target.style.color = '#6B7280'}
-                        title="ลบสิ่งที่ไม่สนใจทั้งหมดที่เลือกไว้"
-                      >
-                        ล้างสิ่งที่ไม่สนใจทั้งหมด
-                      </button>
-                    )}
-                  </div>
-                  {dislikes.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
-                      {dislikes.map(item => (
-                        <span
-                          key={item}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justify: 'center',
-                            gap: '0.35rem',
-                            padding: '0.2rem 0.45rem 0.2rem 0.65rem',
-                            borderRadius: '16px',
-                            fontSize: '0.8rem',
-                            fontWeight: '600',
-                            lineHeight: 1,
-                            background: 'rgba(220, 38, 38, 0.12)',
+                            lineHeight: 1.2,
+                            background: 'rgba(220, 38, 38, 0.08)',
                             color: '#DC2626',
-                            border: '1px solid rgba(220, 38, 38, 0.3)'
+                            border: '1px solid rgba(220, 38, 38, 0.25)',
+                            transition: 'all 0.15s ease'
                           }}
                         >
-                          ✕ {item}
+                          <span>✕ {item}</span>
                           <button
                             type="button"
                             onClick={() => removeDislike(item)}
                             style={{
-                              background: 'rgba(220, 38, 38, 0.25)',
+                              background: 'transparent',
                               border: 'none',
                               color: '#DC2626',
                               cursor: 'pointer',
-                              width: '18px',
-                              height: '18px',
-                              borderRadius: '50%',
+                              padding: '2px',
+                              margin: 0,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              justify: 'center',
-                              padding: 0,
-                              margin: 0,
-                              lineHeight: 0,
-                              flexShrink: 0,
-                              appearance: 'none',
-                              WebkitAppearance: 'none'
+                              justifyContent: 'center',
+                              borderRadius: '4px',
+                              opacity: 0.7,
+                              transition: 'opacity 0.15s',
+                              lineHeight: 1,
+                              flexShrink: 0
                             }}
-                            title="คลิกเพื่อลบสิ่งที่ไม่สนใจนี้ออก"
+                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+                            title="ลบสิ่งที่ไม่สนใจนี้"
                           >
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: 'auto' }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18"></line>
                               <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>

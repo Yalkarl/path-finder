@@ -228,13 +228,9 @@ body {
     display: none !important;
   }
 
-  /* Show compact profile badge on mobile so users can tap to logout */
+  /* Hide profile dropdown on mobile (removed per user request) */
   .desktop-profile-dropdown {
-    display: block !important;
-    position: absolute !important;
-    top: 0.75rem !important;
-    right: 0.75rem !important;
-    z-index: 1000 !important;
+    display: none !important;
   }
   
   /* Show mobile bottom nav */
@@ -317,8 +313,11 @@ body {
     padding: 1.2rem !important;
     border-radius: 16px !important;
   }
-  button, input, select, textarea {
+  button, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select:not(.portfolio-select), textarea {
     min-height: 44px;
+  }
+  input[type="checkbox"], input[type="radio"], input[type="range"], select.portfolio-select {
+    min-height: auto !important;
   }
   .dashboard-grid, .grades-grid {
     grid-template-columns: 1fr !important;

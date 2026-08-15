@@ -55,77 +55,94 @@ export default function StreakPage() {
   const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0 is Monday, 6 is Sunday
 
   return (
-    <div className="card" style={{ padding: '2rem', position: 'relative' }}>
+    <div style={{ maxWidth: '640px', margin: '0 auto', width: '100%', animation: 'fadeIn 0.3s ease-out' }}>
       <button 
         onClick={() => router.push('/dashboard')}
         style={{
-          position: 'absolute',
-          top: '1.5rem',
-          left: '1.5rem',
           background: 'none',
           border: 'none',
           color: 'var(--text-secondary)',
           cursor: 'pointer',
-          fontWeight: 'bold',
+          fontWeight: '700',
           fontSize: '0.9rem',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.25rem',
-          fontFamily: 'inherit'
+          gap: '0.35rem',
+          marginBottom: '0.75rem',
+          padding: '0.25rem 0',
+          fontFamily: 'inherit',
+          transition: 'color 0.2s'
         }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
       >
         ← ย้อนกลับ
       </button>
-      <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-        <h2 style={{ color: 'var(--text-secondary)', marginTop: 0 }}>ความต่อเนื่องของคุณ</h2>
-      
-      <div style={{ margin: '2rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ fontSize: '5rem', animation: 'pulse 2s infinite' }}>🔥</div>
-        <h1 style={{ fontSize: '4rem', color: 'var(--accent)', margin: '0' }}>{streakData.current}</h1>
-        <p style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>วันติดต่อกัน!</p>
-      </div>
 
-      <div style={{ background: 'var(--primary-bg)', padding: '1.5rem', borderRadius: '16px', marginTop: '2rem' }}>
-        <p style={{ fontWeight: '600', marginBottom: '1rem' }}>สถิติสัปดาห์นี้</p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-          {days.map((day, idx) => {
-            const isToday = idx === todayIndex;
-            const isPast = idx < todayIndex;
-            // คำนวณวันที่มีการเข้าใช้งานย้อนหลังอย่างแม่นยำตามจำนวนวัน Streak
-            let loggedIn = false;
-            if (isToday) {
-              loggedIn = streakData.current > 0;
-            } else if (isPast) {
-              const daysAgo = todayIndex - idx;
-              loggedIn = daysAgo < streakData.current;
-            }
-
-            return (
-              <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                <div style={{ 
-                  width: '40px', height: '40px', 
-                  borderRadius: '50%', 
-                  background: loggedIn ? 'var(--success)' : 'var(--surface)',
-                  border: loggedIn ? 'none' : '2px solid var(--border)',
-                  color: loggedIn ? 'white' : 'var(--text-secondary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 'bold',
-                  boxShadow: isToday ? '0 0 0 4px rgba(76, 175, 80, 0.2)' : 'none'
-                }}>
-                  {loggedIn ? '✓' : ''}
-                </div>
-                <span style={{ fontSize: '0.75rem', color: isToday ? 'var(--primary)' : 'var(--text-secondary)', fontWeight: isToday ? 'bold' : 'normal' }}>
-                  {day}
-                </span>
-              </div>
-            );
-          })}
+      <div className="card" style={{ padding: '2rem 1.5rem', textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--text-secondary)', marginTop: 0, fontSize: '1.25rem' }}>ความต่อเนื่องของคุณ</h2>
+        
+        <div style={{ margin: '1.75rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ fontSize: '4.5rem', animation: 'pulse 2s infinite', lineHeight: 1.1 }}>🔥</div>
+          <h1 style={{ fontSize: '3.75rem', color: 'var(--accent)', margin: '0.25rem 0 0 0', lineHeight: 1 }}>{streakData.current}</h1>
+          <p style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0.5rem 0 0 0' }}>วันติดต่อกัน!</p>
         </div>
-      </div>
 
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '2rem' }}>
-        "ความสม่ำเสมอคือกุญแจสู่ความสำเร็จ! เข้ามาเช็คแผนพัฒนาตัวเองกับ Mr. Path ทุกวันเพื่อผลลัพธ์ที่ดีที่สุดนะ" - Mr. Path
-      </p>
+        <div style={{ background: 'var(--primary-bg)', padding: '1.25rem 0.75rem', borderRadius: '16px', marginTop: '1.5rem' }}>
+          <p style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-primary)', marginTop: 0, marginBottom: '1rem' }}>สถิติสัปดาห์นี้</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.25rem', width: '100%' }}>
+            {days.map((day, idx) => {
+              const isToday = idx === todayIndex;
+              const isPast = idx < todayIndex;
+              // คำนวณวันที่มีการเข้าใช้งานย้อนหลังอย่างแม่นยำตามจำนวนวัน Streak
+              let loggedIn = false;
+              if (isToday) {
+                loggedIn = streakData.current > 0;
+              } else if (isPast) {
+                const daysAgo = todayIndex - idx;
+                loggedIn = daysAgo < streakData.current;
+              }
+
+              return (
+                <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', flex: 1, minWidth: 0 }}>
+                  <div style={{ 
+                    width: 'clamp(28px, 8.5vw, 42px)', 
+                    height: 'clamp(28px, 8.5vw, 42px)', 
+                    borderRadius: '50%', 
+                    background: loggedIn ? 'var(--success)' : 'var(--surface)',
+                    border: loggedIn ? 'none' : '2px solid var(--border)',
+                    color: loggedIn ? 'white' : 'var(--text-secondary)',
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontWeight: '800',
+                    fontSize: 'clamp(0.75rem, 2.5vw, 0.9rem)',
+                    boxShadow: isToday ? '0 0 0 3px rgba(76, 175, 80, 0.25)' : 'none',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0
+                  }}>
+                    {loggedIn ? '✓' : ''}
+                  </div>
+                  <span style={{ 
+                    fontSize: 'clamp(0.62rem, 1.9vw, 0.75rem)', 
+                    color: isToday ? 'var(--primary)' : 'var(--text-secondary)', 
+                    fontWeight: isToday ? '800' : '500',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%'
+                  }}>
+                    {day}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginTop: '1.75rem', marginBottom: 0 }}>
+          "ความสม่ำเสมอคือกุญแจสู่ความสำเร็จ! เข้ามาเช็คแผนพัฒนาตัวเองกับ Mr. Path ทุกวันเพื่อผลลัพธ์ที่ดีที่สุดนะ" - Mr. Path
+        </p>
       </div>
     </div>
   );

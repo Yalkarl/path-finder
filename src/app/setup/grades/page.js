@@ -612,19 +612,34 @@ function GradesContent() {
                       </div>
                     </div>
                     <div style={{
-                      fontSize: '1.4rem',
-                      fontWeight: '800',
-                      color: realtimeGPAX ? 'var(--primary)' : '#CBD5E1',
+                      display: 'inline-flex',
+                      alignItems: 'baseline',
+                      gap: '0.35rem',
                       background: '#FFFFFF',
-                      padding: '0.35rem 0.9rem',
+                      padding: '0.4rem 0.85rem',
                       borderRadius: '12px',
                       boxShadow: '0 2px 8px rgba(124, 92, 252, 0.12)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem'
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      lineHeight: 1
                     }}>
-                      {realtimeGPAX ? realtimeGPAX : '0.00'}
-                      <span style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>/ 4.00</span>
+                      <span style={{
+                        fontSize: '1.35rem',
+                        fontWeight: '800',
+                        color: realtimeGPAX ? 'var(--primary)' : '#CBD5E1',
+                        letterSpacing: '-0.02em',
+                        lineHeight: 1
+                      }}>
+                        {realtimeGPAX ? realtimeGPAX : '0.00'}
+                      </span>
+                      <span style={{
+                        fontSize: '0.85rem',
+                        fontWeight: '700',
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1
+                      }}>
+                        / 4.00
+                      </span>
                     </div>
                   </div>
                 );
@@ -1209,14 +1224,32 @@ function GradesContent() {
                                         borderRadius: '12px',
                                         transition: 'all 0.25s ease'
                                       }}>
-                                        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.8rem', color: isChecked ? 'var(--primary)' : 'var(--text-secondary)', cursor: 'pointer', fontWeight: isChecked ? '600' : 'normal' }}>
+                                        <label style={{
+                                          display: 'flex',
+                                          alignItems: 'flex-start',
+                                          gap: '0.65rem',
+                                          fontSize: '0.85rem',
+                                          color: isChecked ? 'var(--primary)' : 'var(--text-primary)',
+                                          cursor: 'pointer',
+                                          fontWeight: isChecked ? '600' : 'normal',
+                                          lineHeight: '1.4'
+                                        }}>
                                           <input
                                             type="checkbox"
                                             checked={isChecked}
                                             onChange={() => handleToggleItem(item, cat.id)}
-                                            style={{ marginTop: '0.15rem', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                                            style={{
+                                              width: '18px',
+                                              height: '18px',
+                                              minWidth: '18px',
+                                              minHeight: '18px',
+                                              marginTop: '2px',
+                                              cursor: 'pointer',
+                                              accentColor: 'var(--primary)',
+                                              flexShrink: 0
+                                            }}
                                           />
-                                          <span style={{ lineHeight: '1.3' }}>{item}</span>
+                                          <span style={{ lineHeight: '1.4', flex: 1 }}>{item}</span>
                                         </label>
 
                                         {/* Inline Config Panel */}
@@ -1313,24 +1346,24 @@ function GradesContent() {
                                                   </div>
 
                                                   <select
-                                                    value={itemObj.level || 'national'}
-                                                    onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
-                                                    style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
-                                                  >
-                                                    <option value="national">ระดับชาติ (National Standardized Test)</option>
-                                                    <option value="international">ระดับนานาชาติ (International Standardized Test)</option>
-                                                  </select>
+                                                     className="portfolio-select"
+                                                     value={itemObj.level || 'national'}
+                                                     onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
+                                                   >
+                                                     <option value="national">ระดับชาติ (National Test)</option>
+                                                     <option value="international">ระดับนานาชาติ (International Test)</option>
+                                                   </select>
                                                 </div>
 
                                                 {/* Line 2: ผลการสอบ / ระดับคะแนน */}
                                                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ผลการสอบ / ระดับคะแนน:</span>
                                                   <select
-                                                    value={itemObj.award || 'none'}
-                                                    onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
-                                                    style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
-                                                  >
-                                                    <option value="winner">คะแนนระดับสูงมาก / ดีเยี่ยม (Excellent)</option>
+                                                     className="portfolio-select"
+                                                     value={itemObj.award || 'none'}
+                                                     onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
+                                                   >
+                                                     <option value="winner">คะแนนระดับสูงมาก / ดีเยี่ยม (Excellent)</option>
                                                     <option value="runnerup1">คะแนนระดับสูง / ดี (Good)</option>
                                                     <option value="none">ผ่านเกณฑ์มาตรฐาน / ผ่านระดับพื้นฐาน</option>
                                                     <option value="below_standard">ต่ำกว่าเกณฑ์มาตรฐาน / ยังไม่ผ่านเกณฑ์ (Below Standard)</option>
@@ -1355,25 +1388,25 @@ function GradesContent() {
                                                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ระดับ:</span>
                                                   <select
-                                                    value={itemObj.level || 'local'}
-                                                    onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
-                                                    style={{ width: '100%', maxWidth: '100%', padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
-                                                  >
-                                                    <option value="local">ทุนภายในสถาบัน / โรงเรียน / มหาวิทยาลัย (เช่น ทุนเรียนดีของโรงเรียน, ทุนยกเว้นค่าเทอมของคณะ)</option>
-                                                    <option value="national">ทุนองค์กรภายในประเทศ / ทุนรัฐบาลไทย (เช่น ทุน พสวท., ทุน ก.พ., ทุน สวทช., ทุนธนาคารต่างๆ)</option>
-                                                    <option value="international">ทุนรัฐบาลต่างประเทศ / ทุนนานาชาติ (เช่น ทุนรัฐบาลญี่ปุ่น Monbukagakusho, ทุนรัฐบาลอังกฤษ Chevening, ทุน Erasmus)</option>
-                                                  </select>
+                                                     className="portfolio-select"
+                                                     value={itemObj.level || 'local'}
+                                                     onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
+                                                   >
+                                                     <option value="local">ทุนภายในสถาบัน / โรงเรียน / มหาวิทยาลัย</option>
+                                                     <option value="national">ทุนองค์กรภายในประเทศ / ทุนรัฐบาลไทย</option>
+                                                     <option value="international">ทุนรัฐบาลต่างประเทศ / ทุนนานาชาติ</option>
+                                                   </select>
                                                 </div>
 
                                                 {/* Line 2: ผลการสอบ */}
                                                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                                   <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ผลการสอบ:</span>
                                                   <select
-                                                    value={itemObj.award || 'none'}
-                                                    onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
-                                                    style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
-                                                  >
-                                                    <option value="winner">ผ่านการคัดเลือก (ได้รับทุน)</option>
+                                                     className="portfolio-select"
+                                                     value={itemObj.award || 'none'}
+                                                     onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
+                                                   >
+                                                     <option value="winner">ผ่านการคัดเลือก (ได้รับทุน)</option>
                                                     <option value="runnerup1">ตัวสำรอง</option>
                                                     <option value="none">เข้าร่วมสอบ</option>
                                                   </select>
