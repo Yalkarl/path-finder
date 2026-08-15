@@ -19,6 +19,7 @@ import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects
 import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight, Sparkles, BookOpen, Lock, Unlock, Clock } from 'lucide-react';
 import { checkAssessmentQuota } from '@/lib/algorithms/dailyAttempts';
 import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
+import { ConstellationSoundTester } from '@/components/ui/ConstellationSoundTester';
 
 const PROFILE_THAI_MAP = {
   'Autonomous Strategic Analyst': 'นักวิเคราะห์กลยุทธ์อิสระ (Autonomous Strategic Analyst)',
@@ -667,6 +668,7 @@ function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
 
 function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval }) {
   const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
+  const [mockActive, setMockActive] = useState(false);
   const prevEvalRef = useRef(isEvaluating);
 
   useEffect(() => {
@@ -681,6 +683,23 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
     }
     prevEvalRef.current = isEvaluating;
   }, [isEvaluating]);
+
+  const handleTriggerMockAnimation = (active) => {
+    if (active) {
+      setPhase('evaluating');
+      setMockActive(true);
+      setTimeout(() => {
+        setPhase('shattering');
+        setTimeout(() => {
+          setPhase('complete');
+          setMockActive(false);
+        }, 1000);
+      }, 3100);
+    } else {
+      setPhase('complete');
+      setMockActive(false);
+    }
+  };
 
   const isLocked = phase === 'evaluating';
   const isShattering = phase === 'shattering';
@@ -706,7 +725,8 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
   const innerStarPoints = innerStarIndices.map(i => `calc(50% + ${stars[i].x}px),calc(50% + ${stars[i].y}px)`).join(' ');
 
   return (
-    <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
+    <>
+      <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
       {/* Skill Radar Chart with Soft Ethereal Blur */}
       <div style={{
         filter: isLocked ? 'blur(10px)' : isShattering ? 'blur(3px)' : 'blur(0px)',
@@ -908,6 +928,10 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
         }
       `}</style>
     </div>
+
+    {/* Interactive Sound Tester for User to preview all 3 sounds */}
+    <ConstellationSoundTester onTriggerMockAnimation={handleTriggerMockAnimation} />
+  </>
   );
 }
 
