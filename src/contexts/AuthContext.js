@@ -29,9 +29,11 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, [pathname, router]);
 
+  const isPublicRoute = pathname === '/' || pathname.startsWith('/login');
+
   return (
     <AuthContext.Provider value={{ user, loading }}>
-      {!loading && children}
+      {isPublicRoute ? children : (!loading && children)}
     </AuthContext.Provider>
   );
 }
