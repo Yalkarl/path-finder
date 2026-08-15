@@ -619,17 +619,43 @@ function ChatPageInner() {
                       }}>
                         {conv.title || 'สนทนาใหม่'}
                       </span>
-                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px', flexShrink: 0, alignItems: 'center' }}>
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditingConvId(conv.id); setEditTitle(conv.title || ''); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px', opacity: 0.7, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                          style={{
+                            background: 'rgba(245, 158, 11, 0.12)',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            color: '#D97706',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.25)'; e.currentTarget.style.transform = 'scale(1.08)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.12)'; e.currentTarget.style.transform = 'scale(1)'; }}
                           title="เปลี่ยนชื่อ"
                         >
                           <Edit2 size={13} />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(conv.id); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px', opacity: 0.7, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.10)',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            color: '#EF4444',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)'; e.currentTarget.style.transform = 'scale(1.08)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.10)'; e.currentTarget.style.transform = 'scale(1)'; }}
                           title="ลบ"
                         >
                           <Trash2 size={13} />
