@@ -56,38 +56,33 @@ export default function StreakPage() {
 
   return (
     <div style={{ maxWidth: '820px', margin: '0 auto', width: '100%', animation: 'fadeIn 0.3s ease-out' }}>
-      <div className="card" style={{ padding: '2.5rem 2.5rem', textAlign: 'center', position: 'relative' }}>
-        {/* Header with back button aligned to top-left */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '32px', marginBottom: '1rem' }}>
-          <button 
-            onClick={() => router.push('/dashboard')}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              fontWeight: '700',
-              fontSize: '0.9rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              padding: '0.25rem 0',
-              fontFamily: 'inherit',
-              transition: 'color 0.2s'
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-          >
-            ← ย้อนกลับ
-          </button>
-          <h2 style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>
-            ความต่อเนื่องของคุณ
-          </h2>
-        </div>
+      <button 
+        onClick={() => router.push('/dashboard')}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          fontWeight: '700',
+          fontSize: '0.9rem',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          marginBottom: '0.85rem',
+          padding: '0.25rem 0',
+          fontFamily: 'inherit',
+          transition: 'color 0.2s'
+        }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+      >
+        ← ย้อนกลับ
+      </button>
+
+      <div className="card" style={{ padding: '2.5rem 2.5rem', textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--text-secondary)', marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem', fontWeight: '700' }}>
+          ความต่อเนื่องของคุณ
+        </h2>
         
         <div style={{ margin: '2rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div style={{ fontSize: '5rem', animation: 'pulse 2s infinite', lineHeight: 1.1 }}>🔥</div>
