@@ -55,41 +55,48 @@ export default function StreakPage() {
   const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1; // 0 is Monday, 6 is Sunday
 
   return (
-    <div style={{ maxWidth: '720px', margin: '0 auto', width: '100%', animation: 'fadeIn 0.3s ease-out' }}>
-      <button 
-        onClick={() => router.push('/dashboard')}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--text-secondary)',
-          cursor: 'pointer',
-          fontWeight: '700',
-          fontSize: '0.9rem',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-          marginBottom: '0.75rem',
-          padding: '0.25rem 0',
-          fontFamily: 'inherit',
-          transition: 'color 0.2s'
-        }}
-        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
-        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-      >
-        ← ย้อนกลับ
-      </button>
-
-      <div className="card" style={{ padding: '2.5rem 2rem', textAlign: 'center' }}>
-        <h2 style={{ color: 'var(--text-secondary)', marginTop: 0, fontSize: '1.4rem', fontWeight: '800' }}>ความต่อเนื่องของคุณ</h2>
+    <div style={{ maxWidth: '820px', margin: '0 auto', width: '100%', animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="card" style={{ padding: '2.5rem 2.5rem', textAlign: 'center', position: 'relative' }}>
+        {/* Header with back button aligned to top-left */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: '32px', marginBottom: '1rem' }}>
+          <button 
+            onClick={() => router.push('/dashboard')}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontWeight: '700',
+              fontSize: '0.9rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.25rem 0',
+              fontFamily: 'inherit',
+              transition: 'color 0.2s'
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+          >
+            ← ย้อนกลับ
+          </button>
+          <h2 style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '1.25rem', fontWeight: '700' }}>
+            ความต่อเนื่องของคุณ
+          </h2>
+        </div>
         
-        <div style={{ margin: '2.5rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ fontSize: '6rem', animation: 'pulse 2s infinite', lineHeight: 1.1 }}>🔥</div>
-          <h1 style={{ fontSize: '5rem', color: 'var(--accent)', margin: '0.35rem 0 0 0', lineHeight: 1, fontWeight: '900' }}>{streakData.current}</h1>
-          <p style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--text-primary)', margin: '0.6rem 0 0 0' }}>วันติดต่อกัน!</p>
+        <div style={{ margin: '2rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ fontSize: '5rem', animation: 'pulse 2s infinite', lineHeight: 1.1 }}>🔥</div>
+          <h1 style={{ fontSize: '4.25rem', color: 'var(--accent)', margin: '0.3rem 0 0 0', lineHeight: 1, fontWeight: '800' }}>{streakData.current}</h1>
+          <p style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0.5rem 0 0 0' }}>วันติดต่อกัน!</p>
         </div>
 
-        <div style={{ background: 'var(--primary-bg)', padding: '1.75rem 1.25rem', borderRadius: '20px', marginTop: '2rem' }}>
-          <p style={{ fontWeight: '800', fontSize: '1.05rem', color: 'var(--text-primary)', marginTop: 0, marginBottom: '1.25rem' }}>สถิติสัปดาห์นี้</p>
+        <div style={{ background: 'var(--primary-bg)', padding: '1.75rem 2rem', borderRadius: '16px', marginTop: '1.75rem' }}>
+          <p style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-primary)', marginTop: 0, marginBottom: '1.25rem' }}>สถิติสัปดาห์นี้</p>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
             {days.map((day, idx) => {
               const isToday = idx === todayIndex;
@@ -104,29 +111,29 @@ export default function StreakPage() {
               }
 
               return (
-                <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                <div key={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.45rem', flex: 1, minWidth: 0 }}>
                   <div style={{ 
-                    width: 'clamp(36px, 10vw, 54px)', 
-                    height: 'clamp(36px, 10vw, 54px)', 
+                    width: 'clamp(34px, 6.5vw, 48px)', 
+                    height: 'clamp(34px, 6.5vw, 48px)', 
                     borderRadius: '50%', 
                     background: loggedIn ? 'var(--success)' : 'var(--surface)',
-                    border: loggedIn ? 'none' : '2.5px solid var(--border)',
+                    border: loggedIn ? 'none' : '2px solid var(--border)',
                     color: loggedIn ? 'white' : 'var(--text-secondary)',
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
                     fontWeight: '800',
-                    fontSize: 'clamp(0.9rem, 3vw, 1.15rem)',
-                    boxShadow: isToday ? '0 0 0 4px rgba(76, 175, 80, 0.25)' : loggedIn ? '0 3px 10px rgba(76, 175, 80, 0.3)' : 'none',
+                    fontSize: 'clamp(0.85rem, 2.5vw, 1.05rem)',
+                    boxShadow: isToday ? '0 0 0 3px rgba(76, 175, 80, 0.25)' : loggedIn ? '0 2px 8px rgba(76, 175, 80, 0.25)' : 'none',
                     transition: 'all 0.2s ease',
                     flexShrink: 0
                   }}>
                     {loggedIn ? '✓' : ''}
                   </div>
                   <span style={{ 
-                    fontSize: 'clamp(0.72rem, 2.2vw, 0.88rem)', 
+                    fontSize: 'clamp(0.68rem, 2vw, 0.82rem)', 
                     color: isToday ? 'var(--primary)' : 'var(--text-secondary)', 
-                    fontWeight: isToday ? '800' : '600',
+                    fontWeight: isToday ? '800' : '500',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -140,7 +147,7 @@ export default function StreakPage() {
           </div>
         </div>
 
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: '1.6', marginTop: '2rem', marginBottom: 0, fontStyle: 'italic' }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', marginTop: '1.75rem', marginBottom: 0 }}>
           "ความสม่ำเสมอคือกุญแจสู่ความสำเร็จ! เข้ามาเช็คแผนพัฒนาตัวเองกับ Mr. Path ทุกวันเพื่อผลลัพธ์ที่ดีที่สุดนะ" - Mr. Path
         </p>
       </div>
