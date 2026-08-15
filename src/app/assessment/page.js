@@ -425,7 +425,7 @@ export default function AssessmentPage() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.background = 'linear-gradient(135deg, rgba(124, 92, 252, 0.08), rgba(233, 30, 99, 0.08))'; }}
               >
                 <Sparkles size={16} style={{ color: 'var(--primary)' }} />
-                <span>✨ พิมพ์ตอบด้วยไอเดียของคุณเอง (AI วิเคราะห์)</span>
+                <span>พิมพ์ตอบด้วยไอเดียของคุณเอง (AI วิเคราะห์)</span>
               </button>
             ) : (
               <div style={{
