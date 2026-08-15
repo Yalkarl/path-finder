@@ -401,6 +401,136 @@ export default function ProfilePage() {
                             fontSize: '0.8rem',
                             fontWeight: '600',
                             lineHeight: 1.2,
+                            background: 'rgba(22, 163, 74, 0.08)',
+                            color: '#16A34A',
+                            border: '1px solid rgba(22, 163, 74, 0.25)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <span>✓ {item}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeLike(item)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#16A34A',
+                              cursor: 'pointer',
+                              padding: '2px',
+                              margin: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: '4px',
+                              opacity: 0.7,
+                              transition: 'opacity 0.15s',
+                              lineHeight: 1,
+                              flexShrink: 0
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                            onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+                            title="ลบสิ่งที่สนใจนี้"
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="พิมพ์หรือคลิกเลือกสิ่งที่สนใจ..."
+                    value={likeInput}
+                    onFocus={() => setShowLikeDropdown(true)}
+                    onChange={(e) => { setLikeInput(e.target.value); setShowLikeDropdown(true); }}
+                    onKeyDown={handleLikeKeyDown}
+                    style={{ fontSize: '0.85rem', width: '100%' }}
+                  />
+                  {showLikeDropdown && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      marginTop: '4px',
+                      background: 'var(--surface, #FFF)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      zIndex: 100,
+                      maxHeight: '180px',
+                      overflowY: 'auto',
+                      padding: '0.4rem'
+                    }}>
+                      {PRESET_LIKES.filter(p => !likes.includes(p) && p.toLowerCase().includes(likeInput.toLowerCase())).map(preset => (
+                        <div
+                          key={preset}
+                          onClick={() => addLike(preset)}
+                          style={{
+                            padding: '0.5rem 0.75rem',
+                            fontSize: '0.85rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            color: 'var(--text-primary)',
+                            fontWeight: '500',
+                            transition: 'background 0.15s'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = 'var(--primary-bg)'}
+                          onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                        >
+                          + {preset}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Dislikes / Non-interests Section - Sleek Dropdown (Dropup) */}
+                <div style={{ marginBottom: '1.75rem', position: 'relative' }} ref={dislikeRef}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <label style={{ fontSize: '0.85rem', color: '#DC2626', fontWeight: '700' }}>
+                      สิ่งที่ไม่สนใจของคุณ
+                    </label>
+                    {dislikes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setDislikes([])}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#6B7280',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          padding: 0
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = '#DC2626'}
+                        onMouseLeave={(e) => e.target.style.color = '#6B7280'}
+                        title="ลบสิ่งที่ไม่สนใจทั้งหมดที่เลือกไว้"
+                      >
+                        ล้างสิ่งที่ไม่สนใจทั้งหมด
+                      </button>
+                    )}
+                  </div>
+                  {dislikes.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+                      {dislikes.map(item => (
+                        <span
+                          key={item}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            padding: '0.3rem 0.65rem',
+                            borderRadius: '20px',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            lineHeight: 1.2,
                             background: 'rgba(220, 38, 38, 0.08)',
                             color: '#DC2626',
                             border: '1px solid rgba(220, 38, 38, 0.25)',
