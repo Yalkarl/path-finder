@@ -22,6 +22,7 @@ import { calculateSkillVector } from '@/lib/algorithms/skillVector';
 import { matchPaths } from '@/lib/algorithms/cosineSimilarity';
 import { findAlternativePaths } from '@/lib/algorithms/alternativePaths';
 import { calculateReadiness } from '@/lib/algorithms/readinessCalculator';
+import { MessageSquare, Edit2, Trash2, Plus, X } from 'lucide-react';
 // คอมโพเนนต์ภายในที่ใช้ useSearchParams
 function ChatPageInner() {
   const { user } = useAuth();
@@ -502,12 +503,16 @@ function ChatPageInner() {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-primary)' }}>💬 การสนทนา</span>
+          <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <MessageSquare size={16} style={{ color: 'var(--primary)' }} /> การสนทนา
+          </span>
           <button
             onClick={() => setConvsPanelOpen(false)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--text-secondary)', padding: '2px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '2px', display: 'flex', alignItems: 'center' }}
             title="ซ่อนแผงสนทนา"
-          >✕</button>
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* New Conversation Button */}
@@ -532,7 +537,7 @@ function ChatPageInner() {
           onMouseEnter={(e) => { e.currentTarget.style.background = '#6B4CE0'; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--primary)'; }}
         >
-          ＋ สร้างการสนทนาใหม่
+          <Plus size={16} /> สร้างการสนทนาใหม่
         </button>
 
         {/* Conversation List */}
@@ -614,17 +619,21 @@ function ChatPageInner() {
                       }}>
                         {conv.title || 'สนทนาใหม่'}
                       </span>
-                      <div style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditingConvId(conv.id); setEditTitle(conv.title || ''); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', padding: '2px', opacity: 0.6 }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px', opacity: 0.7, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
                           title="เปลี่ยนชื่อ"
-                        >✏️</button>
+                        >
+                          <Edit2 size={13} />
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(conv.id); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', padding: '2px', opacity: 0.6 }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px', opacity: 0.7, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}
                           title="ลบ"
-                        >🗑️</button>
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </div>
                     <p style={{
