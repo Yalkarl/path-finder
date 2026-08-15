@@ -1125,7 +1125,11 @@ export default function DashboardPage() {
     };
   }).filter(Boolean);
 
-  const alternativePaths = isTargetLock ? findAlternativePaths(skillVector, profile.targetPath, pathsObject, 3) : [];
+  const alternativePaths = isTargetLock ? findAlternativePaths(skillVector, profile.targetPath, pathsObject, 3, {
+    portfolio: profile.portfolio || [],
+    customActivities: profile.customActivities || [],
+    aiCustomEvaluations: aiCustomEvals
+  }) : [];
 
   const UpdateBadge = () => (
     <span style={{
