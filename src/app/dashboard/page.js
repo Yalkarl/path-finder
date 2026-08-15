@@ -19,7 +19,7 @@ import { SELF_ASSESSMENT_SUBJECTS } from '@/lib/constants/selfAssessmentSubjects
 import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, ChevronRight, Sparkles, BookOpen, Lock, Unlock, Clock } from 'lucide-react';
 import { checkAssessmentQuota } from '@/lib/algorithms/dailyAttempts';
 import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
-import { ConstellationSoundTester } from '@/components/ui/ConstellationSoundTester';
+import { constellationAudio } from '@/lib/sound/constellationAudio';
 
 const PROFILE_THAI_MAP = {
   'Autonomous Strategic Analyst': 'นักวิเคราะห์กลยุทธ์อิสระ (Autonomous Strategic Analyst)',
@@ -668,10 +668,22 @@ function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
 
 function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval }) {
   const [phase, setPhase] = useState(isEvaluating ? 'evaluating' : 'complete');
-  const [mockActive, setMockActive] = useState(false);
   const prevEvalRef = useRef(isEvaluating);
 
   useEffect(() => {
+    const handleSoundChange = (e) => {
+      const isMuted = e?.detail?.muted ?? (localStorage.getItem('pathfinder_audio_muted') === 'true');
+      if (isMuted) {
+        constellationAudio.stopAll();
+      }
+    };
+    window.addEventListener('pathfinder_sound_change', handleSoundChange);
+    return () => window.removeEventListener('pathfinder_sound_change', handleSoundChange);
+  }, []);
+
+  useEffect(() => {
+    const isMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
+
     if (prevEvalRef.current && !isEvaluating) {
       setPhase('shattering');
       const timer = setTimeout(() => {
@@ -680,26 +692,18 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
       return () => clearTimeout(timer);
     } else if (isEvaluating) {
       setPhase('evaluating');
+      if (!isMuted) {
+        constellationAudio.playCosmicCrystal();
+      }
     }
     prevEvalRef.current = isEvaluating;
-  }, [isEvaluating]);
 
-  const handleTriggerMockAnimation = (active) => {
-    if (active) {
-      setPhase('evaluating');
-      setMockActive(true);
-      setTimeout(() => {
-        setPhase('shattering');
-        setTimeout(() => {
-          setPhase('complete');
-          setMockActive(false);
-        }, 1000);
-      }, 3100);
-    } else {
-      setPhase('complete');
-      setMockActive(false);
-    }
-  };
+    return () => {
+      if (!isEvaluating) {
+        constellationAudio.stopAll();
+      }
+    };
+  }, [isEvaluating]);
 
   const isLocked = phase === 'evaluating';
   const isShattering = phase === 'shattering';
@@ -725,8 +729,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
   const innerStarPoints = innerStarIndices.map(i => `calc(50% + ${stars[i].x}px),calc(50% + ${stars[i].y}px)`).join(' ');
 
   return (
-    <>
-      <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', marginTop: '1.5rem', minHeight: '360px', borderRadius: '20px', overflow: 'hidden' }}>
       {/* Skill Radar Chart with Soft Ethereal Blur */}
       <div style={{
         filter: isLocked ? 'blur(10px)' : isShattering ? 'blur(3px)' : 'blur(0px)',
@@ -764,7 +767,6 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
             overflow: 'visible'
           }}>
             <defs>
-              {/* Star Glow Gradient */}
               <radialGradient id="starGlowGrad" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#7C5CFC" stopOpacity="0.8" />
                 <stop offset="100%" stopColor="#7C5CFC" stopOpacity="0" />
@@ -778,15 +780,14 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
 
             {/* Delicate Astrological Orbital Rings */}
             <circle cx="50%" cy="50%" r="65" fill="none" stroke="rgba(124, 92, 252, 0.12)" strokeWidth="1" strokeDasharray="2 4" />
-            <circle cx="50%" cy="50%" r="115" fill="none" stroke="rgba(124, 92, 252, 0.18)" strokeWidth="1" />
-            <circle cx="50%" cy="50%" r="160" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1.2" strokeDasharray="4 16"
-              style={{ animation: 'orbitRingSpin 24s linear infinite', transformOrigin: '50% 50%' }} />
+            <circle cx="50%" cy="50%" r="140" fill="none" stroke="rgba(124, 92, 252, 0.15)" strokeWidth="1" strokeDasharray="4 6" />
+            <circle cx="50%" cy="50%" r="165" fill="none" stroke="rgba(6, 182, 212, 0.1)" strokeWidth="1" strokeDasharray="1 5" style={{ animation: 'orbitRingSpin 40s linear infinite' }} />
 
-            {/* Inner Star Chords (Faint geometric lines) */}
-            <polyline
+            {/* Inner Sacred Star Geometry (Connecting All 5 Nodes) */}
+            <polygon
               points={innerStarPoints}
               fill="rgba(124, 92, 252, 0.03)"
-              stroke="rgba(124, 92, 252, 0.22)"
+              stroke="rgba(124, 92, 252, 0.28)"
               strokeWidth="1.2"
               strokeDasharray="4 4"
             />
@@ -796,95 +797,72 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
               points={outerPolygonPoints}
               fill="rgba(124, 92, 252, 0.05)"
               stroke="url(#beamGrad)"
-              strokeWidth="2"
+              strokeWidth="2.5"
+              strokeDasharray="6 6"
               style={{
-                filter: 'drop-shadow(0 0 6px rgba(124, 92, 252, 0.35))',
-                strokeDasharray: '12 6',
+                filter: 'drop-shadow(0 0 8px rgba(124, 92, 252, 0.45))',
                 animation: 'constellationBeamFlow 3s linear infinite'
               }}
             />
 
             {/* 5 Radiant Constellation Stars */}
-            {stars.map((star, idx) => {
-              const cx = `calc(50% + ${star.x}px)`;
-              const cy = `calc(50% + ${star.y}px)`;
-              return (
-                <g key={idx}>
-                  {/* Outer Pulsing Starlight Aura */}
-                  <circle cx={cx} cy={cy} r="18" fill="none" stroke={isShattering ? '#10B981' : star.color} strokeWidth="1"
-                    style={{
-                      animation: `starlightPulse 2s ease-in-out infinite ${idx * 0.4}s`,
-                      transformOrigin: `${cx} ${cy}`
-                    }} />
+            {stars.map((star, idx) => (
+              <g key={idx} transform={`translate(calc(50% + ${star.x}px), calc(50% + ${star.y}px))`}>
+                {/* Outer Astral Pulse Halo */}
+                <circle
+                  cx="0"
+                  cy="0"
+                  r="16"
+                  fill={star.color}
+                  opacity="0.2"
+                  style={{ animation: `starlightPulse ${2 + (idx % 3) * 0.4}s ease-in-out infinite` }}
+                />
 
-                  {/* 4-Point Star Diamond Flare */}
-                  <g style={{
-                    animation: `starFlareSpin 8s linear infinite ${idx * 0.3}s`,
-                    transformOrigin: `${cx} ${cy}`
-                  }}>
-                    <path
-                      d={`M ${star.x} ${star.y - 10} Q ${star.x} ${star.y} ${star.x + 10} ${star.y} Q ${star.x} ${star.y} ${star.x} ${star.y + 10} Q ${star.x} ${star.y} ${star.x - 10} ${star.y} Z`}
-                      fill={isShattering ? '#10B981' : star.color}
-                      style={{
-                        transform: `translate(calc(50% - 0px), calc(50% - 0px))`,
-                        filter: `drop-shadow(0 0 6px ${isShattering ? '#10B981' : star.color})`
-                      }}
-                    />
-                  </g>
-
-                  {/* Star Core Dot */}
-                  <circle cx={cx} cy={cy} r="4" fill="#FFFFFF" stroke={isShattering ? '#10B981' : star.color} strokeWidth="2" />
-
-                  {/* Star Name Label */}
-                  <text
-                    x={`calc(50% + ${star.x * 1.28}px)`}
-                    y={`calc(50% + ${star.y * 1.28 + 4}px)`}
-                    textAnchor="middle"
-                    fill="var(--text-primary)"
-                    fontSize="11"
-                    fontWeight="700"
-                    style={{ letterSpacing: '0.02em', filter: 'drop-shadow(0 1px 2px rgba(255,255,255,0.8))' }}
-                  >
-                    {star.name}
-                  </text>
+                {/* Rotating Star Cross Flares */}
+                <g style={{ animation: 'starFlareSpin 8s linear infinite' }}>
+                  <line x1="-12" y1="0" x2="12" y2="0" stroke={star.color} strokeWidth="1.5" opacity="0.75" strokeLinecap="round" />
+                  <line x1="0" y1="-12" x2="0" y2="12" stroke={star.color} strokeWidth="1.5" opacity="0.75" strokeLinecap="round" />
                 </g>
-              );
-            })}
 
-            {/* Central Celestial Nexus Star */}
-            <circle cx="50%" cy="50%" r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 8px #7C5CFC)' }} />
+                {/* Brilliant Star Core */}
+                <circle cx="0" cy="0" r="7.5" fill="#FFFFFF" stroke={star.color} strokeWidth="3" style={{ filter: `drop-shadow(0 0 6px ${star.color})` }} />
+
+                {/* Micro Twinkle Point */}
+                <polygon
+                  points="0,-4 1.2,-1.2 4,0 1.2,1.2 0,4 -1.2,1.2 -4,0 -1.2,-1.2"
+                  fill={star.color}
+                  style={{ animation: 'starTwinkle 1.8s ease-in-out infinite' }}
+                />
+              </g>
+            ))}
+
+            {/* Central Astral Seed (Nexus Core) */}
+            <circle cx="50%" cy="50%" r="5" fill="#7C5CFC" style={{ filter: 'drop-shadow(0 0 10px #7C5CFC)' }} />
           </svg>
 
           {/* Minimalist Floating Constellation Telemetry Pill */}
           <div style={{
             position: 'absolute',
-            bottom: '1.25rem',
-            zIndex: 15,
+            bottom: '22px',
             display: 'flex',
             alignItems: 'center',
             gap: '0.65rem',
-            padding: '0.55rem 1.25rem',
-            background: 'rgba(255, 255, 255, 0.92)',
-            backdropFilter: 'blur(12px)',
-            borderRadius: '24px',
-            border: isShattering ? '1.5px solid #10B981' : '1.5px solid rgba(124, 92, 252, 0.3)',
-            boxShadow: '0 8px 24px rgba(124, 92, 252, 0.12)',
-            transition: 'all 0.3s ease'
+            padding: '0.55rem 1.15rem',
+            background: 'rgba(255, 255, 255, 0.95)',
+            border: '1px solid rgba(124, 92, 252, 0.25)',
+            borderRadius: '999px',
+            boxShadow: '0 8px 24px rgba(124, 92, 252, 0.16)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 12
           }}>
-            <span style={{
-              fontSize: '0.9rem',
-              color: isShattering ? '#10B981' : '#7C5CFC',
-              display: 'inline-block',
-              animation: 'starTwinkle 1.5s ease-in-out infinite'
-            }}>✦</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Sparkles size={16} color="#7C5CFC" className="animate-spin" style={{ animationDuration: '4s' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <span style={{
-                fontSize: '0.72rem',
+                fontSize: '0.68rem',
                 fontWeight: '800',
-                letterSpacing: '0.08em',
-                color: isShattering ? '#059669' : '#7C5CFC',
-                textTransform: 'uppercase',
-                fontFamily: 'monospace'
+                color: '#7C5CFC',
+                letterSpacing: '0.8px',
+                fontFamily: 'var(--font-mono, monospace)'
               }}>
                 {isShattering ? 'CONSTELLATION ALIGNED' : 'CONSTELLATION SKILL FORGE'}
               </span>
@@ -928,10 +906,6 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
         }
       `}</style>
     </div>
-
-    {/* Interactive Sound Tester for User to preview all 3 sounds */}
-    <ConstellationSoundTester onTriggerMockAnimation={handleTriggerMockAnimation} />
-  </>
   );
 }
 
