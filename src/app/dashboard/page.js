@@ -925,7 +925,8 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       const unsubscribe = subscribeUserProfile(user.uid, (p) => {
-        if (p && !p.completedSetup) {
+        const hasCompleted = p && (p.completedSetup || p.results || p.academics);
+        if (p && !hasCompleted) {
           router.push('/setup');
           return;
         }

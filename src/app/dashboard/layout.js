@@ -25,7 +25,8 @@ export default function DashboardLayout({ children }) {
     const refreshProfile = async () => {
       if (!user) return;
       const p = await getUserProfile(user.uid);
-      if (!p || !p.completedSetup) {
+      const hasCompleted = p && (p.completedSetup || p.results || p.academics);
+      if (!p || !hasCompleted) {
         router.push('/setup');
       } else {
         const localChar = typeof window !== 'undefined' ? localStorage.getItem('setup_characterId') : null;

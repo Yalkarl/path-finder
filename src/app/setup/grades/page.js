@@ -331,6 +331,7 @@ function GradesContent() {
           },
           aiEvaluation: null, // รีเซ็ตแคชประเมินเก่าของ AI ออกทันทีเพื่อให้เครื่องมือคำนวณท้องถิ่นทำงานอย่างถูกต้องที่ 0ms
           resultsUpdated: true,
+          completedSetup: true,
           updatedAt: new Date().toISOString()
         };
 
@@ -420,6 +421,7 @@ function GradesContent() {
           },
           aiEvaluation: null, // รีเซ็ตแคชประเมินเก่าของ AI เพื่อให้แดชบอร์ดแสดงผลเบื้องต้นทันที (<200ms)
           resultsUpdated: true,
+          completedSetup: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };

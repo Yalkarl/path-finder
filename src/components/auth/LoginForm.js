@@ -21,7 +21,7 @@ export default function LoginForm() {
   useEffect(() => {
     if (!authLoading && user) {
       getUserProfile(user.uid).then(profile => {
-        if (profile?.completedSetup) {
+        if (profile && (profile.completedSetup || profile.results || profile.academics)) {
           router.push('/dashboard');
         } else {
           router.push('/setup');
@@ -32,7 +32,7 @@ export default function LoginForm() {
 
   const redirectAfterAuth = async (authUser) => {
     const profile = await getUserProfile(authUser.uid);
-    if (profile?.completedSetup) {
+    if (profile && (profile.completedSetup || profile.results || profile.academics)) {
       router.push('/dashboard');
     } else {
       router.push('/setup');
