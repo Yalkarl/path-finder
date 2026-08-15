@@ -1257,113 +1257,119 @@ function GradesContent() {
                                           <div style={{ 
                                             display: 'flex', 
                                             flexDirection: 'column', 
-                                            gap: '0.5rem', 
+                                            gap: '0.45rem', 
                                             padding: '0.75rem', 
                                             background: '#FFFFFF', 
                                             borderRadius: '8px', 
                                             border: '1px solid #E2E8F0',
-                                            marginLeft: '1.25rem',
+                                            marginLeft: '0.5rem',
                                             animation: 'fadeIn 0.2s ease-in-out'
                                           }}>
                                             {isPosn ? (
-                                              /* POSN Specific config */
-                                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ระดับค่าย:</span>
-                                                <select
-                                                  value={itemObj.posnCamp || 'camp1'}
-                                                  onChange={(e) => handleUpdateItem(item, { posnCamp: e.target.value })}
-                                                  style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
-                                                >
-                                                  <option value="camp1">ค่าย 1</option>
-                                                  <option value="camp2">ค่าย 2</option>
-                                                  <option value="national">ค่าย 3 / ผู้แทนศูนย์ฯ</option>
-                                                  <option value="team">ผู้แทนประเทศ</option>
-                                                </select>
-                                                <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-primary)', marginLeft: '0.3rem' }}>สาขา:</span>
-                                                <select
-                                                  value={itemObj.posnSubject || 'คณิตศาสตร์'}
-                                                  onChange={(e) => handleUpdateItem(item, { posnSubject: e.target.value })}
-                                                  style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
-                                                >
-                                                  <option value="คณิตศาสตร์">คณิตศาสตร์</option>
-                                                  <option value="คอมพิวเตอร์">คอมพิวเตอร์</option>
-                                                  <option value="เคมี">เคมี</option>
-                                                  <option value="ชีววิทยา">ชีววิทยา</option>
-                                                  <option value="ฟิสิกส์">ฟิสิกส์</option>
-                                                  <option value="ดาราศาสตร์">ดาราศาสตร์</option>
-                                                  <option value="ภูมิศาสตร์">ภูมิศาสตร์</option>
-                                                </select>
+                                              /* POSN Specific config - 1 row per field */
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>ระดับค่าย:</span>
+                                                  <select
+                                                    className="portfolio-select"
+                                                    value={itemObj.posnCamp || 'camp1'}
+                                                    onChange={(e) => handleUpdateItem(item, { posnCamp: e.target.value })}
+                                                    style={{ flex: 1, width: '100%' }}
+                                                  >
+                                                    <option value="camp1">ค่าย 1</option>
+                                                    <option value="camp2">ค่าย 2</option>
+                                                    <option value="national">ค่าย 3 / ผู้แทนศูนย์ฯ</option>
+                                                    <option value="team">ผู้แทนประเทศ</option>
+                                                  </select>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>สาขา:</span>
+                                                  <select
+                                                    className="portfolio-select"
+                                                    value={itemObj.posnSubject || 'คณิตศาสตร์'}
+                                                    onChange={(e) => handleUpdateItem(item, { posnSubject: e.target.value })}
+                                                    style={{ flex: 1, width: '100%' }}
+                                                  >
+                                                    <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                                                    <option value="คอมพิวเตอร์">คอมพิวเตอร์</option>
+                                                    <option value="เคมี">เคมี</option>
+                                                    <option value="ชีววิทยา">ชีววิทยา</option>
+                                                    <option value="ฟิสิกส์">ฟิสิกส์</option>
+                                                    <option value="ดาราศาสตร์">ดาราศาสตร์</option>
+                                                    <option value="ภูมิศาสตร์">ภูมิศาสตร์</option>
+                                                  </select>
+                                                </div>
                                               </div>
                                             ) : item === 'การสอบวัดระดับทักษะวิชาการระดับชาติหรือนานาชาติ' ? (
-                                              /* 3. การสอบวัดระดับทักษะวิชาการระดับชาติหรือนานาชาติ Specific config */
-                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                              /* 3. การสอบวัดระดับทักษะวิชาการระดับชาติหรือนานาชาติ - 1 row per field */
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%' }}>
                                                 {/* Line 1: ระดับ */}
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', position: 'relative', flexWrap: 'wrap' }}>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ระดับ:</span>
-                                                  
-                                                  {/* Tooltip Hover for ระดับ */}
-                                                  <div 
-                                                    style={{ position: 'relative', display: 'inline-block' }}
-                                                    onMouseEnter={() => setHoveredTooltip(item)}
-                                                    onMouseLeave={() => setHoveredTooltip(null)}
-                                                  >
-                                                    <span style={{
-                                                      display: 'inline-flex',
-                                                      alignItems: 'center',
-                                                      justifyContent: 'center',
-                                                      width: '16px',
-                                                      height: '16px',
-                                                      borderRadius: '50%',
-                                                      background: 'var(--primary)',
-                                                      color: 'white',
-                                                      fontSize: '0.65rem',
-                                                      fontWeight: 'bold',
-                                                      cursor: 'pointer',
-                                                      marginLeft: '4px',
-                                                      marginRight: '8px'
-                                                    }}>?</span>
-                                                    {hoveredTooltip === item && (
-                                                      <div style={{
-                                                        position: 'absolute',
-                                                        bottom: '125%',
-                                                        left: '0px',
-                                                        width: '320px',
-                                                        backgroundColor: '#1E1E24',
-                                                        color: '#FFF',
-                                                        textAlign: 'left',
-                                                        borderRadius: '8px',
-                                                        padding: '0.75rem',
-                                                        zIndex: 100,
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                        fontSize: '0.75rem',
-                                                        lineHeight: '1.4',
-                                                        whiteSpace: 'normal'
-                                                      }}>
-                                                        <div style={{ marginBottom: '4px' }}><strong>ระดับชาติ (National Test)</strong> — สำหรับข้อสอบในประเทศ เช่น TGAT, TPAT, A-Level, NETSAT</div>
-                                                        <div><strong>ระดับนานาชาติ (International Test)</strong> — สำหรับข้อสอบมาตรฐานสากล เช่น SAT, AP, IB, IELTS, TOEFL</div>
-                                                      </div>
-                                                    )}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', width: '65px', flexShrink: 0 }}>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ระดับ:</span>
+                                                    <div 
+                                                      style={{ position: 'relative', display: 'inline-block' }}
+                                                      onMouseEnter={() => setHoveredTooltip(item)}
+                                                      onMouseLeave={() => setHoveredTooltip(null)}
+                                                    >
+                                                      <span style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        width: '14px',
+                                                        height: '14px',
+                                                        borderRadius: '50%',
+                                                        background: 'var(--primary)',
+                                                        color: 'white',
+                                                        fontSize: '0.6rem',
+                                                        fontWeight: 'bold',
+                                                        cursor: 'pointer'
+                                                      }}>?</span>
+                                                      {hoveredTooltip === item && (
+                                                        <div style={{
+                                                          position: 'absolute',
+                                                          bottom: '125%',
+                                                          left: '0px',
+                                                          width: '280px',
+                                                          backgroundColor: '#1E1E24',
+                                                          color: '#FFF',
+                                                          textAlign: 'left',
+                                                          borderRadius: '8px',
+                                                          padding: '0.75rem',
+                                                          zIndex: 100,
+                                                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                                          fontSize: '0.75rem',
+                                                          lineHeight: '1.4',
+                                                          whiteSpace: 'normal'
+                                                        }}>
+                                                          <div style={{ marginBottom: '4px' }}><strong>ระดับชาติ (National Test)</strong> — สำหรับข้อสอบในประเทศ เช่น TGAT, TPAT, A-Level, NETSAT</div>
+                                                          <div><strong>ระดับนานาชาติ (International Test)</strong> — สำหรับข้อสอบมาตรฐานสากล เช่น SAT, AP, IB, IELTS, TOEFL</div>
+                                                        </div>
+                                                      )}
+                                                    </div>
                                                   </div>
 
                                                   <select
-                                                     className="portfolio-select"
-                                                     value={itemObj.level || 'national'}
-                                                     onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
-                                                   >
-                                                     <option value="national">ระดับชาติ (National Test)</option>
-                                                     <option value="international">ระดับนานาชาติ (International Test)</option>
-                                                   </select>
+                                                    className="portfolio-select"
+                                                    value={itemObj.level || 'national'}
+                                                    onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
+                                                    style={{ flex: 1, width: '100%' }}
+                                                  >
+                                                    <option value="national">ระดับชาติ (National Standardized Test)</option>
+                                                    <option value="international">ระดับนานาชาติ (International Standardized Test)</option>
+                                                  </select>
                                                 </div>
 
                                                 {/* Line 2: ผลการสอบ / ระดับคะแนน */}
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ผลการสอบ / ระดับคะแนน:</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>ผลการสอบ:</span>
                                                   <select
-                                                     className="portfolio-select"
-                                                     value={itemObj.award || 'none'}
-                                                     onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
-                                                   >
-                                                     <option value="winner">คะแนนระดับสูงมาก / ดีเยี่ยม (Excellent)</option>
+                                                    className="portfolio-select"
+                                                    value={itemObj.award || 'none'}
+                                                    onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
+                                                    style={{ flex: 1, width: '100%' }}
+                                                  >
+                                                    <option value="winner">คะแนนระดับสูงมาก / ดีเยี่ยม (Excellent)</option>
                                                     <option value="runnerup1">คะแนนระดับสูง / ดี (Good)</option>
                                                     <option value="none">ผ่านเกณฑ์มาตรฐาน / ผ่านระดับพื้นฐาน</option>
                                                     <option value="below_standard">ต่ำกว่าเกณฑ์มาตรฐาน / ยังไม่ผ่านเกณฑ์ (Below Standard)</option>
@@ -1371,92 +1377,98 @@ function GradesContent() {
                                                 </div>
 
                                                 {/* Line 3: Description */}
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', width: '100%', marginTop: '0.1rem' }}>
                                                   <input
                                                     type="text"
                                                     placeholder="ระบุชื่อข้อสอบและคะแนนที่ได้ (เช่น SAT Math ได้ 780, AP Physics ได้ระดับ 5)"
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', outline: 'none' }}
+                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
                                                   />
                                                 </div>
                                               </div>
                                             ) : item === 'การสอบชิงทุนการศึกษา' ? (
-                                              /* 4. การสอบชิงทุนการศึกษา Specific config */
-                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                              /* 4. การสอบชิงทุนการศึกษา - 1 row per field */
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%' }}>
                                                 {/* Line 1: ระดับ */}
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ระดับ:</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>ระดับ:</span>
                                                   <select
-                                                     className="portfolio-select"
-                                                     value={itemObj.level || 'local'}
-                                                     onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
-                                                   >
-                                                     <option value="local">ทุนภายในสถาบัน / โรงเรียน / มหาวิทยาลัย</option>
-                                                     <option value="national">ทุนองค์กรภายในประเทศ / ทุนรัฐบาลไทย</option>
-                                                     <option value="international">ทุนรัฐบาลต่างประเทศ / ทุนนานาชาติ</option>
-                                                   </select>
+                                                    className="portfolio-select"
+                                                    value={itemObj.level || 'local'}
+                                                    onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
+                                                    style={{ flex: 1, width: '100%' }}
+                                                  >
+                                                    <option value="local">ทุนภายในสถาบัน / โรงเรียน / มหาวิทยาลัย</option>
+                                                    <option value="national">ทุนองค์กรภายในประเทศ / ทุนรัฐบาลไทย</option>
+                                                    <option value="international">ทุนรัฐบาลต่างประเทศ / ทุนนานาชาติ</option>
+                                                  </select>
                                                 </div>
 
                                                 {/* Line 2: ผลการสอบ */}
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ผลการสอบ:</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>ผลการสอบ:</span>
                                                   <select
-                                                     className="portfolio-select"
-                                                     value={itemObj.award || 'none'}
-                                                     onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
-                                                   >
-                                                     <option value="winner">ผ่านการคัดเลือก (ได้รับทุน)</option>
+                                                    className="portfolio-select"
+                                                    value={itemObj.award || 'none'}
+                                                    onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
+                                                    style={{ flex: 1, width: '100%' }}
+                                                  >
+                                                    <option value="winner">ผ่านการคัดเลือก (ได้รับทุน)</option>
                                                     <option value="runnerup1">ตัวสำรอง</option>
                                                     <option value="none">เข้าร่วมสอบ</option>
                                                   </select>
                                                 </div>
 
                                                 {/* Line 3: Description */}
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', width: '100%', marginTop: '0.1rem' }}>
                                                   <input
                                                     type="text"
                                                     placeholder="ระบุชื่อทุนและรายละเอียดเพิ่มเติม..."
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', outline: 'none' }}
+                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
                                                   />
                                                 </div>
                                               </div>
                                             ) : ((cat.id === 'project' && (targetPath === 'architecture' || targetPath === 'fine-arts' || targetPath === 'fine-applied-arts' || targetPath === 'music-performing-arts')) || cat.id === 'camp' || cat.id === 'volunteer' || cat.id === 'leadership') ? (
                                               /* Simple activity config (no level and award) */
-                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', width: '100%' }}>
+                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', width: '100%' }}>
                                                   <input
                                                     type="text"
                                                     placeholder="รายละเอียดกิจกรรมสั้นๆ..."
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, padding: '0.2rem 0.4rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', outline: 'none' }}
+                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
                                                   />
                                                 </div>
                                               </div>
                                             ) : (
-                                              /* Standard activity config */
-                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                  <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>ระดับ:</span>
+                                              /* Standard activity config - 1 row per field */
+                                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', width: '100%' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>ระดับ:</span>
                                                   <select
+                                                    className="portfolio-select"
                                                     value={itemObj.level || 'local'}
                                                     onChange={(e) => handleUpdateItem(item, { level: e.target.value })}
-                                                    style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
+                                                    style={{ flex: 1, width: '100%' }}
                                                   >
                                                     <option value="international">นานาชาติ</option>
                                                     <option value="national">ระดับชาติ</option>
                                                     <option value="regional">ระดับภาค</option>
                                                     <option value="local">โรงเรียน/ทั่วไป</option>
                                                   </select>
+                                                </div>
 
-                                                  <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-primary)', marginLeft: '0.3rem' }}>รางวัล:</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+                                                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-primary)', width: '65px', flexShrink: 0 }}>รางวัล:</span>
                                                   <select
+                                                    className="portfolio-select"
                                                     value={itemObj.award || 'none'}
                                                     onChange={(e) => handleUpdateItem(item, { award: e.target.value })}
-                                                    style={{ padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}
+                                                    style={{ flex: 1, width: '100%' }}
                                                   >
                                                     <option value="none">เข้าร่วม</option>
                                                     <option value="honorable">รางวัลชมเชย</option>
@@ -1465,13 +1477,14 @@ function GradesContent() {
                                                     <option value="winner">ชนะเลิศ/รางวัลยอดเยี่ยม</option>
                                                   </select>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+
+                                                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', width: '100%', marginTop: '0.1rem' }}>
                                                   <input
                                                     type="text"
                                                     placeholder="รายละเอียดกิจกรรมสั้นๆ..."
                                                     value={itemObj.desc || ''}
                                                     onChange={(e) => handleUpdateItem(item, { desc: e.target.value })}
-                                                    style={{ flex: 1, padding: '0.2rem 0.4rem', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '0.75rem', outline: 'none' }}
+                                                    style={{ flex: 1, width: '100%', padding: '0.35rem 0.6rem', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.78rem', outline: 'none' }}
                                                   />
                                                 </div>
                                               </div>
