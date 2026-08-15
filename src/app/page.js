@@ -52,7 +52,7 @@ export default function Home() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '2.5rem 1.25rem',
-        background: 'linear-gradient(135deg, #F5F3FF 0%, #ECE7FF 40%, #FAF5FF 70%, #FEF3C7 100%)',
+        background: 'linear-gradient(135deg, #F5F3FF 0%, #ECE7FF 40%, #FAF5FF 75%, #FFFDF5 100%)',
         position: 'relative',
         overflow: 'hidden',
       }}>
@@ -63,7 +63,7 @@ export default function Home() {
           left: '8%',
           width: '500px',
           height: '500px',
-          background: 'radial-gradient(circle, rgba(124, 92, 252, 0.22) 0%, rgba(124, 92, 252, 0.05) 50%, rgba(124, 92, 252, 0) 70%)',
+          background: 'radial-gradient(circle, rgba(124, 92, 252, 0.20) 0%, rgba(124, 92, 252, 0.04) 50%, rgba(124, 92, 252, 0) 70%)',
           borderRadius: '50%',
           filter: 'blur(40px)',
           animation: 'pulseAurora 12s ease-in-out infinite',
@@ -75,7 +75,7 @@ export default function Home() {
           right: '6%',
           width: '520px',
           height: '520px',
-          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.04) 50%, rgba(245, 158, 11, 0) 70%)',
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.06) 0%, rgba(245, 158, 11, 0.01) 50%, rgba(245, 158, 11, 0) 70%)',
           borderRadius: '50%',
           filter: 'blur(45px)',
           animation: 'pulseAurora2 14s ease-in-out infinite 1s',
@@ -87,7 +87,7 @@ export default function Home() {
           right: '12%',
           width: '400px',
           height: '400px',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0) 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.14) 0%, rgba(99, 102, 241, 0) 70%)',
           borderRadius: '50%',
           filter: 'blur(35px)',
           animation: 'pulseAurora 15s ease-in-out infinite 2s',
@@ -99,7 +99,7 @@ export default function Home() {
           left: '10%',
           width: '380px',
           height: '380px',
-          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, rgba(236, 72, 153, 0) 70%)',
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.10) 0%, rgba(236, 72, 153, 0) 70%)',
           borderRadius: '50%',
           filter: 'blur(35px)',
           animation: 'pulseAurora2 13s ease-in-out infinite 2.5s',
@@ -113,7 +113,7 @@ export default function Home() {
           right: '-120px',
           width: '480px',
           height: '480px',
-          border: '1.5px dashed rgba(124, 92, 252, 0.22)',
+          border: '1.5px dashed rgba(124, 92, 252, 0.18)',
           borderRadius: '50%',
           animation: 'rotateOrbit 60s linear infinite',
           pointerEvents: 'none',
@@ -124,7 +124,7 @@ export default function Home() {
           right: '-60px',
           width: '360px',
           height: '360px',
-          border: '1px solid rgba(124, 92, 252, 0.12)',
+          border: '1px solid rgba(124, 92, 252, 0.10)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }} />
@@ -135,7 +135,7 @@ export default function Home() {
           left: '-140px',
           width: '520px',
           height: '520px',
-          border: '1.5px dashed rgba(245, 158, 11, 0.2)',
+          border: '1.5px dashed rgba(245, 158, 11, 0.08)',
           borderRadius: '50%',
           animation: 'rotateOrbit 75s linear infinite reverse',
           pointerEvents: 'none',
@@ -146,7 +146,7 @@ export default function Home() {
           left: '-70px',
           width: '380px',
           height: '380px',
-          border: '1px solid rgba(245, 158, 11, 0.12)',
+          border: '1px solid rgba(245, 158, 11, 0.05)',
           borderRadius: '50%',
           pointerEvents: 'none',
         }} />
@@ -158,51 +158,51 @@ export default function Home() {
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
-          opacity: 0.45,
+          opacity: 0.4,
         }}>
           {/* Top Left Constellation cluster */}
-          <g stroke="rgba(124, 92, 252, 0.25)" strokeWidth="1" fill="none">
+          <g stroke="rgba(124, 92, 252, 0.22)" strokeWidth="1" fill="none">
             <line x1="8%" y1="18%" x2="16%" y2="12%" />
             <line x1="16%" y1="12%" x2="22%" y2="24%" />
             <line x1="22%" y1="24%" x2="14%" y2="32%" />
             <line x1="14%" y1="32%" x2="8%" y2="18%" />
           </g>
-          <circle cx="8%" cy="18%" r="3.5" fill="#7C5CFC" opacity="0.6" />
-          <circle cx="16%" cy="12%" r="2.5" fill="#7C5CFC" opacity="0.5" />
-          <circle cx="22%" cy="24%" r="4" fill="#9F7AEA" opacity="0.7" />
-          <circle cx="14%" cy="32%" r="3" fill="#7C5CFC" opacity="0.55" />
+          <circle cx="8%" cy="18%" r="3.5" fill="#7C5CFC" opacity="0.5" />
+          <circle cx="16%" cy="12%" r="2.5" fill="#7C5CFC" opacity="0.4" />
+          <circle cx="22%" cy="24%" r="4" fill="#9F7AEA" opacity="0.6" />
+          <circle cx="14%" cy="32%" r="3" fill="#7C5CFC" opacity="0.45" />
 
           {/* Bottom Right Constellation cluster */}
-          <g stroke="rgba(245, 158, 11, 0.25)" strokeWidth="1" fill="none">
+          <g stroke="rgba(245, 158, 11, 0.12)" strokeWidth="1" fill="none">
             <line x1="82%" y1="72%" x2="90%" y2="65%" />
             <line x1="90%" y1="65%" x2="94%" y2="78%" />
             <line x1="94%" y1="78%" x2="86%" y2="88%" />
             <line x1="86%" y1="88%" x2="82%" y2="72%" />
           </g>
-          <circle cx="82%" cy="72%" r="3.5" fill="#F59E0B" opacity="0.6" />
-          <circle cx="90%" cy="65%" r="3" fill="#FBBF24" opacity="0.65" />
-          <circle cx="94%" cy="78%" r="4" fill="#F59E0B" opacity="0.7" />
-          <circle cx="86%" cy="88%" r="2.5" fill="#FBBF24" opacity="0.5" />
+          <circle cx="82%" cy="72%" r="3" fill="#F59E0B" opacity="0.3" />
+          <circle cx="90%" cy="65%" r="2.5" fill="#FBBF24" opacity="0.3" />
+          <circle cx="94%" cy="78%" r="3" fill="#F59E0B" opacity="0.3" />
+          <circle cx="86%" cy="88%" r="2" fill="#FBBF24" opacity="0.25" />
         </svg>
 
         {/* Decorative Sparkle Stars */}
         <div style={{ position: 'absolute', top: '14%', left: '18%', animation: 'twinkle 4s ease-in-out infinite', pointerEvents: 'none' }}>
-          <Sparkles size={22} style={{ color: 'rgba(124, 92, 252, 0.55)' }} />
+          <Sparkles size={22} style={{ color: 'rgba(124, 92, 252, 0.45)' }} />
         </div>
         <div style={{ position: 'absolute', bottom: '20%', left: '14%', animation: 'twinkle 5s ease-in-out infinite 1s', pointerEvents: 'none' }}>
-          <Sparkles size={18} style={{ color: 'rgba(236, 72, 153, 0.55)' }} />
+          <Sparkles size={18} style={{ color: 'rgba(236, 72, 153, 0.45)' }} />
         </div>
         <div style={{ position: 'absolute', top: '20%', right: '16%', animation: 'twinkle 4.5s ease-in-out infinite 2s', pointerEvents: 'none' }}>
-          <Sparkles size={20} style={{ color: 'rgba(99, 102, 241, 0.55)' }} />
+          <Sparkles size={20} style={{ color: 'rgba(99, 102, 241, 0.45)' }} />
         </div>
         <div style={{ position: 'absolute', bottom: '15%', right: '20%', animation: 'twinkle 5.5s ease-in-out infinite 1.5s', pointerEvents: 'none' }}>
-          <Sparkles size={24} style={{ color: 'rgba(245, 158, 11, 0.55)' }} />
+          <Sparkles size={20} style={{ color: 'rgba(245, 158, 11, 0.28)' }} />
         </div>
         <div style={{ position: 'absolute', top: '50%', left: '6%', animation: 'twinkle 6s ease-in-out infinite 0.8s', pointerEvents: 'none' }}>
-          <Sparkles size={16} style={{ color: 'rgba(124, 92, 252, 0.45)' }} />
+          <Sparkles size={16} style={{ color: 'rgba(124, 92, 252, 0.35)' }} />
         </div>
         <div style={{ position: 'absolute', top: '52%', right: '7%', animation: 'twinkle 6.5s ease-in-out infinite 2.2s', pointerEvents: 'none' }}>
-          <Sparkles size={17} style={{ color: 'rgba(245, 158, 11, 0.45)' }} />
+          <Sparkles size={16} style={{ color: 'rgba(245, 158, 11, 0.25)' }} />
         </div>
 
         {/* ────────────────────────────────────────────────────────
