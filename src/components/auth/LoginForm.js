@@ -137,7 +137,7 @@ export default function LoginForm() {
                   onClick={(e) => { e.preventDefault(); setIsForgotPassword(true); setError(''); setSuccessMessage(''); }}
                   style={{ color: 'var(--primary)', fontSize: '0.75rem', fontWeight: '600', textDecoration: 'none' }}
                 >
-                  ลืมรหัสผ่าน? 🤔
+                  ลืมรหัสผ่าน?
                 </a>
               )}
             </div>
