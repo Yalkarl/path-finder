@@ -71,7 +71,7 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     try {
       await signOut();
-      router.push('/login');
+      window.location.href = '/';
     } catch (err) {
       console.error('Logout error:', err);
     }
