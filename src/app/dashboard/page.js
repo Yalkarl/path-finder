@@ -308,6 +308,7 @@ function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, childre
     const startTime = performance.now();
     const targetVolume = 0.65;
     const fadeInDuration = 2.5; // Smoothly fade in over 2.5 seconds
+    let impactTime = null;
 
     const trackTime = () => {
       // Use real audio currentTime if playing, or wall-clock time if muted/blocked
@@ -331,18 +332,29 @@ function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, childre
         updatePhase('locking');
       } else if (currentTime < 8.0) {
         updatePhase('charged'); // Hold lock firmly during bolt cocking
-      } else if (currentTime < 8.15) {
-        // Ensure AI evaluation finishes before firing the impact shot (with safety max time)
-        if (aiEvalRef.current || !isEvaluating || currentTime >= 9.0) {
-          updatePhase('impact'); // Gunshot impact flash + screen shake at 8.0s!
-        } else {
-          updatePhase('charged');
-        }
-      } else if (currentTime < 9.8) {
-        updatePhase('shatter'); // Shockwave burst & shatter unblur
       } else {
-        updatePhase('complete'); // Reveal readiness results only after shot & shockwave!
-        return; // Stop animation loop
+        // Crosshair is locked and charged!
+        // GATE: ONLY trigger gunshot and reveal when AI evaluation is 100% ready (or 20s safety limit)
+        const isDataReady = Boolean(aiEvalRef.current) || currentTime >= 20.0;
+
+        if (!isDataReady) {
+          // Keep holding crosshair charged lock state until AI finishes!
+          updatePhase('charged');
+        } else {
+          if (impactTime === null) {
+            impactTime = performance.now();
+          }
+          const impactElapsed = (performance.now() - impactTime) / 1000;
+
+          if (impactElapsed < 0.25) {
+            updatePhase('impact'); // Gunshot impact flash + screen shake!
+          } else if (impactElapsed < 1.6) {
+            updatePhase('shatter'); // Shockwave burst & shatter unblur
+          } else {
+            updatePhase('complete'); // Reveal readiness results only after AI is 100% ready!
+            return; // Stop animation loop
+          }
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(trackTime);
@@ -733,6 +745,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
     }
 
     const startTime = performance.now();
+    let impactTime = null;
 
     const trackTime = () => {
       const currentTime = (performance.now() - startTime) / 1000;
@@ -760,23 +773,33 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
         // Star 5 (Management) chime @ 2.6s
         updatePhase('star5');
         setActiveStarCount(5);
-      } else if (currentTime < 3.55) {
-        // Ensure AI evaluation finishes before triggering the supernova burst (with safety max time)
-        if (aiEvalRef.current || !isEvaluating || currentTime >= 4.2) {
-          updatePhase('impact');
-          setActiveStarCount(5);
-        } else {
+      } else {
+        // Star 5 pentagram is fully drawn!
+        // GATE: ONLY trigger Supernova burst when AI is 100% finished (or 15s safety limit)
+        const isDataReady = Boolean(aiEvalRef.current) || currentTime >= 15.0;
+
+        if (!isDataReady) {
+          // Keep holding glowing star5 pentagram state while AI finishes in background
           updatePhase('star5');
           setActiveStarCount(5);
+        } else {
+          if (impactTime === null) {
+            impactTime = performance.now();
+          }
+          const impactElapsed = (performance.now() - impactTime) / 1000;
+
+          if (impactElapsed < 0.35) {
+            updatePhase('impact'); // Supernova impact flash & pulse
+            setActiveStarCount(5);
+          } else if (impactElapsed < 1.3) {
+            updatePhase('shatter'); // Dissolution & Unblur
+            setActiveStarCount(5);
+          } else {
+            updatePhase('complete'); // Reveal 5D skill matrix only after AI processing is 100% finished!
+            setActiveStarCount(5);
+            return; // Stop animation loop
+          }
         }
-      } else if (currentTime < 4.5) {
-        // Dissolution & Unblur (3.55s - 4.5s)
-        updatePhase('shatter');
-        setActiveStarCount(5);
-      } else {
-        updatePhase('complete');
-        setActiveStarCount(5);
-        return; // Stop animation loop
       }
 
       animFrameRef.current = requestAnimationFrame(trackTime);
@@ -1600,7 +1623,7 @@ export default function DashboardPage() {
                 {profile.educationLevel === 'junior' ? 'คุยกับ AI โค้ช เพื่อติวเข้มสอบเข้า ม.4' : 'คุยกับ AI โค้ช เพื่อวางแผนยื่นพอร์ตโฟลิโอ'}
               </button>
               <button 
-                onClick={() => router.push('/setup/grades?mode=edit')}
+                onClick={() => router.push('/setup/grades?mode=edit&from=dashboard')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -2118,7 +2141,7 @@ export default function DashboardPage() {
                             className="btn-outline" 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              router.push(`/setup/grades?mode=edit&targetPath=${encodeURIComponent(path.id)}&analysisMode=target-lock`);
+                              router.push(`/setup/grades?mode=edit&targetPath=${encodeURIComponent(path.id)}&analysisMode=target-lock&from=switch-mode`);
                             }}
                             style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', padding: '0.75rem 1.5rem', fontWeight: '700' }}
                           >

@@ -369,7 +369,7 @@ function GradesContent() {
           }
         }).catch(e => console.warn('Background AI re-evaluation failed:', e));
 
-        if (analysisMode === 'target-lock') {
+        if (analysisMode === 'target-lock' && searchParams.get('from') === 'switch-mode') {
           router.push('/assessment');
         } else {
           router.push('/dashboard');
@@ -972,7 +972,7 @@ function GradesContent() {
                     }}
                     disabled={loading || !isFormValid}
                   >
-                    {loading ? 'กำลังบันทึกข้อมูล...' : (isEditMode && analysisMode !== 'target-lock') ? 'บันทึก' : 'ถัดไป →'}
+                    {loading ? 'กำลังบันทึกข้อมูล...' : (isEditMode && searchParams.get('from') !== 'switch-mode') ? 'บันทึก' : 'ถัดไป →'}
                   </button>
                 </div>
               </>
@@ -1774,7 +1774,7 @@ function GradesContent() {
                   }}
                   disabled={loading || !isFormValid}
                 >
-                  {loading ? 'กำลังบันทึกข้อมูล...' : (isEditMode && analysisMode !== 'target-lock') ? 'บันทึก' : 'ถัดไป →'}
+                  {loading ? 'กำลังบันทึกข้อมูล...' : (isEditMode && searchParams.get('from') !== 'switch-mode') ? 'บันทึก' : 'ถัดไป →'}
                 </button>
               </div>
             </div>
