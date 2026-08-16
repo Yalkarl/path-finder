@@ -6,28 +6,40 @@ export const TARGET_CLUSTERS = {
   'pharmacy': 'medical',
   'allied-health': 'medical',
   'nursing': 'medical',
+  'doctor-pharmacist': 'medical',
   
   // วิศวกรรม เทคโนโลยี การบิน
   'engineering': 'engineering',
+  'computer-science': 'engineering',
   'it-ict': 'engineering',
   'aviation': 'engineering',
+  'logistics-industrial-tech': 'engineering',
+  'industrial-education': 'engineering',
   
-  // วิทยาศาสตร์ธรรมชาติและเกษตร
+  // วิทยาศาสตร์ธรรมชาติ เกษตร สิ่งแวดล้อม กีฬา
   'science': 'science',
   'agriculture': 'science',
+  'food-tech': 'science',
+  'environmental-science': 'science',
+  'sports-science': 'science',
   
   // บริหาร การเงิน ท่องเที่ยว
+  'business-administration': 'business',
   'accounting-business': 'business',
   'economics': 'business',
   'tourism': 'business',
+  'tourism-hospitality': 'business',
   
   // ศิลปะ สถาปัตย์ นิเทศ
   'architecture': 'creative',
   'fine-arts': 'creative',
+  'fine-applied-arts': 'creative',
   'communication': 'creative',
+  'communication-arts': 'creative',
   
   // สังคม ภาษา ครู กฎหมาย
   'humanities': 'social',
+  'humanities-liberal-arts': 'social',
   'law': 'social',
   'political-science': 'social',
   'psychology': 'social',
@@ -45,6 +57,7 @@ export const TARGET_CLUSTERS = {
   'humanities-social-science': 'social',
   'communication-fine-arts': 'creative',
   'special-smte': 'science',
+  'special-iep': 'social',
   'special-ep-iep': 'social'
 };
 

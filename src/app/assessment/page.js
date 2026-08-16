@@ -58,20 +58,24 @@ export default function AssessmentPage() {
       setProfile(userProfile);
 
       if (userProfile.analysisMode === 'target-lock' && userProfile.targetPath) {
-        // ด่านประเมินสถานการณ์เฉพาะสาย 1
+        // ด่านประเมินสถานการณ์เฉพาะสาย
         const clusterKey = TARGET_CLUSTERS[userProfile.targetPath] || 'engineering';
-        const themes = TARGETED_STAGE_THEMES[clusterKey] || [];
+        const themes = TARGETED_STAGE_THEMES[clusterKey] || TARGETED_STAGE_THEMES['engineering'] || [];
         const theme = themes[0];
-        const stageQuestions = TARGETED_ASSESSMENT_BANK.filter(q => q.stageId === theme?.id);
-        
-        setCurrentTheme(theme);
+        let stageQuestions = TARGETED_ASSESSMENT_BANK.filter(q => q.stageId === theme?.id);
+        if (!stageQuestions || stageQuestions.length === 0) {
+          stageQuestions = ASSESSMENT_BANK.filter(q => q.stageId === 1);
+        }
+        setCurrentTheme(theme || STAGE_THEMES[0]);
         setScenarios(stageQuestions);
       } else {
         // สุ่มเลือก 1 ธีมจาก 12 ธีมสำหรับแบบทดสอบเริ่มต้น
         const randomStageId = Math.floor(Math.random() * 12) + 1;
-        const theme = STAGE_THEMES.find(t => t.id === randomStageId);
-        const stageQuestions = ASSESSMENT_BANK.filter(q => q.stageId === randomStageId);
-        
+        const theme = STAGE_THEMES.find(t => t.id === randomStageId) || STAGE_THEMES[0];
+        let stageQuestions = ASSESSMENT_BANK.filter(q => q.stageId === theme?.id);
+        if (!stageQuestions || stageQuestions.length === 0) {
+          stageQuestions = ASSESSMENT_BANK.slice(0, 5);
+        }
         setCurrentTheme(theme);
         setScenarios(stageQuestions);
       }

@@ -369,7 +369,11 @@ function GradesContent() {
           }
         }).catch(e => console.warn('Background AI re-evaluation failed:', e));
 
-        router.push('/dashboard');
+        if (analysisMode === 'target-lock') {
+          router.push('/assessment');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         const likesForSave = analysisMode === 'discovery' ? likes : [];
         const dislikesForSave = analysisMode === 'discovery' ? dislikes : [];
@@ -968,7 +972,7 @@ function GradesContent() {
                     }}
                     disabled={loading || !isFormValid}
                   >
-                    {loading ? 'กำลังบันทึกข้อมูล...' : isEditMode ? 'บันทึก' : 'ถัดไป →'}
+                    {loading ? 'กำลังบันทึกข้อมูล...' : (isEditMode && analysisMode !== 'target-lock') ? 'บันทึก' : 'ถัดไป →'}
                   </button>
                 </div>
               </>
@@ -1770,7 +1774,7 @@ function GradesContent() {
                   }}
                   disabled={loading || !isFormValid}
                 >
-                  {loading ? 'กำลังบันทึกข้อมูล...' : isEditMode ? 'บันทึก' : 'ถัดไป →'}
+                  {loading ? 'กำลังบันทึกข้อมูล...' : (isEditMode && analysisMode !== 'target-lock') ? 'บันทึก' : 'ถัดไป →'}
                 </button>
               </div>
             </div>
