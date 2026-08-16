@@ -240,9 +240,11 @@ function AIQualitativeInsightsSection({ aiEval, profile, isEvaluating = false })
 
 import AssessmentMusicPlayer from '@/components/ui/AssessmentMusicPlayer';
 
-function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
+function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, children }) {
   // scanning -> locking -> charged -> impact -> shatter -> complete
   const [phase, setPhase] = useState(isEvaluating ? 'scanning' : 'complete');
+  const aiEvalRef = useRef(aiEval);
+  aiEvalRef.current = aiEval;
   const prevEvalRef = useRef(null);
   const audioElemRef = useRef(null);
   const animFrameRef = useRef(null);
@@ -330,7 +332,12 @@ function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
       } else if (currentTime < 8.0) {
         updatePhase('charged'); // Hold lock firmly during bolt cocking
       } else if (currentTime < 8.15) {
-        updatePhase('impact'); // Gunshot impact flash + screen shake at 8.0s!
+        // Ensure AI evaluation finishes before firing the impact shot (with safety max time)
+        if (aiEvalRef.current || !isEvaluating || currentTime >= 9.0) {
+          updatePhase('impact'); // Gunshot impact flash + screen shake at 8.0s!
+        } else {
+          updatePhase('charged');
+        }
       } else if (currentTime < 9.8) {
         updatePhase('shatter'); // Shockwave burst & shatter unblur
       } else {
@@ -673,10 +680,12 @@ function TargetLockGaugeContainer({ isEvaluating, onPhaseChange, children }) {
   );
 }
 
-function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval }) {
+function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval, onPhaseChange }) {
   // phases: 'init' -> 'star1' -> 'star2' -> 'star3' -> 'star4' -> 'star5' -> 'impact' -> 'shatter' -> 'complete'
   const [phase, setPhase] = useState(isEvaluating ? 'init' : 'complete');
   const [activeStarCount, setActiveStarCount] = useState(isEvaluating ? 0 : 5);
+  const aiEvalRef = useRef(aiEval);
+  aiEvalRef.current = aiEval;
   const prevEvalRef = useRef(null);
   const animFrameRef = useRef(null);
   const timeoutsRef = useRef([]);
@@ -689,6 +698,11 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
       animFrameRef.current = null;
     }
   };
+
+  const updatePhase = useCallback((newPhase) => {
+    setPhase(newPhase);
+    onPhaseChange?.(newPhase);
+  }, [onPhaseChange]);
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
@@ -710,7 +724,7 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
   // Audio-driven precise time sequence syncing with playCosmicCrystal
   const startAudioSyncedSequence = useCallback(() => {
     stopTracking();
-    setPhase('init');
+    updatePhase('init');
     setActiveStarCount(0);
 
     const isMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
@@ -724,38 +738,43 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
       const currentTime = (performance.now() - startTime) / 1000;
 
       if (currentTime < 0.2) {
-        setPhase('init');
+        updatePhase('init');
         setActiveStarCount(0);
       } else if (currentTime < 0.8) {
         // Star 1 (Logic) chime @ 0.2s
-        setPhase('star1');
+        updatePhase('star1');
         setActiveStarCount(1);
       } else if (currentTime < 1.4) {
         // Star 2 (Science) chime @ 0.8s
-        setPhase('star2');
+        updatePhase('star2');
         setActiveStarCount(2);
       } else if (currentTime < 2.0) {
         // Star 3 (Language) chime @ 1.4s
-        setPhase('star3');
+        updatePhase('star3');
         setActiveStarCount(3);
       } else if (currentTime < 2.6) {
         // Star 4 (Art) chime @ 2.0s
-        setPhase('star4');
+        updatePhase('star4');
         setActiveStarCount(4);
       } else if (currentTime < 3.2) {
         // Star 5 (Management) chime @ 2.6s
-        setPhase('star5');
+        updatePhase('star5');
         setActiveStarCount(5);
       } else if (currentTime < 3.55) {
-        // Burst Chord & Sparkle at 3.2s! (Supernova Impact & Screen Pulse)
-        setPhase('impact');
-        setActiveStarCount(5);
+        // Ensure AI evaluation finishes before triggering the supernova burst (with safety max time)
+        if (aiEvalRef.current || !isEvaluating || currentTime >= 4.2) {
+          updatePhase('impact');
+          setActiveStarCount(5);
+        } else {
+          updatePhase('star5');
+          setActiveStarCount(5);
+        }
       } else if (currentTime < 4.5) {
         // Dissolution & Unblur (3.55s - 4.5s)
-        setPhase('shatter');
+        updatePhase('shatter');
         setActiveStarCount(5);
       } else {
-        setPhase('complete');
+        updatePhase('complete');
         setActiveStarCount(5);
         return; // Stop animation loop
       }
@@ -764,17 +783,17 @@ function DiscoverySkillMatrixContainer({ isEvaluating, vector, academics, aiEval
     };
 
     animFrameRef.current = requestAnimationFrame(trackTime);
-  }, []);
+  }, [updatePhase, isEvaluating]);
 
   useEffect(() => {
     if (isEvaluating) {
       startAudioSyncedSequence();
     } else if (!isEvaluating && prevEvalRef.current === null) {
-      setPhase('complete');
+      updatePhase('complete');
       setActiveStarCount(5);
     }
     prevEvalRef.current = isEvaluating;
-  }, [isEvaluating, startAudioSyncedSequence]);
+  }, [isEvaluating, startAudioSyncedSequence, updatePhase]);
 
   useEffect(() => {
     return () => {
@@ -1195,6 +1214,7 @@ export default function DashboardPage() {
 
   const [evaluatingTimeout, setEvaluatingTimeout] = useState(false);
   const [targetLockPhase, setTargetLockPhase] = useState('complete');
+  const [discoveryPhase, setDiscoveryPhase] = useState('complete');
 
   useEffect(() => {
     if (user) {
@@ -1496,8 +1516,8 @@ export default function DashboardPage() {
               <Target size={14} /> โหมดประเมินความพร้อม (Target Lock)
             </span>
 
-            <AIStatusBadge isEvaluating={(!aiEval && !evaluatingTimeout) || targetLockPhase === 'scanning'} />
-            <TargetLockGaugeContainer isEvaluating={!aiEval && !evaluatingTimeout} onPhaseChange={setTargetLockPhase}>
+            <AIStatusBadge isEvaluating={(!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete'} />
+            <TargetLockGaugeContainer isEvaluating={!aiEval && !evaluatingTimeout} aiEval={aiEval} onPhaseChange={setTargetLockPhase}>
               {profile.educationLevel === 'junior' && readinessPercentages.length > 0 ? (
                 <div style={{ width: '100%', textAlign: 'center' }}>
                   <h2 style={{ marginTop: 0, marginBottom: '1.5rem' }}>
@@ -1606,10 +1626,10 @@ export default function DashboardPage() {
             display: 'flex',
             flexDirection: 'column',
             gap: '2rem',
-            filter: targetLockPhase !== 'complete' ? 'blur(12px)' : 'blur(0px)',
-            opacity: targetLockPhase !== 'complete' ? 0.3 : 1,
-            pointerEvents: targetLockPhase !== 'complete' ? 'none' : 'auto',
-            userSelect: targetLockPhase !== 'complete' ? 'none' : 'auto',
+            filter: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 'blur(12px)' : 'blur(0px)',
+            opacity: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 0.3 : 1,
+            pointerEvents: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 'none' : 'auto',
+            userSelect: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 'none' : 'auto',
             transition: 'all 1.0s cubic-bezier(0.4, 0, 0.2, 1)'
           }}>
           {/* Targeted Gap Analysis */}
@@ -1833,7 +1853,16 @@ export default function DashboardPage() {
           </div>
 
           {/* Alternative Pathways (แผนสำรอง) */}
-          <div>
+          <div 
+            className="relative"
+            style={{
+              filter: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 'blur(16px)' : 'blur(0px)',
+              opacity: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 0.25 : 1,
+              transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 'none' : 'auto',
+              userSelect: ((!aiEval && !evaluatingTimeout) || targetLockPhase !== 'complete') ? 'none' : 'auto'
+            }}
+          >
             <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Lightbulb size={20} style={{ color: 'var(--primary)' }} /> แผนสำรองอัจฉริยะ (Alternative Pathways)
             </h3>
@@ -1896,7 +1925,7 @@ export default function DashboardPage() {
                 <BarChart2 size={24} style={{ color: 'var(--primary)' }} /> My Skill Matrix
                 {isUpdated && <UpdateBadge />}
               </h2>
-              <AIStatusBadge isEvaluating={!aiEval && !evaluatingTimeout} />
+              <AIStatusBadge isEvaluating={(!aiEval && !evaluatingTimeout) || discoveryPhase !== 'complete'} />
             </div>
 
             <DiscoverySkillMatrixContainer
@@ -1904,13 +1933,14 @@ export default function DashboardPage() {
               vector={skillVector}
               academics={profile.academics}
               aiEval={aiEval}
+              onPhaseChange={setDiscoveryPhase}
             />
 
             {/* AI Qualitative Insights Section (Discovery Mode) */}
             <AIQualitativeInsightsSection 
               aiEval={aiEval} 
               profile={profile} 
-              isEvaluating={!aiEval && !evaluatingTimeout} 
+              isEvaluating={(!aiEval && !evaluatingTimeout) || discoveryPhase !== 'complete'} 
             />
           </div>
 
@@ -1987,11 +2017,11 @@ export default function DashboardPage() {
           {/* Match Rankings (Blurred while evaluating) */}
           <div style={{
             position: 'relative',
-            filter: (!aiEval && !evaluatingTimeout) ? 'blur(16px)' : 'blur(0px)',
-            opacity: (!aiEval && !evaluatingTimeout) ? 0.25 : 1,
+            filter: ((!aiEval && !evaluatingTimeout) || discoveryPhase !== 'complete') ? 'blur(16px)' : 'blur(0px)',
+            opacity: ((!aiEval && !evaluatingTimeout) || discoveryPhase !== 'complete') ? 0.25 : 1,
             transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            pointerEvents: (!aiEval && !evaluatingTimeout) ? 'none' : 'auto',
-            userSelect: (!aiEval && !evaluatingTimeout) ? 'none' : 'auto'
+            pointerEvents: ((!aiEval && !evaluatingTimeout) || discoveryPhase !== 'complete') ? 'none' : 'auto',
+            userSelect: ((!aiEval && !evaluatingTimeout) || discoveryPhase !== 'complete') ? 'none' : 'auto'
           }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0 0 1rem 0', color: 'var(--text-secondary)' }}>
               <Trophy size={20} style={{ color: 'var(--primary)' }} /> {profile.educationLevel === 'junior' ? 'อันดับสายการเรียนที่ Match' : 'อันดับคณะที่ Match'}
