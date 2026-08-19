@@ -20,6 +20,7 @@ import { Target, Sliders, BarChart2, FolderOpen, Lightbulb, Trophy, Compass, Che
 import { checkAssessmentQuota } from '@/lib/algorithms/dailyAttempts';
 import { KahootCharacterSvg } from '@/components/ui/KahootVectorCharacters';
 import { constellationAudio } from '@/lib/sound/constellationAudio';
+import { targetLockAudio } from '@/lib/sound/targetLockAudio';
 
 const PROFILE_THAI_MAP = {
   'Autonomous Strategic Analyst': 'นักวิเคราะห์กลยุทธ์อิสระ (Autonomous Strategic Analyst)',
@@ -246,7 +247,6 @@ function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, childre
   const aiEvalRef = useRef(aiEval);
   aiEvalRef.current = aiEval;
   const prevEvalRef = useRef(null);
-  const audioElemRef = useRef(null);
   const animFrameRef = useRef(null);
   const timeoutsRef = useRef([]);
 
@@ -272,70 +272,43 @@ function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, childre
   useEffect(() => {
     const handleSoundChange = (e) => {
       const isMuted = e?.detail?.muted ?? (localStorage.getItem('pathfinder_audio_muted') === 'true');
-      if (isMuted && audioElemRef.current) {
-        audioElemRef.current.pause();
-      } else if (!isMuted && audioElemRef.current && phaseRef.current !== 'complete') {
-        audioElemRef.current.play().catch(() => {});
+      if (isMuted) {
+        targetLockAudio.stopAll();
+      } else if (!isMuted && phaseRef.current !== 'complete') {
+        targetLockAudio.playQuantumLock();
       }
     };
     window.addEventListener('pathfinder_sound_change', handleSoundChange);
     return () => window.removeEventListener('pathfinder_sound_change', handleSoundChange);
   }, []);
 
-  // Audio-driven time detector loop: locks at 6.8s, fires at 8.0s, never reveals early
+  // Audio-driven time detector loop: locks at 6.8s, sonic impact at 8.0s, reveals when AI ready
   const startAudioSyncedSequence = useCallback(() => {
     stopTracking();
     updatePhase('scanning');
 
     const isMuted = typeof window !== 'undefined' && localStorage.getItem('pathfinder_audio_muted') === 'true';
-    let audio = audioElemRef.current;
-    if (!audio) {
-      audio = new Audio('/audio/sniperv2.mp3');
-      audio.preload = 'auto';
-      audioElemRef.current = audio;
-    }
-    audio.currentTime = 0;
-    // Start softly for gentle fade-in
-    audio.volume = 0.05;
-
     if (!isMuted) {
-      audio.play().catch(() => {
-        // If autoplay is blocked without user interaction, visual timeline still runs smoothly
-      });
+      targetLockAudio.playQuantumLock();
     }
 
     // High-precision tracking of audio playback time
     const startTime = performance.now();
-    const targetVolume = 0.65;
-    const fadeInDuration = 2.5; // Smoothly fade in over 2.5 seconds
     let impactTime = null;
 
     const trackTime = () => {
-      // Use real audio currentTime if playing, or wall-clock time if muted/blocked
-      const currentTime = (audio && !audio.paused && audio.currentTime > 0)
-        ? audio.currentTime
-        : (performance.now() - startTime) / 1000;
+      const totalElapsed = (performance.now() - startTime) / 1000;
 
-      // Smooth volume fade-in (from soft 0.05 to full 0.65)
-      if (audio && !isMuted && !audio.paused) {
-        if (currentTime < fadeInDuration) {
-          const ratio = Math.max(0, currentTime / fadeInDuration);
-          audio.volume = Math.min(targetVolume, Math.max(0.05, 0.05 + (targetVolume - 0.05) * ratio));
-        } else {
-          audio.volume = targetVolume;
-        }
-      }
-
-      if (currentTime < 5.8) {
+      if (totalElapsed < 5.2) {
         updatePhase('scanning');
-      } else if (currentTime < 6.8) {
+      } else if (totalElapsed < 6.8) {
         updatePhase('locking');
-      } else if (currentTime < 8.0) {
-        updatePhase('charged'); // Hold lock firmly during bolt cocking
+      } else if (totalElapsed < 8.0) {
+        updatePhase('charged'); // Hold lock firmly during energy buildup
       } else {
         // Crosshair is locked and charged!
-        // GATE: ONLY trigger gunshot and reveal when AI evaluation is 100% ready (or 20s safety limit)
-        const isDataReady = Boolean(aiEvalRef.current) || currentTime >= 20.0;
+        // GATE: ONLY trigger sonic boom and reveal when AI evaluation is 100% ready (or 20s safety limit)
+        const isDataReady = Boolean(aiEvalRef.current) || totalElapsed >= 20.0;
 
         if (!isDataReady) {
           // Keep holding crosshair charged lock state until AI finishes!
@@ -347,7 +320,7 @@ function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, childre
           const impactElapsed = (performance.now() - impactTime) / 1000;
 
           if (impactElapsed < 0.25) {
-            updatePhase('impact'); // Gunshot impact flash + screen shake!
+            updatePhase('impact'); // Sonic boom impact flash + screen pulse!
           } else if (impactElapsed < 1.6) {
             updatePhase('shatter'); // Shockwave burst & shatter unblur
           } else {
@@ -378,10 +351,7 @@ function TargetLockGaugeContainer({ isEvaluating, aiEval, onPhaseChange, childre
   useEffect(() => {
     return () => {
       stopTracking();
-      if (audioElemRef.current) {
-        audioElemRef.current.pause();
-        audioElemRef.current.currentTime = 0;
-      }
+      targetLockAudio.stopAll();
     };
   }, []);
 
